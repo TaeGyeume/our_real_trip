@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {useAuthStore} from '../store/authStore';
+import {useNotificationStore} from '../store/notificationStore';
 import {
   AppBar,
   Toolbar,
@@ -16,7 +17,8 @@ import {
   Paper,
   ClickAwayListener,
   MenuList,
-  MenuItem
+  MenuItem,
+  Badge
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -38,6 +40,9 @@ const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const {notifications, markAllAsRead} = useNotificationStore();
+  const [isNotiOpen, setIsNotiOpen] = useState(false);
+  const notiRef = useRef(null);
 
   // 로그인된 경우에만 프로필 불러오기, 로그인 시 드롭다운 강제 닫기
   useEffect(() => {
@@ -71,6 +76,20 @@ const Header = () => {
   const handleClickAway = event => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
       setIsDropdownOpen(false);
+    }
+  };
+
+  const toggleNotiDropdown = async () => {
+    setIsNotiOpen(prev => !prev);
+
+    if (!isNotiOpen) {
+      await markAllAsRead(); // 아이콘 클릭으로 열릴 때 모든 알림 읽음처리
+    }
+  };
+
+  const handleNotiClickAway = event => {
+    if (notiRef.current && !notiRef.current.contains(event.target)) {
+      setIsNotiOpen(false);
     }
   };
 
@@ -164,6 +183,61 @@ const Header = () => {
               sx={{whiteSpace: 'nowrap'}}>
               알림
             </Button>
+            <IconButton color="inherit" ref={notiRef} onClick={toggleNotiDropdown}>
+              <Badge
+                badgeContent={notifications.filter(noti => !noti.read).length}
+                color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+            {/* 알림 드롭다운 */}
+            {isNotiOpen && (
+              <ClickAwayListener onClickAway={handleNotiClickAway}>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 50,
+                    right: 50,
+                    zIndex: 10,
+                    width: 300,
+                    maxHeight: 400,
+                    overflowY: 'auto'
+                  }}>
+                  <Paper sx={{boxShadow: 3, borderRadius: 1}}>
+                    <MenuList>
+                      <Typography variant="subtitle1" sx={{p: 1}}>
+                        알림
+                      </Typography>
+                      <Divider />
+                      {notifications.length > 0 ? (
+                        notifications
+                          .slice() // 기존 배열 복사하여 불변성 유지
+                          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // 최신순 정렬
+                          .map(noti => (
+                            <MenuItem key={noti._id} sx={{whiteSpace: 'normal'}}>
+                              <ListItemText
+                                primary={noti.message}
+                                secondary={new Date(noti.createdAt).toLocaleString(
+                                  'ko-KR',
+                                  {
+                                    timeZone: 'Asia/Seoul',
+                                    hour12: false
+                                  }
+                                )}
+                                sx={{opacity: noti.read ? 0.6 : 1}}
+                              />
+                            </MenuItem>
+                          ))
+                      ) : (
+                        <Typography sx={{p: 2, color: 'gray'}}>
+                          알림이 없습니다.
+                        </Typography>
+                      )}
+                    </MenuList>
+                  </Paper>
+                </Box>
+              </ClickAwayListener>
+            )}
             <Button
               component={Link}
               to="/qna"

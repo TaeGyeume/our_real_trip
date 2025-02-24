@@ -31,6 +31,7 @@ const userMileageRoutes = require('./routes/userMileageRoutes');
 const qnaRoutes = require('./routes/qnaRoutes'); //
 const reviewRoutes = require('./routes/reviewRoutes');
 const viewsRoutes = require('./routes/viewsRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -81,6 +82,7 @@ app.use('/api/travelItems', travelItemRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/user-coupons', userCouponRoutes);
 app.use('/api/views', viewsRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/product', productRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/tourTicket', userTourTicketRoutes);
