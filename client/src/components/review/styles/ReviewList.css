@@ -5,7 +5,7 @@
 }
 
 .review-card {
-  position: relative; /* 부모 요소를 기준으로 절대 위치 설정 */
+  position: relative;
   border: 1px solid #ddd;
   padding: 15px;
   border-radius: 10px;
@@ -17,7 +17,7 @@
 
 .review-header {
   display: flex;
-  justify-content: space-between; /* 좌우 정렬 */
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
   width: 100%;
@@ -26,7 +26,7 @@
 .review-actions {
   display: flex;
   align-items: center;
-  gap: 10px; /* 좋아요와 케밥 메뉴 사이 간격 */
+  gap: 10px;
 }
 
 .review-username {
@@ -56,6 +56,12 @@
   font-weight: 500;
 }
 
+.review-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .review-images {
   display: flex;
   gap: 8px;
@@ -75,7 +81,7 @@
 .review-text {
   font-size: 16px;
   font-weight: 400;
-  margin-top: 0; /* content 위 여백 제거 */
+  margin-top: 0;
   text-align: left;
 }
 
@@ -147,7 +153,7 @@
 .menu-options {
   position: absolute;
   right: 0;
-  top: 30px; /* 케밥 아이콘 아래에 위치 */
+  top: 30px;
   background: white;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -183,7 +189,6 @@
   margin-left: 10px;
 }
 
-/* 댓글 입력창 */
 .comment-box {
   margin-top: 10px;
   display: flex;
@@ -214,14 +219,26 @@
   background-color: #0056b3;
 }
 
-/* 댓글 리스트 */
 .comment-list {
   margin-top: 10px;
   border-top: 1px solid #eee;
   padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .comment-item {
   margin-bottom: 6px;
+  font-size: 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.comment-item strong {
+  display: inline-block;
+  margin-right: 5px;
+  font-weight: bold;
+  text-align: left;
   font-size: 14px;
 }

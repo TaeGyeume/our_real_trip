@@ -19,27 +19,34 @@ const ReviewList = ({productId}) => {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const fetchReviews = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getReviews(productId);
-        // console.log('Fetched review data:', data);
-        setReviews(data);
+        const [reviewsData, userData] = await Promise.allSettled([
+          getReviews(productId),
+          authAPI.getUserProfile()
+        ]);
+
+        if (reviewsData.status === 'fulfilled') {
+          setReviews(reviewsData.value);
+        } else {
+          console.error('리뷰 불러오기 실패:', reviewsData.reason);
+        }
+
+        if (userData.status === 'fulfilled') {
+          setCurrentUser(userData.value);
+        } else {
+          console.log('비로그인 사용자입니다.');
+          setCurrentUser(null); // 비로그인 상태
+        }
+
+        // setReviews(reviewsData);
+        // setCurrentUser(userData);
       } catch (err) {
-        console.error('리뷰 조회 오류:', err);
+        console.error('데이터 불러오기 오류:', err);
       }
     };
 
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await authAPI.getUserProfile();
-        setCurrentUser(user);
-      } catch (err) {
-        console.error('사용자 정보 불러오기 오류:', err);
-      }
-    };
-
-    fetchReviews();
-    fetchCurrentUser();
+    fetchData();
   }, [productId]);
 
   const toggleMenu = reviewId => {
@@ -85,7 +92,7 @@ const ReviewList = ({productId}) => {
       setCommentInput('');
       setActiveCommentBox(null);
 
-      // 리뷰 목록 다시 가져오기
+      // 댓글 추가 후 리뷰 목록 새로고침
       const updatedReviews = await getReviews(productId);
       setReviews(updatedReviews);
     } catch (error) {
@@ -93,6 +100,8 @@ const ReviewList = ({productId}) => {
       alert(`댓글 추가 실패: ${error.message}`);
     }
   };
+
+  const isAdmin = currentUser?.roles?.includes('admin');
 
   return (
     <div className="review-list">
@@ -102,16 +111,19 @@ const ReviewList = ({productId}) => {
         reviews.map(review => (
           <div key={review._id} className="review-card">
             <div className="review-header">
-              <span className="review-username">
-                {review.userId?.username || '익명 사용자'}
-              </span>
-              <span className="review-date">
-                {new Date(review.createdAt).toISOString().substring(0, 10)}
-              </span>
+              <div className="review-user-info">
+                <span className="review-username">
+                  {review.userId?.username || '익명 사용자'}
+                </span>
+                <span className="review-date">
+                  &nbsp;
+                  {new Date(review.createdAt).toISOString().substring(0, 10)}
+                </span>
+              </div>
 
               <div className="review-actions" ref={dropdownRef}>
                 <button className="like-button" onClick={() => handleLike(review._id)}>
-                  <AiOutlineLike /> {review.likes || 0}
+                  <AiOutlineLike /> {review.likes?.length || 0}
                 </button>
 
                 <div className="kebab-menu">
@@ -136,7 +148,7 @@ const ReviewList = ({productId}) => {
                             </>
                           )}
 
-                          {currentUser.roles?.includes('admin') && (
+                          {isAdmin && (
                             <>
                               <button onClick={() => handleAddCommentClick(review._id)}>
                                 댓글 달기
@@ -147,10 +159,9 @@ const ReviewList = ({productId}) => {
                             </>
                           )}
 
-                          {!currentUser.roles?.includes('admin') &&
-                            currentUser._id !== review.userId._id && (
-                              <p>권한이 없습니다</p>
-                            )}
+                          {!isAdmin && currentUser._id !== review.userId._id && (
+                            <p>권한이 없습니다</p>
+                          )}
                         </>
                       ) : (
                         <p>로그인이 필요합니다</p>
@@ -190,10 +201,14 @@ const ReviewList = ({productId}) => {
             {review.comments && review.comments.length > 0 && (
               <div className="comment-list">
                 {review.comments.map((comment, index) => (
-                  <div key={comment.createdAt || index} className="comment">
+                  <div key={comment._id || index} className="comment">
                     <p>
-                      <strong>{comment.userId?.username || '익명 사용자'}</strong>:{' '}
-                      {comment.content}
+                      <strong>
+                        {comment.userId?.roles?.includes('admin')
+                          ? '관리자'
+                          : comment.userId?.username || '익명 사용자'}
+                      </strong>
+                      : {comment.content}
                     </p>
                   </div>
                 ))}

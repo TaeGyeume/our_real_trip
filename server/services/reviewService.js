@@ -15,7 +15,10 @@ exports.createReview = async reviewData => {
 
 exports.getReviewsByProduct = async productId => {
   try {
-    const reviews = await Review.find({productId}).populate('userId', 'username');
+    const reviews = await Review.find({productId})
+      .populate('userId', 'username')
+      .populate('comments.userId', 'username roles');
+
     return reviews;
   } catch (error) {
     console.error('리뷰 조회 오류:', error);
@@ -80,7 +83,6 @@ exports.deleteReview = async id => {
   }
 };
 
-// 댓글 추가 (관리자만)
 exports.addComment = async (reviewId, userId, commentContent) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(reviewId)) {
@@ -93,7 +95,9 @@ exports.addComment = async (reviewId, userId, commentContent) => {
       throw new Error('리뷰를 찾을 수 없습니다.');
     }
 
-    const user = await User.findById(userId);
+    // 사용자 정보 가져오기 (username, roles 포함)
+    const user = await User.findById(userId).select('username roles');
+
     if (!user) {
       throw new Error('사용자를 찾을 수 없습니다.');
     }
@@ -102,8 +106,9 @@ exports.addComment = async (reviewId, userId, commentContent) => {
       throw new Error('댓글 작성 권한이 없습니다.');
     }
 
+    // 댓글 추가 (user 정보 포함)
     const newComment = {
-      userId: userId,
+      userId: user._id,
       content: commentContent,
       createdAt: new Date(Date.now() + 9 * 60 * 60 * 1000)
     };
@@ -111,11 +116,12 @@ exports.addComment = async (reviewId, userId, commentContent) => {
     review.comments.push(newComment);
     await review.save();
 
-    // 댓글 작성자 정보 포함해서 다시 조회
+    // 댓글 작성자 정보까지 포함해서 populate
     review = await Review.findById(reviewId)
       .populate('userId', 'username')
-      .populate('comments.userId', 'username');
+      .populate('comments.userId', 'username roles'); // 댓글 작성자 정보
 
+    console.log(`[서버] 리뷰 ${reviewId}에 댓글 추가 완료`);
     console.log('[서버] 최종 리뷰 데이터:', JSON.stringify(review, null, 2));
 
     return review;

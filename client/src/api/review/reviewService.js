@@ -64,13 +64,23 @@ export const addComment = async (reviewId, commentContent) => {
   try {
     console.log(`[프론트] 리뷰 ${reviewId}에 댓글 추가 요청`);
 
-    const response = await authAPI.getUserProfile().then(user => {
-      return axios.post(
-        `${BASE_URL}/${reviewId}/comments`,
-        {content: commentContent},
-        requestConfig
-      );
-    });
+    // 유저 정보 가져오기
+    const userResponse = await authAPI.getUserProfile();
+    const userId = userResponse?._id;
+
+    if (!userId) {
+      throw new Error('사용자 정보가 없습니다. 로그인 상태를 확인하세요.');
+    }
+
+    const response = await axios.post(
+      `${BASE_URL}/${reviewId}/comments`,
+      {
+        content: commentContent,
+        userId: userId,
+        roles: userResponse.roles
+      },
+      requestConfig
+    );
 
     console.log('[프론트] 댓글 추가 성공:', response.data);
     return response.data;

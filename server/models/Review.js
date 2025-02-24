@@ -6,7 +6,7 @@ const commentSchema = new mongoose.Schema(
     content: {type: String, required: true}, // 댓글 내용
     createdAt: {type: Date, default: () => new Date(Date.now() + 9 * 60 * 60 * 1000)} // KST 시간
   },
-  {_id: false} // 별도의 ObjectId를 생성하지 않음
+  // {_id: false} // 별도의 ObjectId를 생성하지 않음
 );
 
 const reviewSchema = new mongoose.Schema(

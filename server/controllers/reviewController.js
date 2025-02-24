@@ -84,7 +84,7 @@ exports.addComment = async (req, res) => {
 
     res.status(200).json({
       message: '댓글이 성공적으로 추가되었습니다.',
-      review: updatedReview
+      review: updatedReview // populated된 리뷰 반환
     });
   } catch (error) {
     console.error('[서버] 댓글 추가 실패:', error.message);
