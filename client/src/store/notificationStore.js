@@ -3,7 +3,8 @@ import {create} from 'zustand';
 import {persist} from 'zustand/middleware';
 import {
   getNotifications,
-  sendNotification
+  sendNotification,
+  markAllNotificationsAsRead
 } from '../api/notification/notificationService';
 
 export const useNotificationStore = create(
@@ -39,9 +40,26 @@ export const useNotificationStore = create(
             });
           });
       },
+
+      markAllAsRead: async () => {
+        try {
+          await markAllNotificationsAsRead();
+          set(state => ({
+            notifications: state.notifications.map(noti => ({
+              ...noti,
+              read: true
+            }))
+          }));
+        } catch (error) {
+          console.error('모든 알림 읽음처리 실패:', error);
+        }
+      },
+
       sendNotificationToAll: async message => {
         await sendNotification(message);
-      }
+      },
+
+      clearNotifications: () => set({notifications: []})
     }),
     {name: 'notification-store'}
   )

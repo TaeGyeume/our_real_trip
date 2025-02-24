@@ -14,11 +14,7 @@ const initSocket = server => {
     const userId = socket.handshake.query.userId;
     if (userId) {
       socket.join(userId);
-      console.log(`User ${userId} connected: ${socket.id}`);
-
-      socket.on('disconnect', () => {
-        console.log(`User ${userId} disconnected: ${socket.id}`);
-      });
+      socket.on('disconnect', () => {});
     }
   });
 };

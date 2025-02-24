@@ -47,6 +47,7 @@ export const useAuthStore = create(
         try {
           await authAPI.logoutUser();
           clearCookies(); //  브라우저 쿠키 삭제
+          useNotificationStore.getState().clearNotifications();
           set({user: null, isAuthenticated: false});
         } catch (error) {
           console.error(

@@ -20,14 +20,25 @@ exports.sendNotification = async (req, res) => {
 exports.getUserNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
-    console.log('현재 조회하는 사용자 ID:', userId); // 이 로그 추가
 
     const notifications = await notificationService.getNotificationsByUserId(userId);
-    console.log('조회된 알림 목록:', notifications); // 기존 로그 유지
 
     res.status(200).json({notifications});
   } catch (err) {
     console.error(err);
     res.status(500).json({error: '알림 조회 중 서버 오류 발생'});
+  }
+};
+
+// 읽음 처리 컨트롤러 추가
+exports.markAllAsRead = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await notificationService.markAllNotificationsAsRead(userId);
+    res.status(200).json({success: true, updatedCount: result.modifiedCount});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({error: err.message});
   }
 };

@@ -21,3 +21,8 @@ export const sendNotification = async message => {
     throw error;
   }
 };
+
+// 알림 읽음 처리 API 호출
+export const markAllNotificationsAsRead = async () => {
+  await axios.patch('/notifications/read-all');
+};

@@ -17,15 +17,12 @@ exports.sendNotificationToAll = async message => {
   await notification.save();
 
   users.forEach(user => {
-    console.log(`알림 전송 대상자: ${user._id}`); // 추가
     io.to(user._id.toString()).emit('notification', {
       notificationId: notification._id,
       message,
       createdAt: notification.createdAt
     });
   });
-
-  console.log('알림 전송 및 emit 완료!'); // 추가
 };
 
 exports.getNotificationsByUserId = async userId => {
@@ -46,4 +43,25 @@ exports.getNotificationsByUserId = async userId => {
       readAt: recipientInfo ? recipientInfo.readAt : null
     };
   });
+};
+
+// 읽음 처리 함수 추가
+exports.markAllNotificationsAsRead = async userId => {
+  const result = await Notification.updateMany(
+    {
+      'recipients.userId': userId,
+      'recipients.read': false
+    },
+    {
+      $set: {
+        'recipients.$[elem].read': true,
+        'recipients.$[elem].readAt': new Date(Date.now() + 9 * 60 * 60 * 1000)
+      }
+    },
+    {
+      arrayFilters: [{'elem.userId': userId, 'elem.read': false}]
+    }
+  );
+
+  return result;
 };

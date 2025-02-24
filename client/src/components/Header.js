@@ -40,7 +40,7 @@ const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const {notifications} = useNotificationStore();
+  const {notifications, markAllAsRead} = useNotificationStore();
   const [isNotiOpen, setIsNotiOpen] = useState(false);
   const notiRef = useRef(null);
 
@@ -79,8 +79,12 @@ const Header = () => {
     }
   };
 
-  const toggleNotiDropdown = () => {
+  const toggleNotiDropdown = async () => {
     setIsNotiOpen(prev => !prev);
+
+    if (!isNotiOpen) {
+      await markAllAsRead(); // 아이콘 클릭으로 열릴 때 모든 알림 읽음처리
+    }
   };
 
   const handleNotiClickAway = event => {

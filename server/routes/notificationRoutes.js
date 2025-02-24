@@ -10,4 +10,7 @@ router.post('/send', notificationController.sendNotification);
 // 유저가 받은 알림 목록 조회
 router.get('/', authMiddleware, notificationController.getUserNotifications);
 
+// 읽음 처리 라우트 추가
+router.patch('/read-all', authMiddleware, notificationController.markAllAsRead);
+
 module.exports = router;
