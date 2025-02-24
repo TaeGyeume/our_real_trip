@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {authAPI} from '../auth/auth';
 
 const BASE_URL = 'http://localhost:5000/reviews';
 
@@ -29,9 +30,21 @@ export const updateReview = async (productType, reviewId, updatedData) => {
   return response.data;
 };
 
-export const deleteReview = async (productType, reviewId) => {
-  const response = await axios.delete(`${BASE_URL}/${productType}/reviews/${reviewId}`);
-  return response.data;
+export const deleteReview = async reviewId => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/delete/${reviewId}`);
+
+    console.log('[프론트] 리뷰 삭제 성공:', response.data.message);
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      '[프론트] 리뷰 삭제 실패:',
+      error.response?.data?.message || error.message
+    );
+
+    throw error.response?.data || {message: '리뷰 삭제 중 오류가 발생했습니다.'};
+  }
 };
 
 export const likeReview = async reviewId => {
@@ -39,9 +52,45 @@ export const likeReview = async reviewId => {
   return response.data;
 };
 
-export const addComment = async (reviewId, content) => {
-  const response = await axios.post(`${BASE_URL}/${reviewId}/comment`, {content});
-  return response.data;
+const requestConfig = {
+  withCredentials: true,
+  headers: {
+    'Cache-Control': 'no-store', // 캐시 방지
+    'Content-Type': 'application/json'
+  }
+};
+
+export const addComment = async (reviewId, commentContent) => {
+  try {
+    console.log(`[프론트] 리뷰 ${reviewId}에 댓글 추가 요청`);
+
+    // 유저 정보 가져오기
+    const userResponse = await authAPI.getUserProfile();
+    const userId = userResponse?._id;
+
+    if (!userId) {
+      throw new Error('사용자 정보가 없습니다. 로그인 상태를 확인하세요.');
+    }
+
+    const response = await axios.post(
+      `${BASE_URL}/${reviewId}/comments`,
+      {
+        content: commentContent,
+        userId: userId,
+        roles: userResponse.roles
+      },
+      requestConfig
+    );
+
+    console.log('[프론트] 댓글 추가 성공:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      '[프론트] 댓글 추가 실패:',
+      error.response?.data?.message || error.message
+    );
+    throw error.response?.data || {message: '댓글 추가 중 오류가 발생했습니다.'};
+  }
 };
 
 export const deleteComment = async commentId => {
