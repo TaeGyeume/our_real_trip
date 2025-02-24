@@ -3,7 +3,6 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const {getIO} = require('../config/socket');
-const mongoose = require('mongoose');
 
 exports.sendNotificationToAll = async message => {
   const io = getIO();

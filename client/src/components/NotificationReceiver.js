@@ -1,5 +1,5 @@
 // 알림 스낵바
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {useNotificationStore} from '../store/notificationStore';
 import {Snackbar, Alert} from '@mui/material';
 
@@ -7,13 +7,24 @@ const NotificationReceiver = () => {
   const {notifications} = useNotificationStore();
   const [latestNotification, setLatestNotification] = useState('');
   const [open, setOpen] = useState(false);
+  const prevCountRef = useRef(notifications.length);
 
   useEffect(() => {
-    if (notifications.length > 0) {
+    // 이전 알림 개수보다 많아졌을 때만 실행함
+    if (notifications.length > prevCountRef.current) {
       setLatestNotification(notifications[0].message);
       setOpen(true);
     }
+    prevCountRef.current = notifications.length;
   }, [notifications]);
+
+  // 테스트용 새로고침 할 때마다 실행
+  // useEffect(() => {
+  //   if (notifications.length > 0) {
+  //     setLatestNotification(notifications[0].message);
+  //     setOpen(true);
+  //   }
+  // }, [notifications]);
 
   const handleClose = () => setOpen(false);
 
