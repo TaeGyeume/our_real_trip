@@ -87,9 +87,6 @@ export const confirmBooking = async bookingId => {
 export const getBookingDetails = async bookingId => {
   try {
     const response = await axios.get(`${BASE_URL}/${bookingId}`);
-
-    console.log('API 응답 데이터:', response.data); // 디버깅용 콘솔 출력
-
     return response.data.data; // `data` 객체만 반환
   } catch (error) {
     console.error('예약 상세 조회 오류:', error.response?.data || error);

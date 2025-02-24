@@ -52,7 +52,7 @@ const AccommodationResults = () => {
       setLoading(true);
 
       try {
-        console.log('검색 요청 params:', {...updatedFilters, page: newPage});
+        // console.log('검색 요청 params:', {...updatedFilters, page: newPage});
         const {accommodations: newData, totalPages: newTotalPages} =
           await searchAccommodations(updatedFilters, newPage);
 
