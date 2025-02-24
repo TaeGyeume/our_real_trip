@@ -19,7 +19,6 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {createAccommodation} from '../../../api/accommodation/accommodationService';
 import {fetchCountries, fetchCities} from '../../../api/location/locationService';
 import {authAPI} from '../../../api/auth';
-// import './styles/AccommodationForm.css';
 import {useNavigate} from 'react-router-dom';
 
 const AccommodationForm = ({onSubmit, initialData = {}, userId}) => {

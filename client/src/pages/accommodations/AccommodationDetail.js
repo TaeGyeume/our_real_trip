@@ -39,7 +39,7 @@ const AccommodationDetail = () => {
     const loadAccommodationDetail = async () => {
       try {
         const params = {startDate, endDate, adults, minPrice, maxPrice};
-        console.log('숙소 상세 요청 params:', params);
+        // console.log('숙소 상세 요청 params:', params);
 
         const data = await fetchAccommodationDetail(accommodationId, params);
         setAccommodationData(data);
