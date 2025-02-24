@@ -75,19 +75,20 @@ exports.likeReview = async (req, res) => {
 
 // 관리자 댓글 작성
 exports.addComment = async (req, res) => {
-  const {reviewId} = req.params;
-  const {content} = req.body;
-  const user = req.user;
-
-  if (!user.isAdmin)
-    return res.status(403).json({message: '관리자만 댓글을 작성할 수 있습니다.'});
-
   try {
-    const comment = new Comment({reviewId, userId: user.id, content});
-    await comment.save();
-    res.status(201).json(comment);
-  } catch (err) {
-    res.status(500).json({message: '댓글 작성 중 오류 발생'});
+    const {reviewId} = req.params;
+    const userId = req.user.id;
+    const {content} = req.body;
+
+    const updatedReview = await reviewService.addComment(reviewId, userId, content);
+
+    res.status(200).json({
+      message: '댓글이 성공적으로 추가되었습니다.',
+      review: updatedReview // populated된 리뷰 반환
+    });
+  } catch (error) {
+    console.error('[서버] 댓글 추가 실패:', error.message);
+    res.status(400).json({message: error.message});
   }
 };
 
@@ -116,27 +117,39 @@ exports.updateReview = async (req, res) => {
 
 exports.deleteReview = async (req, res) => {
   try {
-    await ReviewService.deleteReview(req.params.id);
-    res.json({message: '리뷰가 삭제되었습니다.'});
+    const reviewId = req.params.id;
+
+    console.log('[서버] 삭제 요청된 리뷰 ID:', reviewId);
+
+    if (!reviewId || reviewId === 'productType') {
+      return res.status(400).json({message: '리뷰 ID가 제공되지 않았습니다.'});
+    }
+
+    await reviewService.deleteReview(reviewId);
+    res.status(200).json({message: '리뷰가 삭제되었습니다.'});
   } catch (error) {
-    res.status(500).json({message: error.message});
+    console.error('[서버] 리뷰 삭제 실패:', error.message);
+    res.status(500).json({message: `리뷰 삭제 실패: ${error.message}`});
   }
 };
 
 // 댓글 작성 (관리자 인증)
-exports.addComment = [
-  authorizeRoles('admin'),
-  async (req, res) => {
-    try {
-      const {reviewId} = req.params;
-      const {userId, content} = req.body;
-      const comment = await reviewService.addComment(reviewId, userId, content);
-      res.status(201).json(comment);
-    } catch (error) {
-      res.status(500).json({message: error.message});
-    }
+exports.addComment = async (req, res) => {
+  try {
+    const {reviewId} = req.params;
+    const userId = req.user.id;
+    const {content} = req.body;
+
+    const updatedReview = await reviewService.addComment(reviewId, userId, content);
+
+    res.status(200).json({
+      message: '댓글이 성공적으로 추가되었습니다.',
+      review: updatedReview
+    });
+  } catch (error) {
+    res.status(400).json({message: error.message});
   }
-];
+};
 
 // 댓글 삭제 (관리자 인증)
 exports.deleteComment = [

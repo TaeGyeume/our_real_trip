@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {fetchPopularProducts} from '../../api/views/viewsService';
 import Slider from 'react-slick';
-import ProductCard from './PopularProductsCard'; // 분리된 ProductCard 컴포넌트 사용
+import ProductCard from './PopularProductsCard';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import './styles/PopularProductsSlider.css';

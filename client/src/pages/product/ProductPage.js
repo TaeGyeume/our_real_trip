@@ -6,6 +6,10 @@ import TourTicketList from '../../components/product/tourTicket/TourTicketList';
 import AccommodationList from '../../components/product/accommodations/AccommodationList';
 import TravelItemListPage from '../../components/product/travelItems/TravelItemList';
 
+import {Button} from '@mui/material';
+import SendNotificationModal from '../../components/product/notification/SendNotificationModal';
+import {useAuthStore} from '../../store/authStore';
+
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faSquarePlus} from '@fortawesome/free-solid-svg-icons';
 
@@ -13,10 +17,13 @@ const ProductPage = () => {
   const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const accommodationsRef = useRef(null);
   const tourTicketRef = useRef(null);
   const travelItemRef = useRef(null);
+
+  const {user} = useAuthStore();
 
   const scrollToSection = section => {
     const sectionRefs = {
@@ -45,6 +52,18 @@ const ProductPage = () => {
       <Sidebar activeSection={activeSection} onSelectCategory={scrollToSection} />
 
       <div style={{padding: '20px', flex: 1}}>
+        {/* 알림 전송 버튼 (관리자만 보임) */}
+        {user?.roles.includes('admin') && (
+          <div style={{textAlign: 'right', marginBottom: '20px', marginRight: '20px'}}>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => setModalOpen(true)}>
+              전체 알림 보내기
+            </Button>
+          </div>
+        )}
+
         <div id="accommodations" ref={accommodationsRef} style={sectionStyle}>
           <div style={headerContainerStyle}>
             <FontAwesomeIcon
@@ -78,6 +97,8 @@ const ProductPage = () => {
           <TravelItemListPage limit={3} />
         </div>
       </div>
+      {/* 알림 전송 모달 추가 */}
+      <SendNotificationModal open={modalOpen} handleClose={() => setModalOpen(false)} />
     </div>
   );
 };
