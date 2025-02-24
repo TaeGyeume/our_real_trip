@@ -34,8 +34,8 @@ cron.schedule('0 0 * * *', async () => {
 //   console.log('예약 3일 전 알림 테스트 실행!');
 //   try {
 //     await notificationService.sendBookingReminders();
-//     console.log('✅ 알림 전송 완료');
+//     console.log('알림 전송 완료');
 //   } catch (error) {
-//     console.error('❌ 알림 전송 오류:', error);
+//     console.error('알림 전송 오류:', error);
 //   }
 // });
