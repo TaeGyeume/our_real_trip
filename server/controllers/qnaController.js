@@ -12,7 +12,7 @@ const createQnaBoard = async (req, res) => {
 
     // JSON 요청일 경우 (파일 없이 게시글 등록)
     if (contentType.includes('application/json')) {
-      // console.log(' 📝 JSON 요청 처리');
+      // console.log('  JSON 요청 처리');
 
       const {category, title, content} = req.body;
       const userId = req.user?.id;
@@ -95,11 +95,11 @@ const createQnaBoard = async (req, res) => {
 
     // 폼 필드 값 처리
     bb.on('field', (name, value) => {
-      // console.log(`📌 폼 필드 수신: ${name} = ${value}`);
+      // console.log(` 폼 필드 수신: ${name} = ${value}`);
       if (value && value.trim() !== '') {
         formData[name] = value.trim();
       } else {
-        // console.warn(`⚠️ 필드 데이터가 비어 있음: ${name}`);
+        // console.warn(` 필드 데이터가 비어 있음: ${name}`);
       }
     });
 
@@ -327,7 +327,7 @@ const updateQnaBoard = async (req, res) => {
           formData[name] = JSON.parse(value);
           // console.log(` 변환된 ${name}:`, formData[name]);
         } catch (error) {
-          console.warn(`⚠️ ${name} 데이터 파싱 실패:`, value);
+          console.warn(` ${name} 데이터 파싱 실패:`, value);
           formData[name] = []; // 변환 실패 시 빈 배열 사용
         }
       } else {
