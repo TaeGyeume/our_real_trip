@@ -1,5 +1,10 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {getReviews, likeReview} from '../../api/review/reviewService';
+import {
+  getReviews,
+  likeReview,
+  deleteReview,
+  addComment
+} from '../../api/review/reviewService';
 import {AiOutlineLike, AiOutlineMore} from 'react-icons/ai';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
@@ -7,13 +12,17 @@ import authAPI from '../../api/auth/auth';
 const ReviewList = ({productId}) => {
   const [reviews, setReviews] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(null); // 하나의 메뉴만 열리도록 변경
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [commentInput, setCommentInput] = useState('');
+  const [activeCommentBox, setActiveCommentBox] = useState(null);
+
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
         const data = await getReviews(productId);
+        // console.log('Fetched review data:', data);
         setReviews(data);
       } catch (err) {
         console.error('리뷰 조회 오류:', err);
@@ -33,20 +42,6 @@ const ReviewList = ({productId}) => {
     fetchCurrentUser();
   }, [productId]);
 
-  // 외부 클릭 감지하여 드롭다운 닫기
-  useEffect(() => {
-    const handleClickOutside = event => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setMenuOpen(null); // 드롭다운 닫기
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   const toggleMenu = reviewId => {
     setMenuOpen(prev => (prev === reviewId ? null : reviewId));
   };
@@ -62,16 +57,41 @@ const ReviewList = ({productId}) => {
     }
   };
 
-  const handleEdit = reviewId => {
-    alert(`리뷰 ${reviewId} 수정하기`);
+  const handleDelete = async reviewId => {
+    try {
+      await deleteReview(reviewId);
+      alert('리뷰가 성공적으로 삭제되었습니다.');
+      setReviews(prevReviews => prevReviews.filter(review => review._id !== reviewId));
+    } catch (err) {
+      console.error('[프론트] 리뷰 삭제 에러:', err.message);
+      alert(`리뷰 삭제 실패: ${err.message}`);
+    }
   };
 
-  const handleDelete = reviewId => {
-    alert(`리뷰 ${reviewId} 삭제하기`);
+  const handleAddCommentClick = reviewId => {
+    setActiveCommentBox(reviewId);
+    setMenuOpen(null);
   };
 
-  const handleAddComment = reviewId => {
-    alert(`리뷰 ${reviewId}에 댓글 추가`);
+  const handleAddComment = async reviewId => {
+    if (!commentInput.trim()) {
+      alert('댓글을 입력해주세요.');
+      return;
+    }
+
+    try {
+      await addComment(reviewId, commentInput);
+      alert('댓글이 성공적으로 추가되었습니다.');
+      setCommentInput('');
+      setActiveCommentBox(null);
+
+      // 리뷰 목록 다시 가져오기
+      const updatedReviews = await getReviews(productId);
+      setReviews(updatedReviews);
+    } catch (error) {
+      console.error('[프론트] 댓글 추가 실패:', error.message);
+      alert(`댓글 추가 실패: ${error.message}`);
+    }
   };
 
   return (
@@ -83,7 +103,7 @@ const ReviewList = ({productId}) => {
           <div key={review._id} className="review-card">
             <div className="review-header">
               <span className="review-username">
-                {review.userId.username || '익명 사용자'}
+                {review.userId?.username || '익명 사용자'}
               </span>
               <span className="review-date">
                 {new Date(review.createdAt).toISOString().substring(0, 10)}
@@ -106,7 +126,8 @@ const ReviewList = ({productId}) => {
                         <>
                           {currentUser._id === review.userId._id && (
                             <>
-                              <button onClick={() => handleEdit(review._id)}>
+                              <button
+                                onClick={() => alert(`리뷰 ${review._id} 수정하기`)}>
                                 수정하기
                               </button>
                               <button onClick={() => handleDelete(review._id)}>
@@ -117,7 +138,7 @@ const ReviewList = ({productId}) => {
 
                           {currentUser.roles?.includes('admin') && (
                             <>
-                              <button onClick={() => handleAddComment(review._id)}>
+                              <button onClick={() => handleAddCommentClick(review._id)}>
                                 댓글 달기
                               </button>
                               <button onClick={() => handleDelete(review._id)}>
@@ -154,6 +175,30 @@ const ReviewList = ({productId}) => {
             )}
 
             <p className="review-text">{review.content}</p>
+
+            {activeCommentBox === review._id && (
+              <div className="comment-box">
+                <textarea
+                  placeholder="댓글을 입력하세요..."
+                  value={commentInput}
+                  onChange={e => setCommentInput(e.target.value)}
+                />
+                <button onClick={() => handleAddComment(review._id)}>댓글 등록</button>
+              </div>
+            )}
+
+            {review.comments && review.comments.length > 0 && (
+              <div className="comment-list">
+                {review.comments.map((comment, index) => (
+                  <div key={comment.createdAt || index} className="comment">
+                    <p>
+                      <strong>{comment.userId?.username || '익명 사용자'}</strong>:{' '}
+                      {comment.content}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))
       )}

@@ -1,7 +1,6 @@
 const Review = require('../models/Review');
-const Booking = require('../models/Booking');
-const fs = require('fs');
-const path = require('path');
+const User = require('../models/User');
+const mongoose = require('mongoose');
 
 exports.createReview = async reviewData => {
   try {
@@ -58,17 +57,72 @@ exports.updateReview = async (id, data, files) => {
 };
 
 exports.deleteReview = async id => {
-  console.log('[서버] 리뷰 삭제 서비스 호출 - id:', id);
-  await Review.findByIdAndDelete(id);
-  await Comment.deleteMany({reviewId: id});
-  console.log('[서버] 리뷰 및 댓글 삭제 성공');
+  try {
+    console.log('[서버] 리뷰 삭제 서비스 호출 - id:', id);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error('유효하지 않은 ObjectId 형식입니다.');
+    }
+
+    // 리뷰 삭제
+    const review = await Review.findByIdAndDelete(id);
+
+    if (!review) {
+      throw new Error('리뷰를 찾을 수 없습니다.');
+    }
+
+    // 관련 댓글 삭제
+    // await Comment.deleteMany({reviewId: id});
+    console.log('[서버] 리뷰 및 댓글 삭제 성공');
+  } catch (error) {
+    console.error('[서버] 리뷰 삭제 실패:', error.message);
+    throw error;
+  }
 };
 
 // 댓글 추가 (관리자만)
-exports.addComment = async (reviewId, userId, content) => {
-  const comment = new Comment({reviewId, userId, content});
-  await comment.save();
-  return comment;
+exports.addComment = async (reviewId, userId, commentContent) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+      throw new Error('유효하지 않은 리뷰 ID입니다.');
+    }
+
+    let review = await Review.findById(reviewId);
+
+    if (!review) {
+      throw new Error('리뷰를 찾을 수 없습니다.');
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('사용자를 찾을 수 없습니다.');
+    }
+
+    if (!user.roles || !user.roles.includes('admin')) {
+      throw new Error('댓글 작성 권한이 없습니다.');
+    }
+
+    const newComment = {
+      userId: userId,
+      content: commentContent,
+      createdAt: new Date(Date.now() + 9 * 60 * 60 * 1000)
+    };
+
+    review.comments.push(newComment);
+    await review.save();
+
+    // 댓글 작성자 정보 포함해서 다시 조회
+    review = await Review.findById(reviewId)
+      .populate('userId', 'username')
+      .populate('comments.userId', 'username');
+
+    console.log('[서버] 최종 리뷰 데이터:', JSON.stringify(review, null, 2));
+
+    return review;
+  } catch (error) {
+    console.error('[서버] 댓글 추가 실패:', error.message);
+    throw error;
+  }
 };
 
 // 댓글 삭제
