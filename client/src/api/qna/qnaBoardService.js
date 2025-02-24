@@ -3,60 +3,69 @@ import axios from 'axios';
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api/qna';
 
-//  QnA 게시글 생성 (Busboy 사용)
-// ✅ QnA 게시글 생성 (Busboy 사용)
-export const createQnaBoard = async data => {
+// QnA 게시글 생성 (Busboy 사용)
+export const createQnaBoard = async (data, isMultipart) => {
   try {
-    const hasFiles =
-      (data.images && data.images.length > 0) ||
-      (data.attachments && data.attachments.length > 0);
     let requestData;
 
-    if (hasFiles) {
-      requestData = new FormData();
-
-      // 🔹 텍스트 데이터 추가
-      requestData.append('category', data.category?.trim() || '');
-      requestData.append('title', data.title?.trim() || '');
-      requestData.append('content', data.content?.trim() || '');
-
-      // 🔹 이미지 파일 추가
-      if (data.images) {
-        Array.from(data.images).forEach(file => {
-          if (file instanceof File) requestData.append('images', file);
-        });
-      }
-
-      // 🔹 첨부파일 추가
-      if (data.attachments) {
-        Array.from(data.attachments).forEach(file => {
-          if (file instanceof File) requestData.append('attachments', file);
-        });
-      }
-
-      console.log('✅ 최종 전송할 FormData 내용:');
-      for (let [key, value] of requestData.entries()) {
-        console.log(`🔹 ${key}:`, value);
-      }
-    } else {
-      // 🔹 JSON 전송 방식 (파일이 없을 때)
+    //  파일이 없으면 JSON 요청 (application/json)
+    if (
+      (!data.images || data.images.length === 0) &&
+      (!data.attachments || data.attachments.length === 0)
+    ) {
       requestData = {
         category: data.category?.trim() || '',
         title: data.title?.trim() || '',
-        content: data.content?.trim() || '',
-        images: [],
-        attachments: []
+        content: data.content?.trim() || ''
       };
+    } else {
+      //  파일이 있을 경우 multipart/form-data 사용
+      requestData = new FormData();
+      if (data.category) requestData.append('category', data.category.trim());
+      if (data.title) requestData.append('title', data.title.trim());
+      if (data.content) requestData.append('content', data.content.trim());
+
+      if (data.images && data.images.length > 0) {
+        data.images.forEach(file => {
+          if (file instanceof File) {
+            requestData.append('images', file);
+          }
+        });
+      }
+
+      if (data.attachments && data.attachments.length > 0) {
+        data.attachments.forEach(file => {
+          if (file instanceof File) {
+            requestData.append('attachments', file);
+          }
+        });
+      }
     }
 
-    // 🚨 **Content-Type을 설정하지 않음 (Axios가 자동 설정)**
-    const response = await axios.post(`${API_BASE_URL}`, requestData, {
-      withCredentials: true // ✅ 쿠키 포함 요청
+    //  디버깅: requestData 출력
+    // console.log(' 최종 전송할 데이터:', requestData);
+
+    // if (requestData instanceof FormData) {
+    //   for (let [key, value] of requestData.entries()) {
+    //     console.log(` ${key}:`, value);
+    //   }
+    // } else {
+    //   console.log(' JSON 데이터:', requestData);
+    // }
+
+    const headers = isMultipart
+      ? {} //  FormData일 경우 Content-Type 자동 설정
+      : {'Content-Type': 'application/json'}; // JSON 요청 시 명시적 지정
+
+    //  요청 보내기 (JSON 또는 FormData 자동 선택)
+    const response = await axios.post(API_BASE_URL, data, {
+      headers,
+      withCredentials: true
     });
 
     return response.data;
   } catch (error) {
-    console.error('⛔ QnA 게시글 생성 오류:', error.response?.data || error.message);
+    console.error(' QnA 게시글 생성 오류:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -142,34 +151,21 @@ export const deleteQnaComment = async commentId => {
     throw error;
   }
 };
-
-//  QnA 게시글 수정 (파일이 있을 경우 `FormData`, 없을 경우 `JSON`)
-export const updateQnaBoard = async (qnaBoardId, data, isMultipart = false) => {
+export const updateQnaBoard = async (qnaBoardId, data, isMultipart) => {
   try {
     let requestData = data;
-    let headers = {};
+    let headers = isMultipart ? {} : {'Content-Type': 'application/json'};
 
-    if (isMultipart) {
-      const formData = new FormData();
+    //  전송 데이터 디버깅
+    // console.log(' 수정 요청 데이터:', requestData);
 
-      formData.append('category', data.category);
-      formData.append('title', data.title);
-      formData.append('content', data.content);
-
-      if (data.images && data.images.length > 0) {
-        data.images.forEach(file => formData.append('images', file));
-      }
-      if (data.attachments && data.attachments.length > 0) {
-        data.attachments.forEach(file => formData.append('attachments', file));
-      }
-
-      requestData = formData;
-      headers = {'Content-Type': 'multipart/form-data'}; // Axios가 자동 처리
-    } else {
-      headers = {'Content-Type': 'application/json'};
-    }
-
-    console.log(' 수정 요청 데이터:', requestData);
+    // if (isMultipart) {
+    //   for (let [key, value] of requestData.entries()) {
+    //     console.log(` ${key}:`, value);
+    //   }
+    // } else {
+    //   console.log(' JSON 데이터:', requestData);
+    //
 
     const response = await axios.put(`${API_BASE_URL}/${qnaBoardId}`, requestData, {
       headers,

@@ -10,18 +10,18 @@ const generateUniqueUserId = () =>
   `user_${new Date().getTime()}_${Math.floor(Math.random() * 1000)}`;
 const secretKey = process.env.JWT_SECRET || 'your_secret_key';
 
-// ✅ JWT 발급 함수
+//  JWT 발급 함수
 const generateToken = user => {
   console.log(
-    '✅ generateToken 함수안 에 1라인 콘솔로그 JWT 발급 전 user.roles:',
+    ' generateToken 함수안 에 1라인 콘솔로그 JWT 발급 전 user.roles:',
     user.roles
-  ); // ✅ roles 값 확인
+  ); //  roles 값 확인
   return jwt.sign({id: user._id, roles: user.roles || ['user']}, secretKey, {
     expiresIn: '1h'
   });
 };
 
-// ✅ Passport 전략에 JWT 발급 로직 추가
+//  Passport 전략에 JWT 발급 로직 추가
 const socialLoginCallback = async (
   accessToken,
   refreshToken,
@@ -39,29 +39,29 @@ const socialLoginCallback = async (
         socialId: profile.id,
         email: profile.emails?.[0]?.value || '',
         username: profile.displayName || `${provider} User`,
-        roles: ['user'] // ✅ 기본적으로 일반 사용자로 설정 (배열로 변경)
+        roles: ['user'] //  기본적으로 일반 사용자로 설정 (배열로 변경)
       });
       await user.save();
     }
 
     user = user.toObject();
 
-    // ✅ roles 필드가 없을 경우 기본값 설정
+    //  roles 필드가 없을 경우 기본값 설정
     if (!user.roles) {
       user.roles = ['user']; // 기본적으로 user 역할 추가
     }
 
-    delete user.password; // ✅ 보안상 비밀번호 필드 삭제
+    delete user.password; //  보안상 비밀번호 필드 삭제
 
     const token = generateToken(user);
     const refreshToken = generateRefreshToken(user);
-    return done(null, {user, token, refreshToken}); // ✅ JWT & Refresh Token 반환
+    return done(null, {user, token, refreshToken}); //  JWT & Refresh Token 반환
   } catch (err) {
     return done(err, null);
   }
 };
 
-// ✅ 소셜 로그인 전략 등록
+//  소셜 로그인 전략 등록
 passport.use(
   new GoogleStrategy(
     {
@@ -117,7 +117,7 @@ passport.deserializeUser(async (id, done) => {
   done(null, user);
 });
 
-// ✅ Google 로그인 설정
+//  Google 로그인 설정
 passport.use(
   new GoogleStrategy(
     {

@@ -56,13 +56,12 @@ const QnaBoardWrite = () => {
     setFormData({...formData, [name]: fileArray});
   };
 
-  //  게시글 제출 핸들러
   const handleSubmit = async e => {
     e.preventDefault();
 
-    console.log('🚀 업로드 데이터:', formData);
+    // console.log(' 업로드 데이터:', formData);
 
-    if (!formData.category || !formData.title || !formData.content) {
+    if (!formData.category.trim() || !formData.title.trim() || !formData.content.trim()) {
       alert('카테고리, 제목, 내용을 입력하세요.');
       return;
     }
@@ -70,37 +69,43 @@ const QnaBoardWrite = () => {
     setLoading(true);
 
     try {
-      const form = new FormData();
-      form.append('category', formData.category);
-      form.append('title', formData.title);
-      form.append('content', formData.content);
+      let requestData = new FormData();
+      let isMultipart = false;
 
-      // 🔹 이미지 추가
-      formData.images.forEach(file => {
-        if (file instanceof File) {
-          form.append('images', file);
-        }
-      });
+      //  문자열 데이터 추가 (FormData 사용)
+      requestData.append('category', formData.category.trim());
+      requestData.append('title', formData.title.trim());
+      requestData.append('content', formData.content.trim());
 
-      // 🔹 첨부파일 추가
-      formData.attachments.forEach(file => {
-        if (file instanceof File) {
-          form.append('attachments', file);
-        }
-      });
+      //  파일이 존재하는지 확인 후 추가
+      if (formData.images.length > 0 || formData.attachments.length > 0) {
+        isMultipart = true;
+        formData.images.forEach(file => {
+          if (file instanceof File) {
+            requestData.append('images', file);
+          }
+        });
 
-      console.log('✅ 전송할 FormData 내용:');
-      for (let [key, value] of form.entries()) {
-        console.log(`🔹 ${key}:`, value);
+        formData.attachments.forEach(file => {
+          if (file instanceof File) {
+            requestData.append('attachments', file);
+          }
+        });
       }
 
-      // ✅ Axios 요청 실행 (headers를 지정하지 않음)
-      await createQnaBoard(form);
+      //  디버깅: FormData 확인
+      // console.log(' 최종 전송할 FormData 내용:');
+      // for (let [key, value] of requestData.entries()) {
+      //   console.log(` ${key}:`, value);
+      // }
+
+      //  게시글 생성 요청
+      await createQnaBoard(requestData, isMultipart);
 
       alert('게시글이 성공적으로 등록되었습니다!');
       navigate('/qna');
     } catch (error) {
-      console.error('❌ QnA 게시글 작성 오류:', error);
+      console.error(' QnA 게시글 작성 오류:', error);
       alert('게시글 작성에 실패했습니다.');
     } finally {
       setLoading(false);

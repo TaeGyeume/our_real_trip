@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {getTourTickets} from '../../api/tourTicket/tourTicketService';
-import {getUserFavorites} from '../../api/user/favoriteService'; // 🔹 즐겨찾기 목록 가져오기 추가
+import {getUserFavorites} from '../../api/user/favoriteService'; //  즐겨찾기 목록 가져오기 추가
 import {useLocation, useNavigate} from 'react-router-dom';
 import './styles/TourTicketList.css';
 import TourTicketFilter from '../tourTicket/TourTicketFilter';
@@ -11,7 +11,7 @@ const TourTicketList = () => {
   const [priceRange, setPriceRange] = useState([0, 10000000]);
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
-  const [favorites, setFavorites] = useState([]); // 🔹 즐겨찾기 목록 상태 추가
+  const [favorites, setFavorites] = useState([]); //  즐겨찾기 목록 상태 추가
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,7 +29,7 @@ const TourTicketList = () => {
     const fetchFavorites = async () => {
       try {
         const response = await getUserFavorites();
-        setFavorites(response.favorites); // 🔹 사용자 즐겨찾기 목록 저장
+        setFavorites(response.favorites); //  사용자 즐겨찾기 목록 저장
       } catch (error) {
         // console.error('즐겨찾기 목록 가져오기 오류:', error);
       }
@@ -39,12 +39,12 @@ const TourTicketList = () => {
     fetchFavorites();
   }, []);
 
-  // 🔹 특정 아이템이 즐겨찾기 목록에 있는지 확인하는 함수
+  //  특정 아이템이 즐겨찾기 목록에 있는지 확인하는 함수
   const isFavoriteItem = itemId => {
     return favorites.some(fav => fav.itemId === itemId);
   };
 
-  // 🔹 필터링된 상품 (즐겨찾기 정보 반영)
+  //  필터링된 상품 (즐겨찾기 정보 반영)
   const filteredTickets = tickets.map(ticket => ({
     ...ticket,
     isFavorite: isFavoriteItem(ticket._id) //  즐겨찾기 상태 반영

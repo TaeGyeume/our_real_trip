@@ -123,14 +123,14 @@ const Profile = () => {
     }
   };
 
-  // ✅ 모달 열기
+  //  모달 열기
   const openModal = field => {
     if (field === 'membershipLevel' || field === 'mileage') return; // 수정 불가 필드
     setEditingField(field);
     setShowModal(true);
   };
 
-  // ✅ 마일리지 관리 페이지로 이동
+  //  마일리지 관리 페이지로 이동
   const goToMileagePage = () => {
     navigate('/mileage'); // `/mileage` 페이지로 이동
   };
@@ -172,7 +172,7 @@ const Profile = () => {
         ))}
       </div>
 
-      {/* ✅ 모달 창 */}
+      {/*  모달 창 */}
       {showModal && (
         <div
           className="modal fade show d-block"
