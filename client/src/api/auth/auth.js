@@ -40,7 +40,6 @@ const handleRequest = async (requestPromise, errorMessage) => {
 const clearCookiesManually = () => {
   document.cookie = 'accessToken=; Max-Age=0; path=/;';
   document.cookie = 'refreshToken=; Max-Age=0; path=/;';
-  console.log('브라우저 쿠키 수동 삭제 완료');
 };
 
 export const authAPI = {
@@ -50,11 +49,15 @@ export const authAPI = {
       '회원가입 요청 중 오류 발생'
     ),
 
-  loginUser: loginData =>
-    handleRequest(
-      api.post('/auth/login', loginData, requestConfig),
-      '로그인 요청 중 오류 발생'
-    ),
+  loginUser: async userData => {
+    try {
+      const response = await api.post('/auth/login', userData, {withCredentials: true});
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
 
   logoutUser: async () => {
     await handleRequest(
@@ -118,7 +121,7 @@ export const authAPI = {
         api.post('/auth/refresh-token', {}, requestConfig),
         '리프레시 토큰 갱신 중 오류 발생'
       );
-      console.log('✅ 새 액세스 토큰 수신:', response);
+      console.log(' 새 액세스 토큰 수신:', response);
       return response;
     } catch (error) {
       console.error('리프레시 토큰 갱신 실패');

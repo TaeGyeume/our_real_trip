@@ -6,6 +6,7 @@ import {
   fetchUserCoupons
 } from '../../api/coupon/couponService';
 import {authAPI} from '../../api/auth';
+import {useAuthStore} from '../../store/authStore';
 import {
   Drawer,
   Box,
@@ -20,6 +21,7 @@ import {
 import {FaChevronDown, FaTicketAlt} from 'react-icons/fa';
 
 const CouponSidebar = () => {
+  const {isAuthenticated, checkAuth} = useAuthStore();
   const [user, setUser] = useState(null);
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,12 @@ const CouponSidebar = () => {
 
   useEffect(() => {
     const getUserInfo = async () => {
+      if (!isAuthenticated) {
+        setUser(null);
+        return;
+      }
       try {
+        await checkAuth();
         const response = await authAPI.getUserProfile();
         setUser(response);
 
@@ -43,7 +50,7 @@ const CouponSidebar = () => {
     };
 
     getUserInfo();
-  }, []);
+  }, [isAuthenticated, checkAuth]);
 
   useEffect(() => {
     if (user && user.membershipLevel) {

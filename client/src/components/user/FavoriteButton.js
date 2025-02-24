@@ -22,7 +22,7 @@ const FavoriteButton = ({itemId, itemType, initialFavoriteStatus}) => {
       setIsFavorite(prev => !prev); // 낙관적 UI 업데이트
 
       const response = await toggleFavorite(itemId, itemType);
-      console.log(' Favorite toggled:', response);
+      // console.log(' Favorite toggled:', response);
 
       if (!(response.status === 'success' || response.message?.includes('success'))) {
         setIsFavorite(prev => !prev); // 서버 응답 실패 시 롤백

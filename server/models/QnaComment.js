@@ -28,7 +28,7 @@ const QnaCommentSchema = new mongoose.Schema(
   {timestamps: true}
 );
 
-// ✅ 페이징을 위한 인덱스 설정
+//  페이징을 위한 인덱스 설정
 QnaCommentSchema.index({qnaBoard: 1, createdAt: -1});
 
 module.exports = mongoose.model('qnaComment', QnaCommentSchema);

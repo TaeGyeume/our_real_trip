@@ -18,8 +18,8 @@ const transporter = nodemailer.createTransport({
  */
 const sendVerificationEmail = async (email, verificationCode) => {
   try {
-    console.log('📩 [이메일 전송] 이메일:', email); // ✅ 이메일 주소 확인
-    console.log('🔢 [이메일 전송] 인증 코드:', verificationCode); //  인증 코드 확인
+    console.log(' [이메일 전송] 이메일:', email); //  이메일 주소 확인
+    console.log(' [이메일 전송] 인증 코드:', verificationCode); //  인증 코드 확인
 
     const mailOptions = {
       from: `"Our Real Trip Support" <${process.env.EMAIL_USER}>`,
@@ -40,13 +40,13 @@ const sendVerificationEmail = async (email, verificationCode) => {
       `
     };
 
-    console.log('📤 [이메일 전송] 메일 옵션 생성 완료, 전송 시작...'); //  메일 옵션 확인
+    console.log(' [이메일 전송] 메일 옵션 생성 완료, 전송 시작...'); //  메일 옵션 확인
 
     // ✅ 이메일 전송
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ [이메일 전송 성공] 전송 응답: ${info.response}`);
+    console.log(` [이메일 전송 성공] 전송 응답: ${info.response}`);
   } catch (error) {
-    console.error(`❌ [이메일 전송 실패] 오류 발생: ${error.message}`);
+    console.error(` [이메일 전송 실패] 오류 발생: ${error.message}`);
     throw new Error('이메일을 전송하는 중 오류가 발생했습니다.');
   }
 };
