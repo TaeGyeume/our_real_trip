@@ -13,17 +13,17 @@ export const connectSocket = userId => {
     reconnectionDelay: 1000 // 재연결 대기 시간
   });
 
-  socket.on('connect', () => {
-    console.log('소켓 연결 성공:', socket.id);
-  });
+  // socket.on('connect', () => {
+  //   console.log('소켓 연결 성공:', socket.id);
+  // });
 
-  socket.on('connect_error', err => {
-    console.error('소켓 연결 실패:', err.message);
-  });
+  // socket.on('connect_error', err => {
+  //   console.error('소켓 연결 실패:', err.message);
+  // });
 
-  socket.on('disconnect', () => {
-    console.log('소켓 연결 종료됨.');
-  });
+  // socket.on('disconnect', () => {
+  //   console.log('소켓 연결 종료됨.');
+  // });
 
   return socket;
 };
