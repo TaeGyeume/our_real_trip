@@ -1,6 +1,8 @@
 import {create} from 'zustand';
 import {persist} from 'zustand/middleware';
 import {authAPI} from '../api/auth';
+import {useNotificationStore} from './notificationStore';
+import {connectSocket} from '../api/socket/socket';
 
 export const useAuthStore = create(
   persist(
@@ -100,3 +102,19 @@ const clearCookies = () => {
     document.cookie = `${name}=; Max-Age=0; path=/; domain=${window.location.hostname}`;
   }
 };
+
+export const useSocketStore = create(set => ({
+  socket: null,
+  connect: userId => {
+    const socket = connectSocket(userId);
+    set({socket});
+
+    // 소켓 연결 후 알림 리스너 추가
+    useNotificationStore.getState().listenSocketNotifications(socket);
+  },
+  disconnect: () =>
+    set(state => {
+      state.socket?.disconnect();
+      return {socket: null};
+    })
+}));
