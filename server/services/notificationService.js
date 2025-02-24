@@ -28,7 +28,7 @@ exports.sendNotificationToAll = async message => {
 
 exports.getNotificationsByUserId = async userId => {
   const notifications = await Notification.find({
-    'recipients.userId': new mongoose.Types.ObjectId(userId)
+    'recipients.userId': userId
   }).sort({createdAt: -1});
 
   return notifications.map(noti => {
@@ -41,7 +41,9 @@ exports.getNotificationsByUserId = async userId => {
       message: noti.message,
       createdAt: noti.createdAt,
       read: recipientInfo ? recipientInfo.read : false,
-      readAt: recipientInfo ? recipientInfo.readAt : null
+      readAt: recipientInfo ? recipientInfo.readAt : null,
+      bookingId: noti.relatedBooking || null,
+      bookingType: noti.bookingType || null
     };
   });
 };
@@ -71,26 +73,26 @@ exports.markAllNotificationsAsRead = async userId => {
 exports.sendBookingReminders = async () => {
   const io = getIO();
 
-  // 현재 날짜로부터 3일 후 날짜 구하기 (한국시간 기준)
   const threeDaysLater = new Date();
   threeDaysLater.setDate(threeDaysLater.getDate() + 3);
 
-  // 날짜만 추출해서 비교를 쉽게하기 위한 작업 (시간 제거)
   const startOfDay = new Date(threeDaysLater.setHours(0, 0, 0, 0));
   const endOfDay = new Date(threeDaysLater.setHours(23, 59, 59, 999));
 
-  // 예약 시작 날짜가 3일 후인 예약 찾기
   const bookings = await Booking.find({
     startDates: {$elemMatch: {$gte: startOfDay, $lte: endOfDay}},
     paymentStatus: 'CONFIRMED'
   });
 
   for (const booking of bookings) {
-    const message = '예약하신 일정이 3일 남았습니다. 일정을 확인해 주세요.';
+    const bookingType = booking.types[0]; // 예를 들어 첫번째 타입 사용
+    const message = `예약하신 ${translateBookingType(bookingType)} 일정이 3일 남았습니다. 일정을 확인해 주세요.`;
 
     const notification = new Notification({
       message,
-      recipients: [{userId: booking.userId}]
+      recipients: [{userId: booking.userId}],
+      relatedBooking: booking._id,
+      bookingType
     });
 
     await notification.save();
@@ -98,7 +100,24 @@ exports.sendBookingReminders = async () => {
     io.to(booking.userId.toString()).emit('notification', {
       notificationId: notification._id,
       message,
+      bookingType,
+      bookingId: booking._id,
       createdAt: notification.createdAt
     });
+  }
+};
+
+const translateBookingType = type => {
+  switch (type) {
+    case 'flight':
+      return '항공편';
+    case 'accommodation':
+      return '숙박';
+    case 'tourTicket':
+      return '투어/티켓';
+    case 'travelItem':
+      return '여행용품';
+    default:
+      return '예약';
   }
 };

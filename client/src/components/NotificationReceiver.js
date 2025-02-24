@@ -1,3 +1,4 @@
+// 알림 스낵바
 import React, {useState, useEffect} from 'react';
 import {useNotificationStore} from '../store/notificationStore';
 import {Snackbar, Alert} from '@mui/material';
