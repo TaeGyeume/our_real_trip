@@ -14,7 +14,7 @@ const normalizeItemType = itemType => itemType.toLowerCase();
 export const toggleFavorite = async (itemId, itemType) => {
   try {
     const formattedItemType = normalizeItemType(itemType);
-    console.log(` Sending request - itemId: ${itemId}, itemType: ${formattedItemType}`);
+    // console.log(` Sending request - itemId: ${itemId}, itemType: ${formattedItemType}`);
 
     const response = await axios.post(
       `${API_BASE_URL}/toggle`,
@@ -22,7 +22,7 @@ export const toggleFavorite = async (itemId, itemType) => {
       {withCredentials: true}
     );
 
-    console.log(` Favorite toggled successfully: ${response.data.message}`);
+    // console.log(` Favorite toggled successfully: ${response.data.message}`);
     return response.data;
   } catch (error) {
     console.error(' Error toggling favorite:', error.response?.data || error.message);
