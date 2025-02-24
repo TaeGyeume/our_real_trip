@@ -13,4 +13,7 @@ router.get('/', authMiddleware, notificationController.getUserNotifications);
 // 읽음 처리 라우트 추가
 router.patch('/read-all', authMiddleware, notificationController.markAllAsRead);
 
+// 추가된 라우트 (예약 3일전 알림 수동 호출용)
+router.post('/booking/reminder', notificationController.sendBookingReminderNotifications);
+
 module.exports = router;

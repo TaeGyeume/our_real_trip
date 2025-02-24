@@ -42,3 +42,18 @@ exports.markAllAsRead = async (req, res) => {
     res.status(500).json({error: err.message});
   }
 };
+
+exports.sendBookingReminderNotifications = async (req, res) => {
+  try {
+    const notifications = await notificationService.sendBookingReminders();
+
+    res.status(200).json({
+      success: true,
+      count: notifications.length,
+      notifications
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({error: '예약 알림 전송 중 오류 발생'});
+  }
+};
