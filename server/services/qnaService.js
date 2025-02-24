@@ -216,7 +216,7 @@ const updateQnaBoard = async (
     // 2) 삭제할 파일들 처리
     const deleteFiles = (files, type) => {
       if (!Array.isArray(files)) {
-        console.warn(`⚠️ [WARN] ${type}가 배열이 아닙니다:`, files);
+        console.warn(` [WARN] ${type}가 배열이 아닙니다:`, files);
         return;
       }
       files.forEach(filePath => {

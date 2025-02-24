@@ -96,7 +96,7 @@ const QnaBoardWrite = () => {
       //  디버깅: FormData 확인
       // console.log(' 최종 전송할 FormData 내용:');
       // for (let [key, value] of requestData.entries()) {
-      //   console.log(`🔹 ${key}:`, value);
+      //   console.log(` ${key}:`, value);
       // }
 
       //  게시글 생성 요청

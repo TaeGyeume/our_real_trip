@@ -22,9 +22,8 @@ const authMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     // console.error(' 액세스 토큰 검증 실패:', error.message);
-
-    // **🔹 더 이상 `refreshToken` 검증하지 않고, 401을 반환**
-    return res.status(401).json({message: '토큰이 만료되었습니다. 다시 로그인해주세요.'});
+    // ** 더 이상 `refreshToken` 검증하지 않고, 401을 반환**
+    // return res.status(401).json({message: '토큰이 만료되었습니다. 다시 로그인해주세요.'});
   }
 };
 module.exports = authMiddleware;
