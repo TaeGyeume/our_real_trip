@@ -16,6 +16,8 @@ const RoomNew = () => {
     amenities: [''], // 초기값 빈 배열로 설정
     available: true,
     availableCount: '',
+    checkInTime: '15:00',
+    checkOutTime: '11:00',
     images: []
   });
 
@@ -86,6 +88,8 @@ const RoomNew = () => {
     newRoomData.append('maxGuests', formData.maxGuests);
     newRoomData.append('available', formData.available);
     newRoomData.append('availableCount', formData.availableCount);
+    newRoomData.append('checkInTime', formData.checkInTime);
+    newRoomData.append('checkOutTime', formData.checkOutTime);
     newRoomData.append('amenities', JSON.stringify(formData.amenities));
 
     // 기존 이미지 중 삭제되지 않은 이미지만 유지
@@ -232,6 +236,30 @@ const RoomNew = () => {
             onClick={handleAddAmenity}>
             + 추가
           </button>
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">체크인 시간</label>
+          <input
+            type="time"
+            className="form-control"
+            name="checkInTime"
+            value={formData.checkInTime}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">체크아웃 시간</label>
+          <input
+            type="time"
+            className="form-control"
+            name="checkOutTime"
+            value={formData.checkOutTime}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div className="mb-3">

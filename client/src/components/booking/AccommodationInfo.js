@@ -1,5 +1,6 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
+import {Card, CardContent, Typography, Box} from '@mui/material';
 
 const AccommodationInfo = ({booking}) => {
   const navigate = useNavigate();
@@ -27,10 +28,20 @@ const AccommodationInfo = ({booking}) => {
 
   return (
     <>
-      <h4>숙소 정보</h4>
-      <div
-        className="card p-2 mb-2"
-        style={{cursor: 'pointer'}}
+      <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
+        숙소 정보
+      </Typography>
+
+      <Card
+        sx={{
+          p: 2,
+          mb: 2,
+          cursor: 'pointer',
+          boxShadow: 3,
+          borderRadius: 2,
+          transition: '0.3s',
+          '&:hover': {boxShadow: 6}
+        }}
         onClick={() => {
           if (booking.productIds?.length > 0) {
             const firstProduct = booking.productIds.find(product =>
@@ -39,33 +50,56 @@ const AccommodationInfo = ({booking}) => {
             if (firstProduct) handleAccommodationClick(firstProduct);
           }
         }}>
-        {booking.productIds?.length > 0 &&
-          booking.productIds
-            .filter(product => booking.types.includes('accommodation'))
-            .map(product => (
-              <p key={product._id}>
-                <strong>숙소 상품명:</strong> {product.name || '정보 없음'}
-              </p>
+        <CardContent>
+          {booking.productIds?.length > 0 &&
+            booking.productIds
+              .filter(product => booking.types.includes('accommodation'))
+              .map(product => (
+                <Typography
+                  key={product._id}
+                  variant="subtitle1"
+                  sx={{fontWeight: 'bold'}}>
+                  숙소 상품명{' '}
+                  <Typography component="span">{product.name || '정보 없음'}</Typography>
+                </Typography>
+              ))}
+
+          {booking.roomIds?.length > 0 &&
+            booking.roomIds.map(room => (
+              <Box key={room._id} sx={{mt: 1}}>
+                <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+                  객실명 <Typography component="span">{room.name}</Typography>
+                </Typography>
+                <Typography variant="subtitle1">
+                  가격{' '}
+                  <Typography
+                    component="span"
+                    sx={{fontWeight: 'bold', color: 'primary.main'}}>
+                    ₩{room.pricePerNight?.toLocaleString()} / 박
+                  </Typography>
+                </Typography>
+                <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+                  체크인 시간{' '}
+                  <Typography component="span">{room.checkInTime || '15:00'}</Typography>
+                </Typography>
+                <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+                  체크아웃 시간{' '}
+                  <Typography component="span">{room.checkOutTime || '11:00'}</Typography>
+                </Typography>
+              </Box>
             ))}
-        {booking.roomIds?.length > 0 &&
-          booking.roomIds.map(room => (
-            <div key={room._id}>
-              <p>
-                <strong>객실명:</strong> {room.name}
-              </p>
-              <p>
-                <strong>가격:</strong> ₩{room.pricePerNight?.toLocaleString()} / 박
-              </p>
-            </div>
-          ))}
-        {/* 숙소 예약 날짜 정보 추가 */}
-        <p>
-          <strong>체크인:</strong> {checkInDate}
-        </p>
-        <p>
-          <strong>체크아웃:</strong> {checkOutDate}
-        </p>
-      </div>
+
+          {/* 숙소 예약 날짜 정보 추가 */}
+          <Box sx={{mt: 2}}>
+            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+              체크인 <Typography component="span">{checkInDate}</Typography>
+            </Typography>
+            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+              체크아웃 <Typography component="span">{checkOutDate}</Typography>
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
     </>
   );
 };

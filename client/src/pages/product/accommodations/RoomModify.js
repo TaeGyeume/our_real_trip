@@ -15,6 +15,8 @@ const RoomModify = () => {
     amenities: [],
     available: true,
     availableCount: '',
+    checkInTime: '15:00',
+    checkOutTime: '11:00',
     images: [],
     accommodationId: ''
   });
@@ -90,6 +92,8 @@ const RoomModify = () => {
         setFormData({
           ...data,
           amenities: data.amenities || [],
+          checkInTime: data.checkInTime || '15:00',
+          checkOutTime: data.checkOutTime || '11:00',
           images: data.images || [],
           accommodationId: data.accommodation || '' // 숙소 ID 저장 (수정)
         });
@@ -197,6 +201,8 @@ const RoomModify = () => {
       updatedRoomData.append('maxGuests', formData.maxGuests);
       updatedRoomData.append('available', formData.available);
       updatedRoomData.append('availableCount', formData.availableCount);
+      updatedRoomData.append('checkInTime', formData.checkInTime);
+      updatedRoomData.append('checkOutTime', formData.checkOutTime);
       updatedRoomData.append('amenities', JSON.stringify(formData.amenities));
 
       const remainingImages = formData.images
@@ -336,6 +342,30 @@ const RoomModify = () => {
             onClick={handleAddAmenity}>
             + 추가
           </button>
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">체크인 시간</label>
+          <input
+            type="time"
+            className="form-control"
+            name="checkInTime"
+            value={formData.checkInTime}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">체크아웃 시간</label>
+          <input
+            type="time"
+            className="form-control"
+            name="checkOutTime"
+            value={formData.checkOutTime}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         {/* 숙소 이미지 업로드 */}

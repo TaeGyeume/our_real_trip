@@ -265,7 +265,7 @@ const AccommodationModify = () => {
         img.startsWith('/uploads/') ? `${SERVER_URL}${img}` : img
       )
     );
-    navigate(-1);
+    navigate(`/product/accommodations/list`);
   };
 
   if (loading) return <div>로딩 중...</div>;

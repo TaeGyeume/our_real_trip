@@ -108,6 +108,8 @@ const BookingForm = () => {
         (new Date(room.endDate) - new Date(room.startDate)) / (1000 * 60 * 60 * 24)
       )
     );
+    const checkInTimes = formData.rooms.map(() => room.checkInTime || '15:00');
+    const checkOutTimes = formData.rooms.map(() => room.checkOutTime || '11:00');
 
     const totalPrice = nights.reduce(
       (sum, night, i) => sum + night * room.pricePerNight * counts[i],
@@ -134,7 +136,9 @@ const BookingForm = () => {
           name: user.username,
           email: user.email,
           phone: user.phone
-        }
+        },
+        checkInTimes,
+        checkOutTimes
       });
 
       const bookingResponse = await createBooking({
@@ -154,7 +158,9 @@ const BookingForm = () => {
           name: user.username,
           email: user.email,
           phone: user.phone
-        }
+        },
+        checkInTimes,
+        checkOutTimes
       });
 
       console.log('예약 생성 응답:', bookingResponse);
