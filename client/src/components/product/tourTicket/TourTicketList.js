@@ -133,7 +133,7 @@ const TourTicketList = () => {
               />
               <div className="ticket-info">
                 <h3 className="ticket-title">{ticket.title}</h3>
-                <p className="ticket-description">✏️| {ticket.description}</p>
+                {/* <p className="ticket-description">✏️| {ticket.description}</p> */}
                 <p className="ticket-location">지역: {ticket.location}</p>
                 <p className="ticket-price">{ticket.price.toLocaleString()}원</p>
                 <p className="ticket-stock">재고: {ticket.stock}개</p>

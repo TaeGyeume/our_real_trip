@@ -10,6 +10,34 @@
 .booking-content {
   display: flex;
   gap: 20px;
+  margin: auto;
+}
+
+.ticket-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* 상품명 및 설명 */
+.ticket-text {
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+  font-size: 22px;
+}
+
+.ticket-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+}
+
+.ticket-expiration {
+  font-size: 14px;
+  color: #666;
+  margin-top: 5px;
 }
 
 /* 왼쪽: 예약 정보 */
@@ -134,7 +162,6 @@ h4 {
   color: #555;
 }
 
-/* 예약 취소 규정 */
 .cancel-policy {
   background-color: #f9f9f9;
   padding: 15px;
@@ -163,4 +190,21 @@ h4 {
   border: none;
   border-top: 1px solid #e0e0e0; /* 옅은 회색 */
   margin: 15px 0;
+}
+
+.ticket-thumbnail {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+}
+
+/* 수량 선택 컨테이너 */
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
 }
