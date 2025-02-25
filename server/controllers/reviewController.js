@@ -113,6 +113,29 @@ exports.deleteComment = async (req, res) => {
   }
 };
 
+exports.updateComment = async (req, res) => {
+  try {
+    const {reviewId, commentId} = req.params;
+    const {content} = req.body;
+    const userId = req.user.id;
+
+    const updatedReview = await reviewService.updateComment(
+      reviewId,
+      commentId,
+      userId,
+      content
+    );
+
+    res.status(200).json({
+      message: '댓글이 성공적으로 수정되었습니다.',
+      review: updatedReview
+    });
+  } catch (error) {
+    console.error('[서버] 댓글 수정 실패:', error.message);
+    res.status(400).json({message: error.message});
+  }
+};
+
 // 좋아요 추가
 exports.likeReview = async (req, res) => {
   const {reviewId} = req.params;

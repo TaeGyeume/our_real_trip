@@ -4,9 +4,11 @@ import {
   likeReview,
   deleteReview,
   addComment,
-  deleteComment
+  deleteComment,
+  updateComment
 } from '../../api/review/reviewService';
-import {AiOutlineLike, AiOutlineMore} from 'react-icons/ai';
+import {AiOutlineLike, AiOutlineMore, AiFillStar, AiOutlineStar} from 'react-icons/ai';
+import {FaStarHalfAlt} from 'react-icons/fa';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
 
@@ -16,6 +18,8 @@ const ReviewList = ({productId}) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [commentInput, setCommentInput] = useState('');
   const [activeCommentBox, setActiveCommentBox] = useState(null);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editedCommentContent, setEditedCommentContent] = useState('');
 
   const dropdownRef = useRef(null);
 
@@ -109,6 +113,25 @@ const ReviewList = ({productId}) => {
     }
   };
 
+  const handleUpdateComment = async (reviewId, commentId) => {
+    if (!editedCommentContent.trim()) {
+      alert('댓글 내용을 입력해주세요.');
+      return;
+    }
+
+    try {
+      await updateComment(reviewId, commentId, editedCommentContent);
+      alert('댓글이 성공적으로 수정되었습니다.');
+      setEditingCommentId(null);
+
+      // 리뷰 목록 새로고침
+      const updatedReviews = await getReviews(productId);
+      setReviews(updatedReviews);
+    } catch (error) {
+      alert(`댓글 수정 실패: ${error.message}`);
+    }
+  };
+
   const isAdmin = currentUser?.roles?.includes('admin');
 
   return (
@@ -134,49 +157,52 @@ const ReviewList = ({productId}) => {
                   <AiOutlineLike /> {review.likes?.length || 0}
                 </button>
 
-                <div className="kebab-menu">
-                  <AiOutlineMore
-                    onClick={() => toggleMenu(review._id)}
-                    className="kebab-icon"
-                  />
+                {(currentUser?._id === review.userId?._id ||
+                  currentUser?.roles?.includes('admin')) && (
+                  <div className="kebab-menu">
+                    <AiOutlineMore
+                      onClick={() => toggleMenu(review._id)}
+                      className="kebab-icon"
+                    />
 
-                  {menuOpen === review._id && (
-                    <div className="menu-options">
-                      {currentUser ? (
-                        <>
-                          {currentUser._id === review.userId._id && (
-                            <>
-                              <button
-                                onClick={() => alert(`리뷰 ${review._id} 수정하기`)}>
-                                수정하기
-                              </button>
-                              <button onClick={() => handleDelete(review._id)}>
-                                삭제하기
-                              </button>
-                            </>
-                          )}
+                    {menuOpen === review._id && (
+                      <div className="menu-options">
+                        {currentUser ? (
+                          <>
+                            {currentUser._id === review.userId._id && (
+                              <>
+                                <button
+                                  onClick={() => alert(`리뷰 ${review._id} 수정하기`)}>
+                                  수정하기
+                                </button>
+                                <button onClick={() => handleDelete(review._id)}>
+                                  삭제하기
+                                </button>
+                              </>
+                            )}
 
-                          {isAdmin && (
-                            <>
-                              <button onClick={() => handleAddCommentClick(review._id)}>
-                                댓글 달기
-                              </button>
-                              <button onClick={() => handleDelete(review._id)}>
-                                삭제하기
-                              </button>
-                            </>
-                          )}
+                            {isAdmin && (
+                              <>
+                                <button onClick={() => handleAddCommentClick(review._id)}>
+                                  댓글 달기
+                                </button>
+                                <button onClick={() => handleDelete(review._id)}>
+                                  삭제하기
+                                </button>
+                              </>
+                            )}
 
-                          {!isAdmin && currentUser._id !== review.userId._id && (
-                            <p>권한이 없습니다</p>
-                          )}
-                        </>
-                      ) : (
-                        <p>로그인이 필요합니다</p>
-                      )}
-                    </div>
-                  )}
-                </div>
+                            {!isAdmin && currentUser._id !== review.userId._id && (
+                              <p>권한이 없습니다</p>
+                            )}
+                          </>
+                        ) : (
+                          <p>로그인이 필요합니다</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -192,6 +218,23 @@ const ReviewList = ({productId}) => {
                 ))}
               </div>
             )}
+
+            <div className="review-rating">
+              {[...Array(5)].map((_, index) => {
+                const currentStar = index + 1;
+                return (
+                  <span key={index}>
+                    {review.rating >= currentStar ? (
+                      <AiFillStar color="#FFD700" size={20} />
+                    ) : review.rating >= currentStar - 0.5 ? (
+                      <FaStarHalfAlt color="#FFD700" size={20} />
+                    ) : (
+                      <AiOutlineStar color="#E0E0E0" size={20} />
+                    )}
+                  </span>
+                );
+              })}
+            </div>
 
             <p className="review-text">{review.content}</p>
 
@@ -210,22 +253,49 @@ const ReviewList = ({productId}) => {
               <div className="comment-list">
                 {review.comments.map((comment, index) => (
                   <div key={comment._id || index} className="comment">
-                    <p>
-                      <strong>
-                        {comment.userId?.roles?.includes('admin')
-                          ? '관리자'
-                          : comment.userId?.username || '익명 사용자'}
-                      </strong>
-                      : {comment.content}
-                    </p>
+                    {editingCommentId === comment._id ? (
+                      <>
+                        <textarea
+                          value={editedCommentContent}
+                          onChange={e => setEditedCommentContent(e.target.value)}
+                          placeholder="댓글을 수정하세요..."
+                        />
+                        <button
+                          onClick={() => handleUpdateComment(review._id, comment._id)}>
+                          저장
+                        </button>
+                        <button onClick={() => setEditingCommentId(null)}>취소</button>
+                      </>
+                    ) : (
+                      <>
+                        <p>
+                          <strong>
+                            {comment.userId?.roles?.includes('admin')
+                              ? '관리자'
+                              : comment.userId?.username || '익명 사용자'}
+                          </strong>
+                          : {comment.content}
+                        </p>
 
-                    {/* 관리자만 댓글 삭제 */}
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleDeleteComment(review._id, comment._id)}
-                        className="delete-comment-btn">
-                        삭제
-                      </button>
+                        {/* 관리자일 때만 수정/삭제 버튼 노출 */}
+                        {currentUser?.roles?.includes('admin') && (
+                          <div className="comment-actions">
+                            <button
+                              onClick={() => {
+                                setEditingCommentId(comment._id);
+                                setEditedCommentContent(comment.content);
+                              }}>
+                              수정
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteComment(review._id, comment._id)
+                              }>
+                              삭제
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}

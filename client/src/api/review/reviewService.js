@@ -22,7 +22,6 @@ export const createReview = async formData => {
 export const getReviews = async productId => {
   try {
     const response = await axios.get(`${BASE_URL}/${encodeURIComponent(productId)}`);
-    console.log('Fetched reviews:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching reviews:', error);
@@ -41,8 +40,6 @@ export const updateReview = async (productType, reviewId, updatedData) => {
 export const deleteReview = async reviewId => {
   try {
     const response = await axios.delete(`${BASE_URL}/delete/${reviewId}`);
-
-    console.log('[프론트] 리뷰 삭제 성공:', response.data.message);
 
     return response.data;
   } catch (error) {
@@ -77,7 +74,6 @@ export const addComment = async (reviewId, commentContent) => {
       requestConfig
     );
 
-    console.log('[프론트] 댓글 추가 성공:', response.data);
     return response.data;
   } catch (error) {
     console.error(
@@ -101,6 +97,25 @@ export const deleteComment = async (reviewId, commentId) => {
       error.response?.data?.message || error.message
     );
     throw error.response?.data || {message: '댓글 삭제 중 오류가 발생했습니다.'};
+  }
+};
+
+export const updateComment = async (reviewId, commentId, newContent) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/${reviewId}/comments/${commentId}`,
+      {content: newContent},
+      requestConfig
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      '[프론트] 댓글 수정 실패:',
+      error.response?.data?.message || error.message
+    );
+
+    throw new Error(error.response?.data?.message || '댓글 수정 중 오류 발생');
   }
 };
 

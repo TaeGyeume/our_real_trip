@@ -18,4 +18,10 @@ router.delete(
   reviewController.deleteComment
 );
 
+router.patch(
+  '/:reviewId/comments/:commentId',
+  authMiddleware,
+  reviewController.updateComment
+);
+
 module.exports = router;
