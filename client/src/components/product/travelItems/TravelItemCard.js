@@ -3,7 +3,15 @@ import {useNavigate} from 'react-router-dom';
 import {useAuthStore} from '../../../store/authStore';
 import {deleteTravelItem} from '../../../api/travelItem/travelItemService';
 import FavoriteButton from '../../user/FavoriteButton'; // 즐겨찾기 버튼 추가
-import './styles/TravelItemCard.css';
+import {
+  Card,
+  CardMedia,
+  CardContent,
+  CardActions,
+  Typography,
+  Button,
+  Box
+} from '@mui/material';
 
 const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle}) => {
   const navigate = useNavigate();
@@ -54,21 +62,32 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
   };
 
   return (
-    <div
-      className="card travel-item-card mb-3"
-      onClick={handleCardClick}
-      style={{cursor: 'pointer'}}>
+    <Card
+      sx={{
+        maxWidth: 300,
+        borderRadius: 3,
+        boxShadow: 3,
+        cursor: 'pointer',
+        transition: '0.3s',
+        position: 'relative',
+        '&:hover': {boxShadow: 6},
+        mb: 2
+      }}
+      onClick={handleCardClick}>
       {/* 이미지 컨테이너 */}
-      <div className="image-container">
-        <img
-          src={imageUrl}
-          className="card-img-top travel-item-image"
+      <Box sx={{position: 'relative'}}>
+        <CardMedia
+          component="img"
+          height="200"
+          image={!imgError ? imageUrl : '/default-image.jpg'}
           alt={travelItem?.name || '상품 이미지'}
           onError={() => setImgError(true)} // 한 번만 실행되도록 상태 업데이트
         />
 
         {/* 즐겨찾기 버튼 (이미지 내부 오른쪽 상단) */}
-        <div className="favorite-icon-container">
+        <div
+          className="favorite-icon-container"
+          style={{position: 'absolute', top: 10, right: 10}}>
           <FavoriteButton
             itemId={travelItem._id}
             itemType="TravelItem"
@@ -77,33 +96,52 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
             className="favorite-icon"
           />
         </div>
-      </div>
+      </Box>
 
       {/* 상품 정보 */}
-      <div className="card-body">
-        <h5 className="card-title">{travelItem?.name || '상품명 없음'}</h5>
-        <p className="card-text">{travelItem?.description || '설명 없음'}</p>
-        <p>
-          <strong>💰 {travelItem?.price?.toLocaleString() || '가격 미정'}₩</strong>
-        </p>
-        <p
-          className={`card-text ${travelItem?.stock > 0 ? 'text-success' : 'text-danger'}`}>
+      <CardContent>
+        <Typography variant="h6" fontWeight="bold">
+          {travelItem?.name || '상품명 없음'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {travelItem?.description || '설명 없음'}
+        </Typography>
+        <Typography variant="h6" color="primary" sx={{mt: 1}}>
+          💰 {travelItem?.price?.toLocaleString() || '가격 미정'}₩
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{color: travelItem?.stock > 0 ? 'green' : 'red', mt: 1}}>
           {travelItem?.stock > 0 ? '재고 있음' : '품절'}
-        </p>
-      </div>
+        </Typography>
+      </CardContent>
 
       {/* 관리자 전용 버튼 */}
       {isAuthenticated && user?.roles.includes('admin') && (
-        <div className="card-footer d-flex justify-content-between">
-          <button className="btn btn-warning" onClick={handleModifyClick}>
+        <CardActions sx={{justifyContent: 'space-between', px: 2, pb: 2}}>
+          <Button
+            variant="contained"
+            color="warning"
+            size="small"
+            onClick={e => {
+              e.stopPropagation();
+              handleModifyClick();
+            }}>
             ✏️ 수정
-          </button>
-          <button className="btn btn-danger" onClick={handleDeleteClick}>
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={e => {
+              e.stopPropagation();
+              handleDeleteClick();
+            }}>
             ❌ 삭제
-          </button>
-        </div>
+          </Button>
+        </CardActions>
       )}
-    </div>
+    </Card>
   );
 };
 
