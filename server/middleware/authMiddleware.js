@@ -23,7 +23,7 @@ const authMiddleware = async (req, res, next) => {
 
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
-      console.warn('⛔ [Middleware] 리프레시 토큰도 없음 → 로그인 필요');
+      // console.warn('⛔ [Middleware] 리프레시 토큰도 없음 → 로그인 필요');
       req.user = null; // 로그인하지 않은 사용자
       return next();
       return res.status(401).json({message: '로그인이 필요합니다.'});
@@ -70,7 +70,7 @@ const authMiddleware = async (req, res, next) => {
       req.user = jwt.verify(accessToken, process.env.JWT_SECRET);
       return next();
     } catch (error) {
-      console.error('⛔ [Middleware] 리프레시 토큰 검증 실패:', error.message);
+      // console.error('⛔ [Middleware] 리프레시 토큰 검증 실패:', error.message);
       return res.status(403).json({message: '유효하지 않은 리프레시 토큰입니다.'});
     }
   }
@@ -82,7 +82,7 @@ const authMiddleware = async (req, res, next) => {
     // console.log('✅ [Middleware] 인증된 사용자:', req.user);
     next();
   } catch (error) {
-    console.error('⛔ [Middleware] 액세스 토큰 검증 실패:', error.message);
+    // console.error('⛔ [Middleware] 액세스 토큰 검증 실패:', error.message);
     return res.status(401).json({message: '토큰이 만료되었습니다. 다시 로그인해주세요.'});
   }
 };
