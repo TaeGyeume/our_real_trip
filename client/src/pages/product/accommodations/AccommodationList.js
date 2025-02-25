@@ -26,8 +26,6 @@ const AccommodationList = ({limit = 6}) => {
       setLoading(true);
 
       try {
-        console.log('백엔드 요청 보냄... 페이지:', pageNumber, '검색어:', searchValue);
-
         const endpoint = searchValue
           ? '/accommodations/searchByName'
           : '/accommodations/list';
@@ -36,8 +34,6 @@ const AccommodationList = ({limit = 6}) => {
           : {page: pageNumber, limit};
 
         const response = await axios.get(endpoint, {params});
-
-        console.log('응답 데이터:', response.data);
 
         const result = response.data.accommodations || response.data;
 
@@ -71,7 +67,6 @@ const AccommodationList = ({limit = 6}) => {
 
   // 검색어 변경 시 새로운 검색 실행 (무한 스크롤 유지)
   useEffect(() => {
-    console.log('검색어 변경됨. 새로운 검색 실행!', searchTerm);
     setAccommodations([]); // 기존 데이터 초기화
     fetchAccommodations(1, true, searchTerm); // 첫 페이지부터 다시 검색
   }, [searchTerm, fetchAccommodations]);
@@ -79,7 +74,6 @@ const AccommodationList = ({limit = 6}) => {
   // 페이지 변경 시 추가 데이터 로드
   useEffect(() => {
     if (page > 1 && !loadingRef.current) {
-      console.log('페이지 변경됨, 데이터 불러오기', page);
       fetchAccommodations(page);
     }
   }, [page, fetchAccommodations]);
@@ -95,7 +89,6 @@ const AccommodationList = ({limit = 6}) => {
     observerInstance.current = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting && !loadingRef.current && page < totalPages) {
-          console.log('마지막 요소 감지 → 다음 페이지 불러오기!', {page, totalPages});
           setPage(prev => prev + 1);
         }
       },

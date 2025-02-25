@@ -59,10 +59,10 @@ const RoomDetail = () => {
         <div className="d-flex justify-content-between border-bottom pb-3">
           <div>
             <p>
-              <strong>체크인:</strong> {startDate}
+              <strong>체크인 날짜:</strong> {startDate}
             </p>
             <p>
-              <strong>체크아웃:</strong> {endDate}
+              <strong>체크아웃 날짜:</strong> {endDate}
             </p>
           </div>
           <div>
@@ -80,6 +80,12 @@ const RoomDetail = () => {
 
           <p>
             <strong>최대 수용 인원:</strong> {roomData.maxGuests}명
+          </p>
+          <p>
+            <strong>체크인 시간:</strong> {roomData.checkInTime || '15:00'}
+          </p>
+          <p>
+            <strong>체크아웃 시간:</strong> {roomData.checkOutTime || '11:00'}
           </p>
 
           {roomData.amenities?.length > 0 && (

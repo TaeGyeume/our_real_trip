@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {fetchAccommodations} from '../../../api/accommodation/accommodationService';
 import AccommodationCard from './AccommodationCard';
+import {Box, Typography, CircularProgress} from '@mui/material';
 
 const AccommodationList = ({limit = null}) => {
   // limit을 props로 받음 (기본값: null)
@@ -32,35 +33,47 @@ const AccommodationList = ({limit = null}) => {
   };
 
   return (
-    <div className="container mt-4">
-      <h2>🏨 숙소 리스트</h2>
+    <Box sx={{maxWidth: 1200, mx: 'auto', mt: 4, px: 2}}>
+      <Typography variant="h4" fontWeight="bold" gutterBottom>
+        🏨 숙소 리스트
+      </Typography>
 
       {/* 로딩 상태 표시 */}
-      {loading && <p>⏳ 숙소 데이터를 불러오는 중...</p>}
+      {loading && (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+          <CircularProgress />
+        </Box>
+      )}
 
       {/* 오류 발생 시 메시지 표시 */}
-      {error && <p className="text-danger">{error}</p>}
+      {error && (
+        <Typography variant="body1" color="error" textAlign="center">
+          {error}
+        </Typography>
+      )}
 
-      {/* 숙소 목록 표시 (최대 3개) */}
+      {/* 숙소 목록 (한 줄에 3개씩) */}
       {!loading && !error && (
-        <div className="row">
+        <Box display="flex" flexWrap="wrap" gap={3} mt={3}>
           {accommodations.length > 0 ? (
             accommodations
-              .slice(0, limit || accommodations.length) // 최대 `limit`개의 숙소만 표시
+              .slice(0, limit || accommodations.length) // 최대 `limit` 개수만 표시
               .map(accommodation => (
-                <div key={accommodation._id} className="col-md-4 mb-4">
+                <Box key={accommodation._id} sx={{width: '31%'}}>
                   <AccommodationCard
                     accommodation={accommodation}
                     onAccommodationDeleted={handleAccommodationDeleted}
                   />
-                </div>
+                </Box>
               ))
           ) : (
-            <p>등록된 숙소가 없습니다.</p>
+            <Typography variant="body1" textAlign="center">
+              등록된 숙소가 없습니다.
+            </Typography>
           )}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
