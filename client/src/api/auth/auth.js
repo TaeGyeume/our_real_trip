@@ -114,17 +114,42 @@ export const authAPI = {
       '비밀번호 변경 중 오류 발생'
     ),
 
+  // refreshToken: async () => {
+  //   try {
+  //     console.log('리프레시 토큰 갱신 중...');
+  //     const response = await handleRequest(
+  //       api.post('/auth/refresh-token', {}, requestConfig),
+  //       '리프레시 토큰 갱신 중 오류 발생'
+  //     );
+  //     console.log(' 새 액세스 토큰 수신:', response);
+
+  //     api.defaults.headers.common['Authorization'] = `Bearer ${response.accessToken}`;
+
+  //     return response;
+  //   } catch (error) {
+  //     console.error('리프레시 토큰 갱신 실패');
+  //     throw error;
+  //   }
+  // },
   refreshToken: async () => {
+    console.log('🚀 [클라이언트] 리프레시 토큰 요청 실행됨');
+
     try {
-      console.log('리프레시 토큰 갱신 중...');
-      const response = await handleRequest(
-        api.post('/auth/refresh-token', {}, requestConfig),
-        '리프레시 토큰 갱신 중 오류 발생'
+      const response = await api.post(
+        '/auth/refresh-token',
+        {},
+        {
+          withCredentials: true
+        }
       );
-      console.log(' 새 액세스 토큰 수신:', response);
-      return response;
+
+      console.log('✅ [클라이언트] 새 액세스 토큰 수신:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('리프레시 토큰 갱신 실패');
+      console.error(
+        '❌ [클라이언트] 리프레시 토큰 요청 실패:',
+        error.response?.data || error
+      );
       throw error;
     }
   },
