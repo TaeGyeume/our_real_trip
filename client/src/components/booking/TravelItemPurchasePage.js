@@ -6,6 +6,17 @@ import {fetchUserCoupons} from '../../api/coupon/couponService';
 import {cancelBooking} from '../../api/booking/bookingService';
 import {authAPI} from '../../api/auth/index';
 import CouponSelector from './CouponSelector';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Checkbox,
+  FormControlLabel,
+  Button,
+  Stack
+} from '@mui/material';
 
 const TravelItemPurchaseForm = () => {
   const {itemId} = useParams();
@@ -172,61 +183,66 @@ const TravelItemPurchaseForm = () => {
   }
 
   return (
-    <div className="purchase-form">
-      <h3>상품명: {item.name}</h3>
-      <p>가격: {item?.price ? item.price.toLocaleString() : '가격 정보 없음'} 원</p>
+    <Box sx={{maxWidth: 600, mx: 'auto', mt: 4}}>
+      <Typography variant="h4" sx={{mb: 3, fontWeight: 'bold', textAlign: 'center'}}>
+        여행 상품 구매
+      </Typography>
 
-      <label>구매 수량</label>
-      <input
-        type="number"
-        name="count"
-        value={formData.count}
-        min="1"
-        max={item.stock || 50}
-        onChange={e => setFormData({...formData, count: e.target.value})}
-      />
+      <Card sx={{mb: 3, p: 2}}>
+        <CardContent>
+          <Typography variant="h5" sx={{fontWeight: 'bold'}}>
+            {item.name}
+          </Typography>
+          <Typography variant="subtitle1" sx={{color: 'text.secondary'}}>
+            💰 가격: {item.price.toLocaleString()} 원
+          </Typography>
+        </CardContent>
+      </Card>
 
-      {/* 체크박스 추가 */}
-      <div>
-        <input
-          type="checkbox"
-          id="useUserInfo"
-          checked={useUserInfo}
-          onChange={handleUseUserInfo}
+      <Stack spacing={2} sx={{mb: 3}}>
+        <TextField
+          label="구매 수량"
+          type="number"
+          fullWidth
+          value={formData.count}
+          onChange={e => setFormData({...formData, count: e.target.value})}
+          inputProps={{min: 1, max: item.stock || 50}}
         />
-        <label htmlFor="useUserInfo">로그인한 사용자 정보 사용</label>
-      </div>
-      <label>예약자 이름</label>
-      <input
-        type="text"
-        name="name"
-        value={reservationInfo.name}
-        onChange={handleInputChange}
-      />
 
-      <label>이메일</label>
-      <input
-        type="email"
-        name="email"
-        value={reservationInfo.email}
-        onChange={handleInputChange}
-      />
+        <FormControlLabel
+          control={<Checkbox checked={useUserInfo} onChange={handleUseUserInfo} />}
+          label="로그인한 사용자 정보 사용"
+        />
 
-      <label>연락처</label>
-      <input
-        type="text"
-        name="phone"
-        value={reservationInfo.phone}
-        onChange={handleInputChange}
-      />
-
-      <label>주소</label>
-      <input
-        type="text"
-        name="address"
-        value={reservationInfo.address}
-        onChange={handleInputChange}
-      />
+        <TextField
+          label="예약자 이름"
+          fullWidth
+          value={reservationInfo.name}
+          onChange={handleInputChange}
+          name="name"
+        />
+        <TextField
+          label="이메일"
+          fullWidth
+          value={reservationInfo.email}
+          onChange={handleInputChange}
+          name="email"
+        />
+        <TextField
+          label="연락처"
+          fullWidth
+          value={reservationInfo.phone}
+          onChange={handleInputChange}
+          name="phone"
+        />
+        <TextField
+          label="주소"
+          fullWidth
+          value={reservationInfo.address}
+          onChange={handleInputChange}
+          name="address"
+        />
+      </Stack>
 
       <CouponSelector
         userCoupons={userCoupons}
@@ -235,15 +251,20 @@ const TravelItemPurchaseForm = () => {
         onCouponSelect={handleCouponSelect}
       />
 
-      <p>
+      <Typography sx={{mt: 2, fontWeight: 'bold'}}>
         최종 결제 금액: {(item.price * formData.count - discountAmount).toLocaleString()}{' '}
         원
-      </p>
+      </Typography>
 
-      <button onClick={handlePayment} className="payment-btn">
+      <Button
+        variant="contained"
+        fullWidth
+        sx={{mt: 3}}
+        color="primary"
+        onClick={handlePayment}>
         🛒 결제하기
-      </button>
-    </div>
+      </Button>
+    </Box>
   );
 };
 
