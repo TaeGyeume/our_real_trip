@@ -81,27 +81,14 @@ exports.register = async (req, res) => {
 // 로그인 컨트롤러 (액세스 및 리프레시 토큰 설정)
 exports.login = async (req, res) => {
   try {
-    const {accessToken, refreshToken, user} = await authService.loginUser(req.body, res);
+    /**
+     * 기존에는 여기서 res.cookie()를 설정했지만,
+     * loginUser 내부에서 쿠키를 설정하도록 변경했습니다.
+     */
+    const {user} = await authService.loginUser(req.body, res);
 
-    // 공통 쿠키 설정 옵션
-    const tokenCookieOptions = {
-      httpOnly: true,
-      secure: false, // 배포 환경에서는 secure 활성화
-      sameSite: 'None', // 크로스 사이트에서도 쿠키 유지
-      path: '/',
-      // maxAge: 15 * 60 * 1000 // 액세스 토큰은 15분 유효
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 토큰은 7일 유효
-    };
-
-    res.cookie('accessToken', accessToken, tokenCookieOptions);
-
-    if (refreshToken) {
-      res.cookie('refreshToken', refreshToken, {
-        ...tokenCookieOptions,
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 리프레시 토큰은 7일 유효
-      });
-    }
-
+    // 쿠키 설정은 이미 service.loginUser()에서 처리
+    // 여기서는 사용자 정보만 응답
     res.status(200).json({user});
   } catch (error) {
     console.error('로그인 오류:', error.message);
