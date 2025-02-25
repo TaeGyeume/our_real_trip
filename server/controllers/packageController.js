@@ -1,20 +1,21 @@
 const packageService = require('../services/packageService');
+const mongoose = require('mongoose');
+const Flight = require('../models/Flight'); // ✅ Flight 모델 추가
+const Accommodation = require('../models/Accommodation');
+const TourTicket = require('../models/TourTicket');
 
 /**
  * ✅ 패키지 상품 생성 (관리자만 가능)
  */
 exports.createPackage = async (req, res) => {
   try {
-    // 관리자 권한 확인 (RBAC 적용)
     if (!req.user || !req.user.roles || !req.user.roles.includes('admin')) {
       return res.status(403).json({message: '관리자만 패키지를 생성할 수 있습니다.'});
     }
 
-    // 요청 본문 유효성 검사
     const {
       name,
       description,
-      price,
       discountRate,
       startDate,
       endDate,
@@ -28,7 +29,6 @@ exports.createPackage = async (req, res) => {
     if (
       !name ||
       !description ||
-      !price ||
       !category ||
       !accommodations ||
       !tours ||
@@ -38,7 +38,61 @@ exports.createPackage = async (req, res) => {
       return res.status(400).json({message: '필수 필드가 누락되었습니다.'});
     }
 
-    const createdPackage = await packageService.createPackage(req.body);
+    console.log('🔍 [DEBUG] 요청 데이터:', req.body);
+
+    // flights 배열 변환
+    const flightDetails = Array.isArray(flights)
+      ? flights.map(flight => {
+          if (!flight.flightId || !flight.seatsToUse) {
+            throw new Error(`항공 정보가 올바르지 않습니다: ${JSON.stringify(flight)}`);
+          }
+          return {
+            flightId: new mongoose.Types.ObjectId(flight.flightId),
+            seatsToUse: flight.seatsToUse
+          };
+        })
+      : [];
+
+    console.log('🔍 [DEBUG] flights after conversion:', flightDetails);
+
+    // accommodations & tours 변환
+    const accommodationIds = accommodations.map(acc => new mongoose.Types.ObjectId(acc));
+    const tourIds = tours.map(tour => new mongoose.Types.ObjectId(tour));
+
+    const createdById = new mongoose.Types.ObjectId(createdBy);
+
+    // 숙소 가격 계산 및 존재 여부 검증
+    if (Array.isArray(accommodations) && accommodations.length > 0) {
+      console.log('🔍 [DEBUG] 숙소 ID 목록:', accommodations);
+
+      const accommodationData = await Accommodation.find({_id: {$in: accommodations}});
+      console.log('🔍 [DEBUG] 숙소 조회 결과:', accommodationData);
+
+      if (!accommodationData || accommodationData.length !== accommodations.length) {
+        throw new Error('숙소 정보를 찾을 수 없습니다.');
+      }
+    }
+
+    const packageData = {
+      name,
+      description,
+      discountRate,
+      startDate,
+      endDate,
+      accommodations: accommodationIds,
+      tours: tourIds,
+      flights: flightDetails,
+      category,
+      createdBy: createdById
+    };
+
+    console.log('✅ [DEBUG] 패키지 데이터 생성 완료:', packageData);
+
+    // 패키지 생성 서비스 호출 (price 자동 계산)
+    const createdPackage = await packageService.createPackage(packageData);
+
+    console.log('✅ [SUCCESS] 패키지 생성 완료:', createdPackage);
+
     return res.status(201).json(createdPackage);
   } catch (error) {
     console.error('[ERROR] 패키지 생성 실패:', error);
@@ -47,7 +101,7 @@ exports.createPackage = async (req, res) => {
 };
 
 /**
- * ✅ 전체 패키지 목록 조회 (페이징 + 제목 검색 가능)
+ * 전체 패키지 목록 조회 (페이징 + 제목 검색 가능)
  */
 exports.getAllPackages = async (req, res) => {
   try {
@@ -77,7 +131,7 @@ exports.getAllPackages = async (req, res) => {
 };
 
 /**
- * ✅ 특정 패키지 상품 조회
+ *  특정 패키지 상품 조회
  */
 exports.getPackageById = async (req, res) => {
   try {
@@ -96,7 +150,7 @@ exports.getPackageById = async (req, res) => {
 };
 
 /**
- * ✅ 패키지 상품 수정 (관리자만 가능)
+ *  패키지 상품 수정 (관리자만 가능)
  */
 exports.updatePackage = async (req, res) => {
   try {
@@ -119,8 +173,8 @@ exports.updatePackage = async (req, res) => {
   }
 };
 
-/**
- * ✅ 패키지 상품 삭제 (관리자만 가능)
+/*
+ * 패키지 상품 삭제 (관리자만 가능)
  */
 exports.deletePackage = async (req, res) => {
   try {
