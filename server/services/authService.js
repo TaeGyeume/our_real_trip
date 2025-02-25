@@ -23,8 +23,8 @@ const createVerificationCode = async email => {
       used: false
     });
 
-    await verification.save(); //  MongoDB에 저장
-    console.log(' [DB 저장 성공] 인증 코드:', verification); //  로그 추가
+    await verification.save();
+    console.log(' [DB 저장 성공] 인증 코드:', verification);
     return code;
   } catch (error) {
     console.error(' 인증 코드 저장 오류:', error.message);
@@ -55,7 +55,7 @@ exports.verifyCode = async (email, code) => {
     }
 
     verification.used = true; // 사용된 인증 코드로 변경
-    await verification.save(); //  MongoDB에서 상태 업데이트
+    await verification.save();
     console.log(' [서비스] 인증 코드 검증 성공:', email, code);
 
     return true;
@@ -78,11 +78,10 @@ exports.findUserIdByEmail = async email => {
       throw new Error('해당 이메일로 가입된 아이디가 없습니다.');
     }
 
-    //  인증 코드 생성 및 DB에 저장 (기존 코드에서 빠진 부분 추가)
+    // 인증 코드 생성 후 이메일 발송
     const verificationCode = await createVerificationCode(email);
-    console.log(' [서비스] 생성된 인증 코드:', verificationCode); //  인증 코드 확인
+    console.log(' [서비스] 생성된 인증 코드:', verificationCode);
 
-    console.log(' [서비스] 이메일 전송 시작...');
     await sendVerificationEmail(email, verificationCode);
     console.log(' [서비스] 인증 코드 이메일 발송 완료');
 
@@ -112,7 +111,7 @@ exports.verifyCodeAndFindUserId = async (email, code) => {
   }
 };
 
-// 아이디, 이메일, 전화번호 중복 확인 서비스 추가
+// 아이디, 이메일, 전화번호 중복 확인 서비스
 exports.checkDuplicate = async ({userid, email, phone}) => {
   let existingUser = null;
 
@@ -160,19 +159,23 @@ exports.loginUser = async ({userid, password}, res) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error('비밀번호가 일치하지 않습니다.');
 
+  // === Access Token ===
   const accessToken = jwt.sign(
     {id: user._id, roles: user.roles},
     process.env.JWT_SECRET,
     {
-      expiresIn: '7d' // 액세스 토큰은 15분 유효
+      // 필요에 따라 15m, 1h 등으로 변경
+      // expiresIn: '7d'
+      expiresIn: '1m'
     }
   );
 
+  // === Refresh Token ===
   const refreshToken = jwt.sign(
     {id: user._id, roles: user.roles},
     process.env.REFRESH_TOKEN_SECRET,
     {
-      expiresIn: '7d' // 리프레시 토큰은 7일 유효
+      expiresIn: '7d'
     }
   );
 
@@ -182,29 +185,34 @@ exports.loginUser = async ({userid, password}, res) => {
   const refreshTokenDoc = new RefreshToken({
     userId: user._id,
     token: refreshToken,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7일 후 만료
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   });
   await refreshTokenDoc.save();
 
-  // 액세스 토큰 쿠키 저장
+  // === 쿠키 설정 ===
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
+    sameSite: isProduction ? 'None' : 'Lax',
     path: '/',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
+    // maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
+    maxAge: 15 * 60 * 1000 // 15분
+    // maxAge: 1 * 60 * 1000 // 1분
   });
 
-  // 리프레시 토큰 쿠키 저장
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
+    sameSite: isProduction ? 'None' : 'Lax',
     path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
   });
 
-  return {accessToken, user: {userid: user.userid, email: user.email, roles: user.roles}};
+  // === 컨트롤러에서 사용할 수 있도록 유저 정보와 토큰을 리턴하되,
+  // 쿠키 설정은 여기서 마무리. ===
+  return {
+    user: {userid: user.userid, email: user.email, roles: user.roles}
+  };
 };
 
 // 사용자 프로필 조회 서비스
@@ -219,7 +227,7 @@ exports.updateProfile = async (userId, updateData) => {
   const user = await User.findById(userId);
   if (!user) throw new Error('사용자를 찾을 수 없습니다.');
 
-  //  변경된 데이터만 검사 (자기 자신의 기존 데이터 제외)
+  //  변경된 데이터 중복 검사
   if (updateData.userid && updateData.userid !== user.userid) {
     const existingUser = await User.findOne({userid: updateData.userid});
     if (existingUser) throw new Error('이미 사용 중인 아이디입니다.');
@@ -235,7 +243,6 @@ exports.updateProfile = async (userId, updateData) => {
     if (existingPhone) throw new Error('이미 사용 중인 전화번호입니다.');
   }
 
-  //  변경된 필드만 업데이트
   const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
     new: true,
     runValidators: true
@@ -268,8 +275,8 @@ exports.forgotPassword = async email => {
 
   user.passwordResetToken = hashedToken;
   user.passwordResetExpires = Date.now() + 3600000; // 1시간 후 만료
-
   await user.save();
+
   await sendResetPasswordEmail(email, resetToken);
 
   return {message: '비밀번호 재설정 이메일이 발송되었습니다.'};
@@ -279,7 +286,7 @@ exports.forgotPassword = async email => {
 exports.resetPassword = async ({userId, token, currentPassword, newPassword}) => {
   let user = null;
 
-  //  로그인된 사용자의 비밀번호 변경 (현재 비밀번호 확인)
+  // 로그인된 사용자 (currentPassword 확인)
   if (userId) {
     user = await User.findById(userId);
     if (!user) throw new Error('사용자를 찾을 수 없습니다.');
@@ -288,7 +295,7 @@ exports.resetPassword = async ({userId, token, currentPassword, newPassword}) =>
     if (!isMatch) throw new Error('현재 비밀번호가 일치하지 않습니다.');
   }
 
-  //  비밀번호 재설정 (비밀번호 찾기 후 이메일 링크로 받은 토큰 기반)
+  // 이메일 링크를 통한 비밀번호 재설정
   if (token) {
     user = await User.findOne({
       passwordResetExpires: {$gt: Date.now()}
@@ -298,7 +305,6 @@ exports.resetPassword = async ({userId, token, currentPassword, newPassword}) =>
       throw new Error('토큰이 유효하지 않거나 만료되었습니다.');
     }
 
-    //  토큰 검증 (bcrypt.compare 사용)
     const isValidToken = await bcrypt.compare(token, user.passwordResetToken);
     if (!isValidToken) {
       throw new Error('토큰이 유효하지 않습니다.');
@@ -307,7 +313,6 @@ exports.resetPassword = async ({userId, token, currentPassword, newPassword}) =>
 
   if (!user) throw new Error('비밀번호를 변경할 수 없습니다.');
 
-  //  새 비밀번호 설정
   user.password = await bcrypt.hash(newPassword, 10);
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
@@ -322,22 +327,23 @@ exports.logoutUser = async (res, userId) => {
     await RefreshToken.deleteMany({userId}); // 유저의 모든 리프레시 토큰 삭제
   }
 
+  // 쿠키 명시적 제거
   res.clearCookie('accessToken', {
     httpOnly: true,
     secure: isProduction,
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
-    path: '/' // 쿠키 삭제 경로 설정
+    sameSite: isProduction ? 'None' : 'Lax',
+    path: '/'
   });
 
   res.clearCookie('refreshToken', {
     httpOnly: true,
     secure: isProduction,
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
-    path: '/' // 쿠키 삭제 경로 설정
+    sameSite: isProduction ? 'None' : 'Lax',
+    path: '/'
   });
 };
 
-// 리프레시 토큰 갱신 서비스 (액세스 토큰 및 리프레시 토큰 재발급)
+// 리프레시 토큰 갱신 서비스
 exports.refreshAccessToken = async (refreshToken, res) => {
   try {
     if (!refreshToken) throw new Error('리프레시 토큰이 없습니다.');
@@ -355,21 +361,18 @@ exports.refreshAccessToken = async (refreshToken, res) => {
     const newAccessToken = jwt.sign(
       {id: decoded.id, roles: decoded.roles},
       process.env.JWT_SECRET,
-      {
-        expiresIn: '15m' // 새 액세스 토큰은 15분 유효
-      }
+      {expiresIn: '15m'} // 필요 시 변경
     );
 
     const newRefreshToken = jwt.sign(
       {id: decoded.id, roles: decoded.roles},
       process.env.REFRESH_TOKEN_SECRET,
-      {
-        expiresIn: '7d' // 새 리프레시 토큰은 7일 유효
-      }
+      {expiresIn: '7d'}
     );
 
-    // 기존 리프레시 토큰 삭제 후 새로운 토큰 저장
+    // 기존 리프레시 토큰 삭제
     await RefreshToken.deleteMany({userId: decoded.id});
+
     const newRefreshTokenDoc = new RefreshToken({
       userId: decoded.id,
       token: newRefreshToken,
@@ -377,23 +380,22 @@ exports.refreshAccessToken = async (refreshToken, res) => {
     });
     await newRefreshTokenDoc.save();
 
-    // 새로운 리프레시 토큰 쿠키 저장
+    // 새 리프레시 토큰 쿠키
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
+      sameSite: isProduction ? 'None' : 'Lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    // 새로운 액세스 토큰 쿠키 저장
+    // 새 액세스 토큰 쿠키
     res.cookie('accessToken', newAccessToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
+      sameSite: isProduction ? 'None' : 'Lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
-      // maxAge: 15 * 60 * 1000  15분
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     return newAccessToken;
@@ -401,7 +403,7 @@ exports.refreshAccessToken = async (refreshToken, res) => {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: isProduction,
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
+      sameSite: isProduction ? 'None' : 'Lax',
       path: '/'
     });
     throw new Error('유효하지 않은 리프레시 토큰입니다.');
