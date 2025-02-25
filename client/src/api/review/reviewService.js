@@ -3,6 +3,14 @@ import {authAPI} from '../auth/auth';
 
 const BASE_URL = 'http://localhost:5000/reviews';
 
+const requestConfig = {
+  withCredentials: true,
+  headers: {
+    'Cache-Control': 'no-store', // 캐시 방지
+    'Content-Type': 'application/json'
+  }
+};
+
 export const createReview = async formData => {
   return await axios.post(`${BASE_URL}/create`, formData, {
     headers: {
@@ -47,19 +55,6 @@ export const deleteReview = async reviewId => {
   }
 };
 
-export const likeReview = async reviewId => {
-  const response = await axios.post(`${BASE_URL}/${reviewId}/like`);
-  return response.data;
-};
-
-const requestConfig = {
-  withCredentials: true,
-  headers: {
-    'Cache-Control': 'no-store', // 캐시 방지
-    'Content-Type': 'application/json'
-  }
-};
-
 export const addComment = async (reviewId, commentContent) => {
   try {
     console.log(`[프론트] 리뷰 ${reviewId}에 댓글 추가 요청`);
@@ -95,5 +90,10 @@ export const addComment = async (reviewId, commentContent) => {
 
 export const deleteComment = async commentId => {
   const response = await axios.delete(`${BASE_URL}/comment/${commentId}`);
+  return response.data;
+};
+
+export const likeReview = async reviewId => {
+  const response = await axios.post(`${BASE_URL}/${reviewId}/like`);
   return response.data;
 };

@@ -35,12 +35,9 @@ const ReviewList = ({productId}) => {
         if (userData.status === 'fulfilled') {
           setCurrentUser(userData.value);
         } else {
-          console.log('비로그인 사용자입니다.');
           setCurrentUser(null); // 비로그인 상태
         }
 
-        // setReviews(reviewsData);
-        // setCurrentUser(userData);
       } catch (err) {
         console.error('데이터 불러오기 오류:', err);
       }
@@ -67,10 +64,9 @@ const ReviewList = ({productId}) => {
   const handleDelete = async reviewId => {
     try {
       await deleteReview(reviewId);
-      alert('리뷰가 성공적으로 삭제되었습니다.');
+      alert('리뷰가 삭제되었습니다.');
       setReviews(prevReviews => prevReviews.filter(review => review._id !== reviewId));
     } catch (err) {
-      console.error('[프론트] 리뷰 삭제 에러:', err.message);
       alert(`리뷰 삭제 실패: ${err.message}`);
     }
   };
@@ -88,7 +84,7 @@ const ReviewList = ({productId}) => {
 
     try {
       await addComment(reviewId, commentInput);
-      alert('댓글이 성공적으로 추가되었습니다.');
+      alert('댓글이 작성되었습니다.');
       setCommentInput('');
       setActiveCommentBox(null);
 
@@ -96,7 +92,6 @@ const ReviewList = ({productId}) => {
       const updatedReviews = await getReviews(productId);
       setReviews(updatedReviews);
     } catch (error) {
-      console.error('[프론트] 댓글 추가 실패:', error.message);
       alert(`댓글 추가 실패: ${error.message}`);
     }
   };
