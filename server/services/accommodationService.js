@@ -287,10 +287,8 @@ exports.getAvailableRoomsByAccommodation = async ({
         const reservedCountOnDate =
           reservedDates.find(d => d.date.toISOString().split('T')[0] === dateStr)
             ?.count || 0;
-
         // 가용 객실 개수보다 예약 개수가 많으면 제외
         if (reservedCountOnDate >= room.availableCount) return false;
-
         currentDate.setDate(currentDate.getDate() + 1);
       }
       return true;

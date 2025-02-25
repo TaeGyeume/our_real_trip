@@ -4,7 +4,7 @@ import {
   deleteMultipleTourTickets
 } from '../../../api/tourTicket/tourTicketService';
 import {useLocation, useNavigate} from 'react-router-dom';
-import '../tourTicket/styles/TourTicketList.css';
+import {Box, Card, CardMedia, CardContent, Typography} from '@mui/material';
 
 const TourTicketList = () => {
   const [tickets, setTickets] = useState([]);
@@ -103,47 +103,75 @@ const TourTicketList = () => {
         </div>
       )}
 
-      <div className="tour-ticket-grid">
+      <Box display="flex" flexWrap="wrap" gap={3} mt={3}>
         {tickets.length > 0 ? (
           tickets.map(ticket => (
-            <div
+            <Card
               key={ticket._id}
-              className={`tour-ticket-card ${
-                selectedTickets.has(ticket._id) ? 'selected' : ''
-              }`}
+              sx={{
+                width: '300px',
+                borderRadius: 3,
+                boxShadow: 3,
+                cursor: 'pointer',
+                transition: '0.3s',
+                position: 'relative',
+                mb: 2,
+                '&:hover': {boxShadow: 6}
+              }}
               onClick={() =>
                 isDeleteMode
                   ? handleSelectTicket(ticket._id)
                   : navigate(`/product/tourTicket/${ticket._id}`)
-              }
-            >
+              }>
+              {/* 체크박스, 이미지, 상품 정보 */}
               {isDeleteMode && (
                 <input
                   type="checkbox"
-                  className="ticket-checkbox"
                   checked={selectedTickets.has(ticket._id)}
                   onChange={() => handleSelectTicket(ticket._id)}
                   onClick={e => e.stopPropagation()} // 카드 클릭 방지
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    left: 10,
+                    zIndex: 2,
+                    backgroundColor: 'white'
+                  }}
                 />
               )}
-              <img
-                src={`http://localhost:5000${ticket.images[0]}`}
+              <CardMedia
+                component="img"
+                height="200"
+                image={`http://localhost:5000${ticket.images[0]}`}
                 alt={ticket.title}
-                className="ticket-image"
               />
-              <div className="ticket-info">
-                <h3 className="ticket-title">{ticket.title}</h3>
-                <p className="ticket-description">✏️| {ticket.description}</p>
-                <p className="ticket-location">지역: {ticket.location}</p>
-                <p className="ticket-price">{ticket.price.toLocaleString()}원</p>
-                <p className="ticket-stock">재고: {ticket.stock}개</p>
-              </div>
-            </div>
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{height: '2rem', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                  {ticket.title}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{height: '2rem', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                  ✏️| {ticket.description}
+                </Typography>
+                <Typography variant="body1" sx={{color: 'primary.main', mt: 1}}>
+                  💰 {ticket.price.toLocaleString()}원
+                </Typography>
+                <Typography>재고: {ticket.stock}</Typography>
+                <Typography variant="body2" sx={{mt: 1}}>
+                  지역: {ticket.location}
+                </Typography>
+              </CardContent>
+            </Card>
           ))
         ) : (
           <p>등록된 상품이 없습니다.</p>
         )}
-      </div>
+      </Box>
     </div>
   );
 };

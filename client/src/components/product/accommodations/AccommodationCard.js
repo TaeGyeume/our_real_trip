@@ -2,7 +2,14 @@
 import React from 'react';
 import {createSearchParams, useNavigate} from 'react-router-dom';
 import {deleteAccommodation} from '../../../api/accommodation/accommodationService';
-import './styles/AccommodationCard.css';
+import {
+  Card,
+  CardMedia,
+  CardContent,
+  Typography,
+  Button,
+  CardActions
+} from '@mui/material';
 
 // 기본 날짜 설정 함수 (오늘 + n일)
 const getFormattedDate = (daysToAdd = 0) => {
@@ -79,31 +86,57 @@ const AccommodationCard = ({
   }
 
   return (
-    <div
-      className="card accommodation-card mb-3"
-      onClick={handleCardClick}
-      style={{cursor: 'pointer'}}>
-      <img
-        src={imageUrl}
-        className="card-img-top accommodation-image"
-        alt={accommodation.name}
-      />
-      <div className="card-body">
-        <h5 className="card-title">{accommodation.name}</h5>
-        <p className="card-text">{accommodation.description}</p>
-        <p>
-          <strong>최저가:</strong> {accommodation.minPrice?.toLocaleString()}원
-        </p>
-      </div>
-      <div className="d-flex justify-content-between px-3 pb-3">
-        <button className="btn btn-warning" onClick={handleModifyClick}>
+    <Card
+      sx={{
+        maxWidth: 300,
+        borderRadius: 3,
+        boxShadow: 3,
+        cursor: 'pointer',
+        transition: '0.3s',
+        '&:hover': {boxShadow: 6},
+        mb: 2
+      }}
+      onClick={handleCardClick}>
+      {/* 숙소 이미지 */}
+      <CardMedia component="img" height="200" image={imageUrl} alt={accommodation.name} />
+
+      {/* 숙소 정보 */}
+      <CardContent>
+        <Typography variant="h6" fontWeight="bold">
+          {accommodation.name}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
+          {accommodation.description}
+        </Typography>
+        <Typography variant="body1" fontWeight="bold">
+          최저가: {accommodation.minPrice?.toLocaleString()}원
+        </Typography>
+      </CardContent>
+
+      {/* 액션 버튼 */}
+      <CardActions sx={{justifyContent: 'space-between', px: 2, pb: 2}}>
+        <Button
+          variant="contained"
+          color="warning"
+          size="small"
+          onClick={e => {
+            e.stopPropagation();
+            handleModifyClick();
+          }}>
           ✏️ 수정
-        </button>
-        <button className="btn btn-danger" onClick={handleDeleteClick}>
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          size="small"
+          onClick={e => {
+            e.stopPropagation();
+            handleDeleteClick();
+          }}>
           🗑️ 삭제
-        </button>
-      </div>
-    </div>
+        </Button>
+      </CardActions>
+    </Card>
   );
 };
 
