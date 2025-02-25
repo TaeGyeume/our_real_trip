@@ -91,8 +91,6 @@ const RoomModify = () => {
         const response = await axios.get(`/rooms/${roomId}`);
         const data = response.data;
 
-        console.log('객실 데이터:', data); // 디버깅용 로그 추가
-
         setFormData({
           ...data,
           amenities: data.amenities || [],
@@ -107,11 +105,8 @@ const RoomModify = () => {
             img.startsWith('/uploads/') ? `${SERVER_URL}${img}` : img
           )
         );
-
-        console.log('숙소 ID 저장됨:', data.accommodation); // 디버깅용
         setLoading(false);
       } catch (err) {
-        console.error('객실 정보 불러오기 오류:', err);
         setError('객실 정보를 불러오는 중 오류 발생');
         setLoading(false);
       }
@@ -134,8 +129,6 @@ const RoomModify = () => {
 
   // 이미지 삭제 핸들러 (UI & 데이터에서 정확히 삭제)
   const handleDeleteImage = imageUrl => {
-    console.log('삭제할 이미지:', imageUrl);
-
     if (imageUrl.startsWith('blob:')) {
       setNewImages(prev => {
         return prev.filter(img => {
@@ -179,16 +172,10 @@ const RoomModify = () => {
   // 수정 요청 핸들러 (FormData로 업로드)
   const handleSubmit = async e => {
     e.preventDefault();
-
-    console.log('최종 삭제할 이미지 목록 전송:', imagesToDelete);
-
     try {
       const formattedDeletedImages = imagesToDelete
         .filter(img => !img.startsWith('blob:'))
         .map(img => (img.startsWith(SERVER_URL) ? img.replace(SERVER_URL, '') : img));
-
-      console.log('DELETE 요청 전송 (삭제할 이미지):', formattedDeletedImages);
-
       if (formattedDeletedImages.length > 0) {
         await axios.post(
           `/rooms/${roomId}/images/delete`,
@@ -220,8 +207,6 @@ const RoomModify = () => {
         .filter(img => !imagesToDelete.includes(img.preview)) // `preview` 값 기준으로 삭제 여부 확인
         .map(img => img.file); // `File` 객체만 추출
 
-      console.log('최종 업로드할 새로운 이미지:', finalNewImages);
-
       if (finalNewImages.length > 0) {
         finalNewImages.forEach(image => {
           updatedRoomData.append('images', image);
@@ -230,7 +215,6 @@ const RoomModify = () => {
         console.log('업로드할 새 이미지 없음!');
       }
 
-      console.log('PATCH 요청 전송 (객실 수정)');
       await axios.patch(`/rooms/${roomId}`, updatedRoomData, {
         headers: {'Content-Type': 'multipart/form-data'}
       });

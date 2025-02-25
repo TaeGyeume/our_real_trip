@@ -65,8 +65,6 @@ const RoomNew = () => {
 
   // 이미지 삭제 핸들러
   const handleDeleteImage = imageUrl => {
-    console.log('삭제할 이미지:', imageUrl);
-
     if (imageUrl.startsWith('blob:')) {
       setNewImages(prev => prev.filter(img => img.preview !== imageUrl)); // 정확하게 제거
     } else {
@@ -105,8 +103,6 @@ const RoomNew = () => {
       .filter(img => !imagesToDelete.includes(img.preview)) // `preview` 값 기준으로 삭제 여부 확인
       .map(img => img.file); // `File` 객체만 추출
 
-    console.log('최종 업로드할 새로운 이미지:', finalNewImages);
-
     if (finalNewImages.length > 0) {
       finalNewImages.forEach(image => {
         newRoomData.append('images', image);
@@ -116,8 +112,6 @@ const RoomNew = () => {
     }
 
     try {
-      console.log('삭제할 이미지 리스트:', imagesToDelete);
-
       // 이미지 삭제 요청 (이미 존재하는 이미지 삭제)
       if (imagesToDelete.length > 0) {
         await axios.post(
