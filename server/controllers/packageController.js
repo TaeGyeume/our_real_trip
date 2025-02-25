@@ -160,6 +160,15 @@ exports.updatePackage = async (req, res) => {
     }
 
     const {id} = req.params;
+
+    // 🔍 [DEBUG] 요청 바디 확인
+    console.log('🔍 [DEBUG] 요청 데이터:', req.body);
+
+    // req.body가 제대로 들어오는지 확인
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({message: '업데이트할 데이터가 없습니다.'});
+    }
+
     const updatedPackage = await packageService.updatePackage(id, req.body);
 
     if (!updatedPackage) {
@@ -172,7 +181,6 @@ exports.updatePackage = async (req, res) => {
     return res.status(500).json({message: '패키지 수정 실패', error: error.message});
   }
 };
-
 /*
  * 패키지 상품 삭제 (관리자만 가능)
  */

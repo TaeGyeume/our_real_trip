@@ -160,35 +160,66 @@ async function getPackageById(packageId) {
  * ✅ 패키지 상품 수정 (관리자만 가능)
  */
 async function updatePackage(packageId, updateData) {
-  const {accommodations, flights, tours, discountRate, startDate, endDate} = updateData;
+  console.log('🔍 [DEBUG] 요청 데이터:', updateData);
 
-  // 기존 패키지 데이터를 조회하여 수정
+  // 기존 패키지 데이터 가져오기
   const existingPackage = await Package.findById(packageId);
   if (!existingPackage) {
     throw new Error('패키지를 찾을 수 없습니다.');
   }
 
-  // 새로 입력된 숙소, 항공, 투어 정보로 가격을 계산
-  let totalPrice = 0;
+  // 업데이트할 필드 설정 (기존 값 유지)
+  const updatedFields = {
+    name: updateData.name ?? existingPackage.name,
+    description: updateData.description ?? existingPackage.description,
+    discountRate: updateData.discountRate ?? existingPackage.discountRate,
+    startDate: updateData.startDate ?? existingPackage.startDate,
+    endDate: updateData.endDate ?? existingPackage.endDate,
+    category: updateData.category ?? existingPackage.category,
+    minPeople: updateData.minPeople ?? existingPackage.minPeople,
+    maxPeople: updateData.maxPeople ?? existingPackage.maxPeople,
+    status: updateData.status ?? existingPackage.status,
+    images: updateData.images ?? existingPackage.images,
+    availableDates: updateData.availableDates ?? existingPackage.availableDates,
+    createdBy: existingPackage.createdBy // 작성자는 유지
+  };
 
-  if (accommodations && accommodations.length > 0) {
-    const accommodationData = await Accommodation.find({_id: {$in: accommodations}});
-    if (!accommodationData || accommodationData.length !== accommodations.length) {
+  // ✅ 가격 관련 기존 값 유지
+  let totalPrice = existingPackage.price;
+  let finalPrice = existingPackage.finalPrice;
+
+  // ✅ 숙소 업데이트가 포함된 경우 가격 재계산, 없으면 기존 가격 유지
+  if (updateData.accommodations) {
+    const accommodationData = await Accommodation.find({
+      _id: {$in: updateData.accommodations}
+    });
+    if (
+      !accommodationData ||
+      accommodationData.length !== updateData.accommodations.length
+    ) {
       throw new Error('숙소 정보를 찾을 수 없습니다.');
     }
-    totalPrice += accommodationData.reduce((sum, acc) => sum + (acc.minPrice || 0), 0);
+    totalPrice = accommodationData.reduce((sum, acc) => sum + (acc.minPrice || 0), 0);
+    updatedFields.accommodations = updateData.accommodations;
+  } else {
+    updatedFields.accommodations = existingPackage.accommodations;
   }
 
-  if (tours && tours.length > 0) {
-    const tourData = await TourTicket.find({_id: {$in: tours}});
-    if (!tourData || tourData.length !== tours.length) {
+  // ✅ 투어 업데이트가 포함된 경우 가격 재계산, 없으면 기존 가격 유지
+  if (updateData.tours) {
+    const tourData = await TourTicket.find({_id: {$in: updateData.tours}});
+    if (!tourData || tourData.length !== updateData.tours.length) {
       throw new Error('투어 정보를 찾을 수 없습니다.');
     }
     totalPrice += tourData.reduce((sum, tour) => sum + (tour.price || 0), 0);
+    updatedFields.tours = updateData.tours;
+  } else {
+    updatedFields.tours = existingPackage.tours;
   }
 
-  if (flights && flights.length > 0) {
-    for (const flight of flights) {
+  // ✅ 항공 업데이트가 포함된 경우 가격 재계산, 없으면 기존 가격 유지
+  if (updateData.flights) {
+    for (const flight of updateData.flights) {
       const flightData = await Flight.findById(flight.flightId);
       if (!flightData) {
         throw new Error(`항공 정보를 찾을 수 없습니다: ${flight.flightId}`);
@@ -198,34 +229,33 @@ async function updatePackage(packageId, updateData) {
       }
       totalPrice += flightData.price * flight.seatsToUse;
     }
+    updatedFields.flights = updateData.flights;
+  } else {
+    updatedFields.flights = existingPackage.flights;
   }
 
-  // 최종 가격 계산 (할인 적용)
-  let finalPrice = 0;
-  if (totalPrice > 0) {
-    finalPrice = Math.round(totalPrice - (totalPrice * discountRate) / 100);
+  // ✅ 할인율 적용 (할인율이 업데이트될 경우만 재계산, 아니면 기존 최종 가격 유지)
+  if (updateData.discountRate !== undefined || totalPrice !== existingPackage.price) {
+    finalPrice = Math.round(totalPrice - (totalPrice * updatedFields.discountRate) / 100);
   }
 
-  // finalPrice가 NaN이면 0으로 설정
-  if (isNaN(finalPrice)) {
-    finalPrice = 0;
-  }
+  // ✅ 기존 가격 유지
+  updatedFields.price = totalPrice ?? existingPackage.price;
+  updatedFields.finalPrice = finalPrice ?? existingPackage.finalPrice;
+
+  console.log('✅ [DEBUG] 최종 가격:', updatedFields.finalPrice);
 
   // 패키지 데이터 업데이트
-  const updatedPackage = await Package.findByIdAndUpdate(
-    packageId,
-    {
-      ...updateData,
-      price: totalPrice,
-      finalPrice
-    },
-    {new: true}
-  ).populate('accommodations flights tours createdBy');
+  const updatedPackage = await Package.findByIdAndUpdate(packageId, updatedFields, {
+    new: true,
+    runValidators: true
+  }).populate('accommodations flights tours createdBy');
 
   if (!updatedPackage) {
     throw new Error('패키지 수정 실패: 패키지를 찾을 수 없습니다.');
   }
 
+  console.log('✅ [SUCCESS] 패키지 수정 완료:', updatedPackage);
   return updatedPackage;
 }
 
