@@ -100,12 +100,16 @@ exports.addComment = async (req, res) => {
 
 // 댓글 삭제
 exports.deleteComment = async (req, res) => {
-  const {commentId} = req.params;
   try {
-    await Comment.findByIdAndDelete(commentId);
-    res.json({message: '댓글이 삭제되었습니다.'});
-  } catch (err) {
-    res.status(500).json({message: '댓글 삭제 중 오류 발생'});
+    const {reviewId, commentId} = req.params;
+    const userId = req.user.id;
+
+    const result = await reviewService.deleteComment(reviewId, commentId, userId);
+
+    res.status(200).json({message: '댓글이 성공적으로 삭제되었습니다.', review: result});
+  } catch (error) {
+    console.error('[서버] 댓글 삭제 실패:', error.message);
+    res.status(500).json({message: error.message});
   }
 };
 

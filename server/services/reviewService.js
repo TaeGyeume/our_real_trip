@@ -74,8 +74,6 @@ exports.deleteReview = async id => {
       throw new Error('리뷰를 찾을 수 없습니다.');
     }
 
-    // 관련 댓글 삭제
-    // await Comment.deleteMany({reviewId: id});
     console.log('[서버] 리뷰 및 댓글 삭제 성공');
   } catch (error) {
     console.error('[서버] 리뷰 삭제 실패:', error.message);
@@ -132,6 +130,45 @@ exports.addComment = async (reviewId, userId, commentContent) => {
 };
 
 // 댓글 삭제
-exports.deleteComment = async commentId => {
-  await Comment.findByIdAndDelete(commentId);
+exports.deleteComment = async (reviewId, commentId, userId) => {
+  try {
+    // 리뷰 ID 유효성 검사
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+      throw new Error('유효하지 않은 리뷰 ID입니다.');
+    }
+
+    // 댓글 ID 유효성 검사
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+      throw new Error('유효하지 않은 댓글 ID입니다.');
+    }
+
+    // 리뷰 찾기
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      throw new Error('리뷰를 찾을 수 없습니다.');
+    }
+
+    // 사용자 정보 확인
+    const user = await User.findById(userId);
+    if (!user || !user.roles.includes('admin')) {
+      throw new Error('댓글 삭제 권한이 없습니다.');
+    }
+
+    // 댓글 삭제
+    const initialLength = review.comments.length;
+    review.comments = review.comments.filter(
+      comment => comment._id.toString() !== commentId
+    );
+
+    if (initialLength === review.comments.length) {
+      throw new Error('댓글을 찾을 수 없습니다.');
+    }
+
+    await review.save();
+
+    return review;
+  } catch (error) {
+    console.error('[서버] 댓글 삭제 실패:', error.message);
+    throw error;
+  }
 };

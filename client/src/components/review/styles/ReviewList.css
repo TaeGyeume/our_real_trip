@@ -242,3 +242,17 @@
   text-align: left;
   font-size: 14px;
 }
+
+.delete-comment-btn {
+  position: relative;
+  background-color: transparent;
+  border: none;
+  color: red;
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 14px;
+}
+
+.delete-comment-btn:hover {
+  text-decoration: underline;
+}

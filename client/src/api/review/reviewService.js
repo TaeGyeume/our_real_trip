@@ -88,9 +88,20 @@ export const addComment = async (reviewId, commentContent) => {
   }
 };
 
-export const deleteComment = async commentId => {
-  const response = await axios.delete(`${BASE_URL}/comment/${commentId}`);
-  return response.data;
+export const deleteComment = async (reviewId, commentId) => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/${reviewId}/comments/${commentId}`, {
+      withCredentials: true
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      '[프론트] 댓글 삭제 실패:',
+      error.response?.data?.message || error.message
+    );
+    throw error.response?.data || {message: '댓글 삭제 중 오류가 발생했습니다.'};
+  }
 };
 
 export const likeReview = async reviewId => {

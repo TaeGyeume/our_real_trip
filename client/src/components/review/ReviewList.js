@@ -3,7 +3,8 @@ import {
   getReviews,
   likeReview,
   deleteReview,
-  addComment
+  addComment,
+  deleteComment
 } from '../../api/review/reviewService';
 import {AiOutlineLike, AiOutlineMore} from 'react-icons/ai';
 import './styles/ReviewList.css';
@@ -37,7 +38,6 @@ const ReviewList = ({productId}) => {
         } else {
           setCurrentUser(null); // 비로그인 상태
         }
-
       } catch (err) {
         console.error('데이터 불러오기 오류:', err);
       }
@@ -68,6 +68,19 @@ const ReviewList = ({productId}) => {
       setReviews(prevReviews => prevReviews.filter(review => review._id !== reviewId));
     } catch (err) {
       alert(`리뷰 삭제 실패: ${err.message}`);
+    }
+  };
+
+  const handleDeleteComment = async (reviewId, commentId) => {
+    try {
+      await deleteComment(reviewId, commentId);
+      alert('댓글이 성공적으로 삭제되었습니다.');
+
+      const updatedReviews = await getReviews(productId);
+      setReviews(updatedReviews);
+    } catch (error) {
+      console.error('[프론트] 댓글 삭제 실패:', error.message);
+      alert(`댓글 삭제 실패: ${error.message}`);
     }
   };
 
@@ -205,6 +218,15 @@ const ReviewList = ({productId}) => {
                       </strong>
                       : {comment.content}
                     </p>
+
+                    {/* 관리자만 댓글 삭제 */}
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDeleteComment(review._id, comment._id)}
+                        className="delete-comment-btn">
+                        삭제
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
