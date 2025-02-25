@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {fetchTravelItemDetail} from '../../api/travelItem/travelItemService';
 import './styles/TravelItemDetailPage.css';
+import ReviewList from '../../components/review/ReviewList';
 
 const TravelItemDetailPage = () => {
   const {itemId} = useParams();
@@ -69,6 +70,11 @@ const TravelItemDetailPage = () => {
             🛒 구매하기
           </button>
         </div>
+      </div>
+
+      <div>
+        <h2>📝 리뷰</h2>
+        <ReviewList productId={itemId} />
       </div>
     </div>
   );

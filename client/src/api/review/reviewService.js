@@ -39,6 +39,7 @@ export const updateReview = async (reviewId, updatedData) => {
         'Content-Type': 'multipart/form-data'
       }
     });
+    
     return response.data;
   } catch (error) {
     console.error('[프론트] 리뷰 수정 실패:', error.response?.data || error.message);

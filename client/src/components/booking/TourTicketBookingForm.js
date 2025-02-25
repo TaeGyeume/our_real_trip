@@ -6,6 +6,7 @@ import {fetchUserCoupons} from '../../api/coupon/couponService';
 import {cancelBooking} from '../../api/booking/bookingService';
 import {authAPI} from '../../api/auth/index';
 import CouponSelector from './CouponSelector';
+import './styles/TourTicketBookingForm.css';
 
 const TourTicketBookingForm = () => {
   const {id} = useParams();
@@ -139,35 +140,126 @@ const TourTicketBookingForm = () => {
   }
 
   return (
-    <div className="booking-form">
-      <h3>상품명: {ticket.title}</h3>
-      <p>가격: {ticket.price.toLocaleString()} 원</p>
+    //     <div className="booking-container">
+    //       <h3>상품명: {ticket.title}</h3>
+    //       <p>가격: {ticket.price.toLocaleString()} 원</p>
 
-      <label>총 개수</label>
-      <input
-        type="number"
-        name="count"
-        value={formData.count}
-        min="1"
-        max="50"
-        onChange={e => setFormData({...formData, count: e.target.value})}
-      />
+    //       <label>총 개수</label>
+    //       <input
+    //         type="number"
+    //         name="count"
+    //         value={formData.count}
+    //         min="1"
+    //         max="50"
+    //         onChange={e => setFormData({...formData, count: e.target.value})}
+    //       />
 
-      <CouponSelector
-        userCoupons={userCoupons}
-        itemPrice={ticket.price}
-        count={formData.count}
-        onCouponSelect={handleCouponSelect}
-      />
+    //       <CouponSelector
+    //         userCoupons={userCoupons}
+    //         itemPrice={ticket.price}
+    //         count={formData.count}
+    //         onCouponSelect={handleCouponSelect}
+    //       />
 
-      <p>
-        최종 결제 금액:{' '}
-        {(ticket.price * formData.count - discountAmount).toLocaleString()} 원
-      </p>
+    //       <p>
+    //         최종 결제 금액:{' '}
+    //         {(ticket.price * formData.count - discountAmount).toLocaleString()} 원
+    //       </p>
 
-      <button onClick={handlePayment} className="payment-btn">
-        결제하기
-      </button>
+    //       <button onClick={handlePayment} className="payment-btn">
+    //         결제하기
+    //       </button>
+    //     </div>
+    //   );
+    // };
+
+    <div className="booking-container">
+      <h2>예약하기</h2>
+      <div className="booking-content">
+        {/* 왼쪽: 티켓 정보, 쿠폰, 포인트, 예약자 정보 */}
+        <div className="booking-details">
+          <div className="ticket-info">
+            <h3>{ticket.title}</h3>
+            <p>가격: {ticket.price.toLocaleString()} 원</p>
+          </div>
+
+          <hr className="divider" />
+          <div className="coupon-section">
+            <h4>쿠폰 할인</h4>
+            <CouponSelector
+              userCoupons={userCoupons}
+              itemPrice={ticket.price}
+              count={formData.count}
+              onCouponSelect={handleCouponSelect}
+            />
+            <br />
+            <p>
+              사용 가능한 쿠폰이 보이지 않나요? 내 프로필 > 쿠폰 메뉴에서 쿠폰 상태를
+              확인해 주세요. 선착순 쿠폰은 소진 완료되면 더 이상 노출되지 않아요!
+            </p>
+            <br />
+            <br />
+          </div>
+          <hr className="divider" />
+          <div className="point-section">
+            <h4>포인트 사용</h4>
+            <p>내 포인트: 0원</p>
+            <br />
+            <br />
+          </div>
+          <hr className="divider" />
+          <div className="user-info">
+            <h4>예약자 정보</h4>
+            <p>{user.username}</p>
+            <p>{user.email}</p>
+            <p>{user.phone}</p>
+          </div>
+        </div>
+
+        {/* 오른쪽: 결제 요약 및 버튼 */}
+        <div className="payment-section">
+          <div className="payment-summary">
+            <h4>결제 정보</h4>
+            <p>
+              주문 금액 <span>{ticket.price.toLocaleString()}원</span>
+            </p>
+            <p>
+              할인 금액 <span>{discountAmount.toLocaleString()}원</span>
+            </p>
+
+            <div>
+              <strong>
+                총 결제 금액:{' '}
+                {(ticket.price * formData.count - discountAmount).toLocaleString()}원
+              </strong>
+            </div>
+          </div>
+
+          <div className="terms-section">
+            <h4>약관 안내</h4>
+            <p>
+              개인정보 수집 및 이용 동의 (필수)
+              <br />
+              개인정보 제공 동의 (필수)
+            </p>
+            <p>위 약관을 확인하였으며, 본인은 약관 및 결제에 동의합니다.</p>
+          </div>
+
+          <div className="cancel-policy">
+            <h5>예약 취소 규정</h5>
+            <ul>
+              <li>부분환불 가능</li>
+              <li>유효기간 내 미사용 티켓 100% 환불 가능</li>
+              <li>유효기간 후 미사용 티켓 100% 환불 가능</li>
+              <li>사용한 티켓은 환불 불가능합니다.</li>
+            </ul>
+          </div>
+
+          <button onClick={handlePayment} className="payment-btn">
+            {(ticket.price * formData.count - discountAmount).toLocaleString()}원 결제하기
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
