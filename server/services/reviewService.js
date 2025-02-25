@@ -1,5 +1,7 @@
 const Review = require('../models/Review');
 const User = require('../models/User');
+const fs = require('fs');
+const path = require('path');
 const mongoose = require('mongoose');
 
 exports.createReview = async reviewData => {
@@ -50,13 +52,32 @@ exports.toggleLike = async (reviewId, userId) => {
   return review;
 };
 
-exports.updateReview = async (id, data, files) => {
-  console.log('[서버] 리뷰 수정 서비스 호출 - id:', id, 'data:', data);
-  const imagePaths = files ? files.map(file => `/uploads/${file.filename}`) : [];
-  const updatedData = {...data, images: imagePaths.length > 0 ? imagePaths : data.images};
-  const review = await Review.findByIdAndUpdate(id, updatedData, {new: true});
-  console.log('[서버] 리뷰 수정 성공:', review);
-  return review;
+exports.updateReview = async (reviewId, updateData, imageFiles) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+      throw new Error('유효하지 않은 리뷰 ID입니다.');
+    }
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      throw new Error('리뷰를 찾을 수 없습니다.');
+    }
+
+    if (updateData.content) {
+      review.content = updateData.content;
+    }
+
+    if (imageFiles && imageFiles.length > 0) {
+      const newImagePaths = imageFiles.map(file => `/uploads/${file.filename}`);
+      review.images.push(...newImagePaths);
+    }
+
+    await review.save();
+    return review;
+  } catch (error) {
+    console.error('[서버] 리뷰 수정 실패:', error.message);
+    throw new Error(error.message);
+  }
 };
 
 exports.deleteReview = async id => {
@@ -188,7 +209,7 @@ exports.updateComment = async (reviewId, commentId, userId, newContent) => {
     }
 
     const comment = review.comments.id(commentId);
-    
+
     if (!comment) {
       throw new Error('댓글을 찾을 수 없습니다.');
     }

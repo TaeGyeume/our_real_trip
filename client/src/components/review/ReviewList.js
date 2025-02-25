@@ -3,6 +3,7 @@ import {
   getReviews,
   likeReview,
   deleteReview,
+  updateReview,
   addComment,
   deleteComment,
   updateComment
@@ -16,6 +17,9 @@ const ReviewList = ({productId}) => {
   const [reviews, setReviews] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [editedContent, setEditedContent] = useState('');
+  const [editedImages, setEditedImages] = useState([]);
   const [commentInput, setCommentInput] = useState('');
   const [activeCommentBox, setActiveCommentBox] = useState(null);
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -86,6 +90,45 @@ const ReviewList = ({productId}) => {
     } catch (err) {
       alert(`리뷰 삭제 실패: ${err.message}`);
     }
+  };
+
+  const handleEditReview = review => {
+    setEditingReviewId(review._id);
+    setEditedContent(review.content);
+    setEditedImages(review.images || []);
+  };
+
+  const handleUpdateReview = async reviewId => {
+    const formData = new FormData();
+    formData.append('content', editedContent);
+
+    // 추가된 이미지 업로드
+    editedImages.forEach(img => {
+      if (img instanceof File) {
+        formData.append('images', img);
+      }
+    });
+
+    try {
+      await updateReview(reviewId, formData);
+      alert('리뷰가 성공적으로 수정되었습니다.');
+      setEditingReviewId(null);
+
+      // 리뷰 새로고침
+      const updatedReviews = await getReviews(productId);
+      setReviews(updatedReviews);
+    } catch (error) {
+      alert(`리뷰 수정 실패: ${error.message}`);
+    }
+  };
+
+  const handleImageChange = e => {
+    const files = Array.from(e.target.files);
+    setEditedImages(prevImages => [...prevImages, ...files]);
+  };
+
+  const handleRemoveImage = index => {
+    setEditedImages(prevImages => prevImages.filter((_, i) => i !== index));
   };
 
   const handleDeleteComment = async (reviewId, commentId) => {
@@ -160,7 +203,7 @@ const ReviewList = ({productId}) => {
             <div className="review-header">
               <div className="review-user-info">
                 <span className="review-username">
-                  {review.userId?.username || '익명 사용자'}
+                  👤 {review.userId?.username || '익명 사용자'}
                 </span>
                 <span className="review-date">
                   &nbsp;
@@ -176,7 +219,7 @@ const ReviewList = ({productId}) => {
                 {(currentUser?._id === review.userId?._id || isAdmin) && (
                   <div className="kebab-menu" onMouseDown={e => e.stopPropagation()}>
                     <AiOutlineMore
-                      onClick={e => toggleMenu(review._id)}
+                      onClick={e => toggleMenu(review._id, e)}
                       className="kebab-icon"
                     />
 
@@ -188,8 +231,7 @@ const ReviewList = ({productId}) => {
                           <>
                             {currentUser._id === review.userId._id && (
                               <>
-                                <button
-                                  onClick={() => alert(`리뷰 ${review._id} 수정하기`)}>
+                                <button onClick={() => handleEditReview(review)}>
                                   수정하기
                                 </button>
                                 <button onClick={() => handleDelete(review._id)}>
@@ -223,19 +265,62 @@ const ReviewList = ({productId}) => {
               </div>
             </div>
 
-            {review.images && review.images.length > 0 && (
-              <div className="review-images">
-                {review.images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={`http://localhost:5000${image}`}
-                    alt={`리뷰 이미지 ${index + 1}`}
-                    className="review-thumbnail"
-                  />
-                ))}
+            {/* 리뷰 수정 모드 */}
+            {editingReviewId === review._id ? (
+              <div className="edit-review">
+                <textarea
+                  value={editedContent}
+                  onChange={e => setEditedContent(e.target.value)}
+                  placeholder="리뷰를 수정하세요..."
+                />
+
+                <div className="edit-images">
+                  {editedImages.map((img, index) => (
+                    <div key={index} className="edit-image">
+                      {img instanceof File ? (
+                        <img
+                          src={URL.createObjectURL(img)}
+                          alt={`업로드 이미지 ${index + 1}`}
+                          width="100"
+                        />
+                      ) : (
+                        <img
+                          src={`http://localhost:5000${img}`}
+                          alt={`기존 이미지 ${index + 1}`}
+                          width="100"
+                        />
+                      )}
+                      <button onClick={() => handleRemoveImage(index)}>삭제</button>
+                    </div>
+                  ))}
+                </div>
+
+                <input type="file" multiple onChange={handleImageChange} />
+
+                <button onClick={() => handleUpdateReview(review._id)}>저장</button>
+                <button onClick={() => setEditingReviewId(null)}>취소</button>
               </div>
+            ) : (
+              <>
+                {/* 리뷰 내용 및 이미지 표시 */}
+                <p className="review-text">{review.content}</p>
+
+                {review.images && review.images.length > 0 && (
+                  <div className="review-images">
+                    {review.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={`http://localhost:5000${image}`}
+                        alt={`리뷰 이미지 ${index + 1}`}
+                        className="review-thumbnail"
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
 
+            {/* 별점 표시 */}
             <div className="review-rating">
               {[...Array(5)].map((_, index) => {
                 const currentStar = index + 1;
@@ -253,8 +338,7 @@ const ReviewList = ({productId}) => {
               })}
             </div>
 
-            <p className="review-text">{review.content}</p>
-
+            {/* 댓글 작성 */}
             {activeCommentBox === review._id && (
               <div className="comment-box">
                 <textarea
@@ -266,6 +350,7 @@ const ReviewList = ({productId}) => {
               </div>
             )}
 
+            {/* 댓글 리스트 */}
             {review.comments && review.comments.length > 0 && (
               <div className="comment-list">
                 {review.comments.map((comment, index) => (
@@ -294,7 +379,7 @@ const ReviewList = ({productId}) => {
                           : {comment.content}
                         </p>
 
-                        {/* 관리자일 때만 수정/삭제 버튼 노출 */}
+                        {/* 관리자일 때만 수정/삭제 버튼 표시 */}
                         {currentUser?.roles?.includes('admin') && (
                           <div className="comment-actions">
                             <button

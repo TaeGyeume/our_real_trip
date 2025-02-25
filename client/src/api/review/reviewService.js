@@ -29,12 +29,21 @@ export const getReviews = async productId => {
   }
 };
 
-export const updateReview = async (productType, reviewId, updatedData) => {
-  const response = await axios.put(
-    `${BASE_URL}/${productType}/reviews/${reviewId}`,
-    updatedData
-  );
-  return response.data;
+export const updateReview = async (reviewId, updatedData) => {
+  try {
+    const response = await axios({
+      method: 'put',
+      url: `${BASE_URL}/update/${reviewId}`,
+      data: updatedData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('[프론트] 리뷰 수정 실패:', error.response?.data || error.message);
+    throw error.response?.data || {message: '리뷰 수정 중 오류 발생'};
+  }
 };
 
 export const deleteReview = async reviewId => {
