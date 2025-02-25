@@ -2,15 +2,34 @@ import React, {useState, useEffect} from 'react';
 import {getUserFavorites} from '../../api/user/favoriteService';
 import {useNavigate} from 'react-router-dom';
 import FavoriteButton from '../../components/user/FavoriteButton';
+import authAPI from '../../api/auth/auth';
 import './styles/FavoriteList.css';
 
 const FavoriteList = () => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+
+  // 🔹 로그인 여부 확인 함수
+  const checkLoginStatus = async () => {
+    try {
+      await authAPI.getUserProfile(); // ✅ 로그인한 사용자 정보 요청
+      setIsLoggedIn(true); // 로그인 성공
+    } catch (error) {
+      console.warn('⚠️ [클라이언트] 로그인하지 않은 사용자 → 즐겨찾기 조회 안 함.');
+      setIsLoggedIn(false); // 로그인 안 됨
+    }
+  };
 
   //  즐겨찾기 목록 불러오기
   const fetchFavorites = async () => {
+    if (!isLoggedIn) {
+      console.log('🚫 [클라이언트] 로그인하지 않은 사용자는 즐겨찾기 API 요청 안 함.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await getUserFavorites();
       // console.log(' 즐겨찾기 목록 데이터:', response.favorites);
@@ -23,8 +42,16 @@ const FavoriteList = () => {
   };
 
   useEffect(() => {
-    fetchFavorites();
+    checkLoginStatus(); //  로그인 상태 확인
   }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchFavorites(); //  로그인한 경우에만 API 요청
+    } else {
+      setLoading(false); // 로그인하지 않은 경우 바로 로딩 종료
+    }
+  }, [isLoggedIn]);
 
   //  즐겨찾기 상태를 즉시 UI에 반영하는 함수
   const updateFavoriteStatus = (itemId, newStatus) => {

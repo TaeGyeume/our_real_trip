@@ -23,21 +23,19 @@ const processQueue = (error, token = null) => {
 
 // 응답 인터셉터
 api.interceptors.response.use(
-  response => response,
+  response => response, // 정상 응답이면 그대로 반환
   async error => {
     const originalRequest = error.config;
 
-    // 401 Unauthorized 에러 처리 (액세스 토큰 만료 시)
+    // 401 Unauthorized 발생 시 리프레시 토큰 요청을 시도해야 함
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // 현재 리프레시 중일 경우 큐에 요청 추가
         return new Promise((resolve, reject) => {
           failedQueue.push({resolve, reject});
         })
           .then(token => {
-            // 새로 발급된 액세스 토큰으로 헤더 업데이트 후 재요청
             originalRequest.headers['Authorization'] = `Bearer ${token}`;
             return api(originalRequest);
           })
@@ -47,38 +45,27 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // 리프레시 토큰 API 요청
+        console.log('🔄 [클라이언트] 리프레시 토큰 요청 시작');
         const res = await api.post('/auth/refresh-token');
 
         if (res.status === 200 && res.data.accessToken) {
-          console.log('리프레시 토큰 갱신 성공');
+          console.log('✅ [클라이언트] 리프레시 토큰 갱신 성공:', res.data.accessToken);
           const newAccessToken = res.data.accessToken;
 
-          // 새 액세스 토큰을 Authorization 헤더에 저장
+          // 새 액세스 토큰 저장
           api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
           processQueue(null, newAccessToken);
 
           isRefreshing = false;
           originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-          return api(originalRequest); // 원래 요청 재시도
+          return api(originalRequest);
         }
       } catch (refreshError) {
-        console.error(
-          '리프레시 토큰 갱신 실패:',
-          refreshError.response?.data?.message || refreshError.message
-        );
+        console.error('❌ [클라이언트] 리프레시 토큰 갱신 실패:', refreshError);
         processQueue(refreshError, null);
         isRefreshing = false;
-
-        // 로그인 페이지로 리다이렉트
-        window.location.href = '/login';
+        window.location.href = '/login'; // 로그인 페이지로 리디렉트
       }
-    }
-
-    // 403 Forbidden 접근 권한 없음 -> 로그인 페이지 이동
-    if (error.response?.status === 403) {
-      console.error('접근 권한 없음, 로그인 페이지로 이동');
-      window.location.href = '/login';
     }
 
     return Promise.reject(error);
