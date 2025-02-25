@@ -69,6 +69,10 @@ import QnaBoardWrite from './pages/qna/QnaBoardWrite';
 import QnaBoardEdit from './pages/qna/QnaBoardEdit';
 import ReviewForm from './components/review/ReviewForm';
 import NotificationReceiver from './components/NotificationReceiver';
+import PackageList from './pages/package/PackageList';
+import PackageDetail from './pages/package/PackageDetail';
+import PackageEdit from './pages/package/PackageEdit';
+import PackageCreate from './pages/package/PackageCreate';
 import Modal from 'react-modal';
 
 const App = () => {
@@ -136,6 +140,8 @@ const App = () => {
             path="/login"
             element={isAuthenticated ? <Navigate to="/profile" /> : <AuthPages.Login />}
           />
+          <Route path="/packages" element={<PackageList />} />
+          <Route path="/package/:id" element={<PackageDetail />} />
           <Route path="/find-userid" element={<FindUserId />} />
           <Route path="/google/callback" element={<GoogleLoginCallback />} />
           <Route path="/kakao/callback" element={<KakaoLoginCallback />} />
@@ -193,6 +199,8 @@ const App = () => {
           </Route>
           {/* 어드민 전용 페이지 */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+            <Route path="/package/new" element={<PackageCreate />} />
+            <Route path="/package/edit/:id" element={<PackageEdit />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/product/tourTicket/list" element={<TourTicketList />} />
             <Route path="/product/tourTicket/new" element={<TourTicketForm />} />
