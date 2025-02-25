@@ -65,7 +65,7 @@ const PopularProductsSlider = () => {
 
   return (
     <div className="popular-products-container">
-      <h2 className="section-title">🔥 인기 상품</h2>
+      <h2 className="section-title">🔥 다른 회원이 많이 본 상품</h2>
       <Slider {...settings} className="popular-products-slider">
         {products.map(product => (
           <ProductCard key={product._id} product={product} />

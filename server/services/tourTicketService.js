@@ -12,16 +12,13 @@ exports.getTicketById = async id => {
   try {
     const ticket = await TourTicket.findByIdAndUpdate(
       id,
-      {$inc: {views: 1}}, // ✅ 조회수 1 증가
-      {new: true} // ✅ 업데이트된 문서 반환
+      {$inc: {views: 1}},
+      {new: true}
     );
 
     if (!ticket) {
       throw new Error('해당 티켓을 찾을 수 없습니다.');
     }
-
-    console.log(`✅ 조회된 티켓 (조회수 증가 적용됨):`, ticket);
-
     return ticket;
   } catch (error) {
     throw new Error('티켓을 가져오는 중 오류 발생: ' + error.message);
