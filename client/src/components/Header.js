@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {useAuthStore} from '../store/authStore';
-import {useNotificationStore} from '../store/notificationStore';
+import NotificationMenu from './NotificationMenu';
 import {
   AppBar,
   Toolbar,
@@ -17,8 +17,7 @@ import {
   Paper,
   ClickAwayListener,
   MenuList,
-  MenuItem,
-  Badge
+  MenuItem
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -27,7 +26,6 @@ import HomeIcon from '@mui/icons-material/Home';
 import HotelIcon from '@mui/icons-material/Hotel';
 import TourIcon from '@mui/icons-material/CardTravel';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
@@ -40,11 +38,8 @@ const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const {notifications, markAllAsRead} = useNotificationStore();
-  const [isNotiOpen, setIsNotiOpen] = useState(false);
-  const notiRef = useRef(null);
 
-  // 로그인된 경우에만 프로필 불러오기, 로그인 시 드롭다운 강제 닫기
+  // 로그인된 경우에만 프로필 불러오기
   useEffect(() => {
     if (isAuthenticated) {
       fetchUserProfile();
@@ -76,20 +71,6 @@ const Header = () => {
   const handleClickAway = event => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
       setIsDropdownOpen(false);
-    }
-  };
-
-  const toggleNotiDropdown = async () => {
-    setIsNotiOpen(prev => !prev);
-
-    if (!isNotiOpen) {
-      await markAllAsRead(); // 아이콘 클릭으로 열릴 때 모든 알림 읽음처리
-    }
-  };
-
-  const handleNotiClickAway = event => {
-    if (notiRef.current && !notiRef.current.contains(event.target)) {
-      setIsNotiOpen(false);
     }
   };
 
@@ -176,70 +157,6 @@ const Header = () => {
             </Button>
             <Button
               component={Link}
-              to="/notification"
-              startIcon={<NotificationsIcon />}
-              variant="contained"
-              color="#74b9ff"
-              sx={{whiteSpace: 'nowrap'}}>
-              알림
-            </Button>
-            <IconButton color="inherit" ref={notiRef} onClick={toggleNotiDropdown}>
-              <Badge
-                badgeContent={notifications.filter(noti => !noti.read).length}
-                color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            {/* 알림 드롭다운 */}
-            {isNotiOpen && (
-              <ClickAwayListener onClickAway={handleNotiClickAway}>
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 50,
-                    right: 50,
-                    zIndex: 10,
-                    width: 300,
-                    maxHeight: 400,
-                    overflowY: 'auto'
-                  }}>
-                  <Paper sx={{boxShadow: 3, borderRadius: 1}}>
-                    <MenuList>
-                      <Typography variant="subtitle1" sx={{p: 1}}>
-                        알림
-                      </Typography>
-                      <Divider />
-                      {notifications.length > 0 ? (
-                        notifications
-                          .slice() // 기존 배열 복사하여 불변성 유지
-                          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // 최신순 정렬
-                          .map(noti => (
-                            <MenuItem key={noti._id} sx={{whiteSpace: 'normal'}}>
-                              <ListItemText
-                                primary={noti.message}
-                                secondary={new Date(noti.createdAt).toLocaleString(
-                                  'ko-KR',
-                                  {
-                                    timeZone: 'Asia/Seoul',
-                                    hour12: false
-                                  }
-                                )}
-                                sx={{opacity: noti.read ? 0.6 : 1}}
-                              />
-                            </MenuItem>
-                          ))
-                      ) : (
-                        <Typography sx={{p: 2, color: 'gray'}}>
-                          알림이 없습니다.
-                        </Typography>
-                      )}
-                    </MenuList>
-                  </Paper>
-                </Box>
-              </ClickAwayListener>
-            )}
-            <Button
-              component={Link}
               to="/qna"
               startIcon={<QuestionAnswerIcon />}
               variant="contained"
@@ -263,7 +180,8 @@ const Header = () => {
           {/* 로그인 여부에 따른 UI 변경 */}
           {isAuthenticated && user ? (
             <>
-              {/* 프로필 아이콘 */}
+              <NotificationMenu />
+              {/* 알림 드롭다운 */}
               <IconButton color="inherit" onClick={toggleDropdown} ref={dropdownRef}>
                 <AccountCircleIcon />
               </IconButton>
@@ -388,13 +306,6 @@ const Header = () => {
               sx={{textDecoration: 'none', color: 'inherit'}}>
               <ShoppingBagIcon sx={{marginRight: 1}} />
               <ListItemText primary="여행 용품" />
-            </ListItem>
-            <ListItem
-              component={Link}
-              to="/notification"
-              sx={{textDecoration: 'none', color: 'inherit'}}>
-              <NotificationsIcon sx={{marginRight: 1}} />
-              <ListItemText primary="알림" />
             </ListItem>
             <ListItem
               component={Link}
