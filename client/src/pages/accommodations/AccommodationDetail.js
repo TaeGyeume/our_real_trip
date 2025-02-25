@@ -152,7 +152,7 @@ const AccommodationDetail = () => {
         )}
       </Box>
 
-      {/* 리뷰 리스트 */}
+      {/* 리뷰 리스트  */}
       <Box sx={{mt: 4}}>
         <Typography variant="h5" fontWeight="bold" sx={{mb: 2}}>
           📝 리뷰
