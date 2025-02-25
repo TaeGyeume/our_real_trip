@@ -84,6 +84,7 @@ const FilterPanel = ({onFilterChange}) => {
           <option value="default">기본순</option>
           <option value="priceLow">가격 낮은 순</option>
           <option value="priceHigh">가격 높은 순</option>
+          <option value="rating">평점순</option>
         </select>
       </div>
 

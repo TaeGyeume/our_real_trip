@@ -126,7 +126,7 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
             size="small"
             onClick={e => {
               e.stopPropagation();
-              handleModifyClick();
+              handleModifyClick(e);
             }}>
             ✏️ 수정
           </Button>
@@ -136,7 +136,7 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
             size="small"
             onClick={e => {
               e.stopPropagation();
-              handleDeleteClick();
+              handleDeleteClick(e);
             }}>
             ❌ 삭제
           </Button>
