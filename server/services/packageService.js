@@ -90,7 +90,15 @@ async function createPackage(packageData) {
   }
 
   // ✅ 최종 가격 계산 (할인 적용)
-  const finalPrice = Math.round(totalPrice - (totalPrice * discountRate) / 100);
+  // totalPrice가 유효한지 확인 후 finalPrice 계산
+  const finalPrice = totalPrice
+    ? Math.round(totalPrice - (totalPrice * discountRate) / 100)
+    : 0;
+
+  // finalPrice가 NaN이면 0으로 설정
+  if (isNaN(finalPrice)) {
+    throw new Error('계산된 최종 가격이 유효하지 않습니다.');
+  }
 
   console.log('✅ [DEBUG] 최종 가격 계산 완료:', finalPrice);
 
@@ -152,47 +160,67 @@ async function getPackageById(packageId) {
  * ✅ 패키지 상품 수정 (관리자만 가능)
  */
 async function updatePackage(packageId, updateData) {
-  const {accommodations, flights, tours, price, discountRate, startDate, endDate} =
-    updateData;
+  const {accommodations, flights, tours, discountRate, startDate, endDate} = updateData;
 
+  // 기존 패키지 데이터를 조회하여 수정
   const existingPackage = await Package.findById(packageId);
   if (!existingPackage) {
     throw new Error('패키지를 찾을 수 없습니다.');
   }
 
-  const updatedData = {
-    name: updateData.name || existingPackage.name,
-    description: updateData.description || existingPackage.description,
-    price: updateData.price || existingPackage.price,
-    discountRate: updateData.discountRate || existingPackage.discountRate,
-    finalPrice: Math.round(
-      (updateData.price || existingPackage.price) -
-        (updateData.discountRate || existingPackage.discountRate) / 100
-    ),
-    accommodations: accommodations || existingPackage.accommodations,
-    flights: flights || existingPackage.flights,
-    tours: tours || existingPackage.tours,
-    startDate: updateData.startDate || existingPackage.startDate,
-    endDate: updateData.endDate || existingPackage.endDate,
-    category: updateData.category || existingPackage.category
-  };
+  // 새로 입력된 숙소, 항공, 투어 정보로 가격을 계산
+  let totalPrice = 0;
 
-  const totalItems =
-    (updatedData.accommodations ? updatedData.accommodations.length : 0) +
-    (updatedData.flights ? updatedData.flights.length : 0) +
-    (updatedData.tours ? updatedData.tours.length : 0);
-
-  if (totalItems < 2) {
-    throw new Error('패키지는 최소 2개의 상품을 포함해야 합니다.');
+  if (accommodations && accommodations.length > 0) {
+    const accommodationData = await Accommodation.find({_id: {$in: accommodations}});
+    if (!accommodationData || accommodationData.length !== accommodations.length) {
+      throw new Error('숙소 정보를 찾을 수 없습니다.');
+    }
+    totalPrice += accommodationData.reduce((sum, acc) => sum + (acc.minPrice || 0), 0);
   }
 
-  if (new Date(updateData.endDate) < new Date(updateData.startDate)) {
-    throw new Error('여행 종료일은 시작일보다 이후여야 합니다.');
+  if (tours && tours.length > 0) {
+    const tourData = await TourTicket.find({_id: {$in: tours}});
+    if (!tourData || tourData.length !== tours.length) {
+      throw new Error('투어 정보를 찾을 수 없습니다.');
+    }
+    totalPrice += tourData.reduce((sum, tour) => sum + (tour.price || 0), 0);
   }
 
-  const updatedPackage = await Package.findByIdAndUpdate(packageId, updatedData, {
-    new: true
-  }).populate('accommodations flights tours createdBy');
+  if (flights && flights.length > 0) {
+    for (const flight of flights) {
+      const flightData = await Flight.findById(flight.flightId);
+      if (!flightData) {
+        throw new Error(`항공 정보를 찾을 수 없습니다: ${flight.flightId}`);
+      }
+      if (flight.seatsToUse > flightData.seatsAvailable) {
+        throw new Error('좌석 수가 부족합니다.');
+      }
+      totalPrice += flightData.price * flight.seatsToUse;
+    }
+  }
+
+  // 최종 가격 계산 (할인 적용)
+  let finalPrice = 0;
+  if (totalPrice > 0) {
+    finalPrice = Math.round(totalPrice - (totalPrice * discountRate) / 100);
+  }
+
+  // finalPrice가 NaN이면 0으로 설정
+  if (isNaN(finalPrice)) {
+    finalPrice = 0;
+  }
+
+  // 패키지 데이터 업데이트
+  const updatedPackage = await Package.findByIdAndUpdate(
+    packageId,
+    {
+      ...updateData,
+      price: totalPrice,
+      finalPrice
+    },
+    {new: true}
+  ).populate('accommodations flights tours createdBy');
 
   if (!updatedPackage) {
     throw new Error('패키지 수정 실패: 패키지를 찾을 수 없습니다.');
