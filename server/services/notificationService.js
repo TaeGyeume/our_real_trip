@@ -98,7 +98,7 @@ exports.sendBookingReminders = async () => {
 
   const bookings = await Booking.find({
     startDates: {$elemMatch: {$gte: startOfDay, $lte: endOfDay}},
-    paymentStatus: 'CONFIRMED'
+    paymentStatus: {$in: ['CONFIRMED', 'COMPLETED']}
   });
 
   for (const booking of bookings) {
