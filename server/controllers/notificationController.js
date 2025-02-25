@@ -20,10 +20,16 @@ exports.sendNotification = async (req, res) => {
 exports.getUserNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    const notifications = await notificationService.getNotificationsByUserId(userId);
+    const notifications = await notificationService.getNotificationsByUserId(
+      userId,
+      page,
+      limit
+    );
 
-    res.status(200).json({notifications});
+    res.status(200).json(notifications);
   } catch (err) {
     console.error(err);
     res.status(500).json({error: '알림 조회 중 서버 오류 발생'});
