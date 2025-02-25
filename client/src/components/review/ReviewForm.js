@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {useSearchParams} from 'react-router-dom';
+import {useSearchParams, useNavigate} from 'react-router-dom';
 import {createReview} from '../../api/review/reviewService';
 import {useAuthStore} from '../../store/authStore';
 
@@ -7,6 +7,7 @@ const ReviewForm = () => {
   const [searchParams] = useSearchParams();
   const productId = searchParams.get('productId');
   const bookingId = searchParams.get('bookingId');
+  const navigate = useNavigate();
 
   const {user} = useAuthStore();
   const userId = user?._id;
@@ -40,6 +41,7 @@ const ReviewForm = () => {
     try {
       await createReview(formData);
       alert('리뷰 작성 완료!');
+      navigate('/booking/my/?status=completed');
     } catch (error) {
       console.error('리뷰 작성 실패:', error.response ? error.response.data : error);
       alert('리뷰 작성 실패');

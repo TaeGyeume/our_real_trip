@@ -50,8 +50,21 @@ const ReviewList = ({productId}) => {
     fetchData();
   }, [productId]);
 
-  const toggleMenu = reviewId => {
-    setMenuOpen(prev => (prev === reviewId ? null : reviewId));
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setMenuOpen(null); // 외부 클릭 시 드롭다운 닫기
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick);
+    };
+  }, []);
+
+  const toggleMenu = (reviewId, e) => {
+    if (e) e.stopPropagation(); // 이벤트 버블링 방지
+    setMenuOpen(prev => (prev === reviewId ? null : reviewId)); // 드롭다운 토글
   };
 
   const handleLike = async reviewId => {
@@ -86,11 +99,6 @@ const ReviewList = ({productId}) => {
       console.error('[프론트] 댓글 삭제 실패:', error.message);
       alert(`댓글 삭제 실패: ${error.message}`);
     }
-  };
-
-  const handleAddCommentClick = reviewId => {
-    setActiveCommentBox(reviewId);
-    setMenuOpen(null);
   };
 
   const handleAddComment = async reviewId => {
@@ -132,6 +140,11 @@ const ReviewList = ({productId}) => {
     }
   };
 
+  const handleAddCommentClick = reviewId => {
+    setActiveCommentBox(reviewId);
+    setMenuOpen(null);
+  };
+
   const isAdmin = currentUser?.roles?.includes('admin');
 
   return (
@@ -140,7 +153,10 @@ const ReviewList = ({productId}) => {
         <p className="no-reviews">등록된 리뷰가 없습니다.</p>
       ) : (
         reviews.map(review => (
-          <div key={review._id} className="review-card">
+          <div
+            key={review._id}
+            className="review-card"
+            onMouseDown={e => e.stopPropagation()}>
             <div className="review-header">
               <div className="review-user-info">
                 <span className="review-username">
@@ -157,16 +173,17 @@ const ReviewList = ({productId}) => {
                   <AiOutlineLike /> {review.likes?.length || 0}
                 </button>
 
-                {(currentUser?._id === review.userId?._id ||
-                  currentUser?.roles?.includes('admin')) && (
-                  <div className="kebab-menu">
+                {(currentUser?._id === review.userId?._id || isAdmin) && (
+                  <div className="kebab-menu" onMouseDown={e => e.stopPropagation()}>
                     <AiOutlineMore
-                      onClick={() => toggleMenu(review._id)}
+                      onClick={e => toggleMenu(review._id)}
                       className="kebab-icon"
                     />
 
                     {menuOpen === review._id && (
-                      <div className="menu-options">
+                      <div
+                        className="menu-options"
+                        onMouseDown={e => e.stopPropagation()}>
                         {currentUser ? (
                           <>
                             {currentUser._id === review.userId._id && (
