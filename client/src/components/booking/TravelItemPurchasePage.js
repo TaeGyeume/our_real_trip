@@ -15,6 +15,13 @@ const TravelItemPurchaseForm = () => {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [formData, setFormData] = useState({count: 1});
+  const [useUserInfo, setUseUserInfo] = useState(false);
+  const [reservationInfo, setReservationInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -53,7 +60,36 @@ const TravelItemPurchaseForm = () => {
     setDiscountAmount(discount);
   };
 
+  // 체크박스 클릭 시 로그인한 사용자 정보 입력
+  const handleUseUserInfo = () => {
+    if (!useUserInfo) {
+      setReservationInfo({
+        name: user?.username || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        address: user?.address || ''
+      });
+    } else {
+      setReservationInfo({
+        name: '',
+        email: '',
+        phone: '',
+        address: ''
+      });
+    }
+    setUseUserInfo(!useUserInfo);
+  };
+
+  const handleInputChange = e => {
+    const {name, value} = e.target;
+    setReservationInfo({...reservationInfo, [name]: value});
+  };
+
   const handlePayment = async () => {
+    if (!reservationInfo.name || !reservationInfo.email || !reservationInfo.phone) {
+      alert('예약자 정보를 모두 입력해주세요.');
+      return;
+    }
     const totalPrice = item.price * formData.count;
     const finalPrice = totalPrice - discountAmount;
 
@@ -76,12 +112,7 @@ const TravelItemPurchaseForm = () => {
         finalPrice, // 최종 결제 금액 (할인 후) 추가
         userId: user._id,
         couponId: selectedCoupon ? selectedCoupon._id : null,
-        reservationInfo: {
-          name: user.username,
-          email: user.email,
-          phone: user.phone,
-          address: user.address
-        }
+        reservationInfo
       });
 
       if (!bookingResponse || !bookingResponse.booking) {
@@ -153,6 +184,48 @@ const TravelItemPurchaseForm = () => {
         min="1"
         max={item.stock || 50}
         onChange={e => setFormData({...formData, count: e.target.value})}
+      />
+
+      {/* 체크박스 추가 */}
+      <div>
+        <input
+          type="checkbox"
+          id="useUserInfo"
+          checked={useUserInfo}
+          onChange={handleUseUserInfo}
+        />
+        <label htmlFor="useUserInfo">로그인한 사용자 정보 사용</label>
+      </div>
+      <label>예약자 이름</label>
+      <input
+        type="text"
+        name="name"
+        value={reservationInfo.name}
+        onChange={handleInputChange}
+      />
+
+      <label>이메일</label>
+      <input
+        type="email"
+        name="email"
+        value={reservationInfo.email}
+        onChange={handleInputChange}
+      />
+
+      <label>연락처</label>
+      <input
+        type="text"
+        name="phone"
+        value={reservationInfo.phone}
+        onChange={handleInputChange}
+      />
+
+      <label>주소</label>
+      <input
+        type="text"
+        name="address"
+        value={reservationInfo.address}
+        onChange={handleInputChange}
       />
 
       <CouponSelector
