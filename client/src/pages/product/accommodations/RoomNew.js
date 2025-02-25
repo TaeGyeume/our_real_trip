@@ -1,6 +1,10 @@
 import React, {useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import axios from '../../../api/axios';
+import {Box, Typography, TextField, Button, Stack, IconButton} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 const RoomNew = () => {
   const navigate = useNavigate();
@@ -137,163 +141,132 @@ const RoomNew = () => {
   };
 
   return (
-    <div className="container mt-4">
-      <h2>새 객실 추가</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label className="form-label">숙소 ID</label>
-          <input
-            type="text"
-            className="form-control"
-            name="accommodation"
-            value={formData.accommodation}
-            onChange={handleChange}
-            required
-          />
-        </div>
+    <Box sx={{maxWidth: 800, mx: 'auto', mt: 4, p: 3, boxShadow: 3, borderRadius: 2}}>
+      <Typography variant="h4" sx={{mb: 3, fontWeight: 'bold', textAlign: 'center'}}>
+        새 객실 추가
+      </Typography>
 
-        <div className="mb-3">
-          <label className="form-label">객실명</label>
-          <input
-            type="text"
-            className="form-control"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
+      <Stack spacing={2} component="form" onSubmit={handleSubmit}>
+        <TextField
+          label="숙소 ID"
+          fullWidth
+          name="accommodation"
+          value={formData.accommodation}
+          onChange={handleChange}
+          required
+        />
+        <TextField
+          label="객실명"
+          fullWidth
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
+        <TextField
+          label="설명"
+          fullWidth
+          multiline
+          rows={3}
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+        />
+        <TextField
+          label="가격 (1박)"
+          fullWidth
+          type="number"
+          name="pricePerNight"
+          value={formData.pricePerNight}
+          onChange={handleChange}
+          required
+        />
+        <TextField
+          label="최대 인원"
+          fullWidth
+          type="number"
+          name="maxGuests"
+          value={formData.maxGuests}
+          onChange={handleChange}
+          required
+        />
+        <TextField
+          label="방 개수"
+          fullWidth
+          type="number"
+          name="availableCount"
+          value={formData.availableCount}
+          onChange={handleChange}
+          required
+        />
 
-        <div className="mb-3">
-          <label className="form-label">설명</label>
-          <textarea
-            className="form-control"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <Typography variant="h6">편의시설</Typography>
+        {formData.amenities.map((amenity, index) => (
+          <Stack key={index} direction="row" spacing={1} alignItems="center">
+            <TextField
+              fullWidth
+              value={amenity}
+              onChange={e => handleAmenityChange(index, e.target.value)}
+            />
+            <IconButton color="error" onClick={() => handleRemoveAmenity(index)}>
+              <DeleteIcon />
+            </IconButton>
+          </Stack>
+        ))}
+        <Button startIcon={<AddIcon />} onClick={handleAddAmenity}>
+          편의시설 추가
+        </Button>
 
-        <div className="mb-3">
-          <label className="form-label">가격</label>
-          <input
-            type="number"
-            className="form-control"
-            name="pricePerNight"
-            value={formData.pricePerNight}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <TextField
+          label="체크인 시간"
+          fullWidth
+          type="time"
+          name="checkInTime"
+          value={formData.checkInTime}
+          onChange={handleChange}
+          required
+        />
+        <TextField
+          label="체크아웃 시간"
+          fullWidth
+          type="time"
+          name="checkOutTime"
+          value={formData.checkOutTime}
+          onChange={handleChange}
+          required
+        />
 
-        <div className="mb-3">
-          <label className="form-label">최대 인원</label>
-          <input
-            type="number"
-            className="form-control"
-            name="maxGuests"
-            value={formData.maxGuests}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <Typography variant="h6">객실 이미지</Typography>
+        <Button component="label" variant="contained" startIcon={<UploadFileIcon />}>
+          이미지 업로드
+          <input type="file" hidden multiple onChange={handleFileChange} />
+        </Button>
 
-        <div className="mb-3">
-          <label className="form-label">방 개수</label>
-          <input
-            type="number"
-            className="form-control"
-            name="availableCount"
-            value={formData.availableCount}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        {/* 편의시설 입력 UI 추가 */}
-        <div className="mb-3">
-          <label className="form-label">편의시설</label>
-          {formData.amenities.map((amenity, index) => (
-            <div key={index} className="d-flex">
-              <input
-                type="text"
-                className="form-control me-2"
-                value={amenity}
-                onChange={e => handleAmenityChange(index, e.target.value)}
+        <Stack direction="row" spacing={2} flexWrap="wrap">
+          {previewImages.map((image, index) => (
+            <Box key={index} sx={{position: 'relative'}}>
+              <img
+                src={image}
+                alt={`preview-${index}`}
+                width={80}
+                height={80}
+                style={{borderRadius: 8}}
               />
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={() => handleRemoveAmenity(index)}>
-                삭제
-              </button>
-            </div>
+              <IconButton
+                sx={{position: 'absolute', top: 0, right: 0}}
+                onClick={() => handleDeleteImage(image)}>
+                <DeleteIcon />
+              </IconButton>
+            </Box>
           ))}
-          <button
-            type="button"
-            className="btn btn-secondary mt-2"
-            onClick={handleAddAmenity}>
-            + 추가
-          </button>
-        </div>
+        </Stack>
 
-        <div className="mb-3">
-          <label className="form-label">체크인 시간</label>
-          <input
-            type="time"
-            className="form-control"
-            name="checkInTime"
-            value={formData.checkInTime}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">체크아웃 시간</label>
-          <input
-            type="time"
-            className="form-control"
-            name="checkOutTime"
-            value={formData.checkOutTime}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">객실 이미지</label>
-          <input
-            type="file"
-            className="form-control"
-            multiple
-            onChange={handleFileChange}
-          />
-        </div>
-
-        {/* 업로드한 이미지 미리보기 및 삭제 */}
-        {previewImages.length > 0 && (
-          <div className="image-preview">
-            {previewImages.map((image, index) => (
-              <div key={index} className="preview-container">
-                <img src={image} alt={`preview-${index}`} className="preview-image" />
-                <button
-                  type="button"
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDeleteImage(image)}>
-                  삭제
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <button type="submit" className="btn btn-primary">
+        <Button variant="contained" color="primary" type="submit" fullWidth>
           객실 추가
-        </button>
-      </form>
-    </div>
+        </Button>
+      </Stack>
+    </Box>
   );
 };
 
