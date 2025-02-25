@@ -25,12 +25,23 @@ exports.sendNotificationToAll = async message => {
   });
 };
 
-exports.getNotificationsByUserId = async userId => {
+exports.getNotificationsByUserId = async (userId, page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
+
   const notifications = await Notification.find({
     'recipients.userId': userId
-  }).sort({createdAt: -1});
+  })
+    .sort({createdAt: -1})
+    .skip(skip)
+    .limit(limit);
 
-  return notifications.map(noti => {
+  const totalNotifications = await Notification.countDocuments({
+    'recipients.userId': userId
+  });
+
+  const hasMore = page * limit < totalNotifications;
+
+  const formattedNotifications = notifications.map(noti => {
     const recipientInfo = noti.recipients.find(
       recipient => recipient.userId.toString() === userId.toString()
     );
@@ -45,6 +56,13 @@ exports.getNotificationsByUserId = async userId => {
       bookingType: noti.bookingType || null
     };
   });
+
+  return {
+    notifications: formattedNotifications,
+    currentPage: page,
+    totalPages: Math.ceil(totalNotifications / limit),
+    hasMore
+  };
 };
 
 // 읽음 처리 함수 추가

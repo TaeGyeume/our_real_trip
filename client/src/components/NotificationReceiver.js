@@ -10,10 +10,14 @@ const NotificationReceiver = () => {
   const prevCountRef = useRef(notifications.length);
 
   useEffect(() => {
-    // 이전 알림 개수보다 많아졌을 때만 실행함
     if (notifications.length > prevCountRef.current) {
-      setLatestNotification(notifications[0].message);
-      setOpen(true);
+      // 기존 읽지 않은 알림이 아닌, 새로 추가된 "읽지 않은 알림"만 확인
+      const newUnread = notifications.find(noti => !noti.read);
+
+      if (newUnread) {
+        setLatestNotification(newUnread.message);
+        setOpen(true);
+      }
     }
     prevCountRef.current = notifications.length;
   }, [notifications]);
