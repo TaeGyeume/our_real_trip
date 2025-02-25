@@ -164,7 +164,7 @@ exports.loginUser = async ({userid, password}, res) => {
     {id: user._id, roles: user.roles},
     process.env.JWT_SECRET,
     {
-      expiresIn: '15m' // 액세스 토큰은 15분 유효
+      expiresIn: '7d' // 액세스 토큰은 15분 유효
     }
   );
 
@@ -192,7 +192,7 @@ exports.loginUser = async ({userid, password}, res) => {
     secure: isProduction,
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
     path: '/',
-    maxAge: 15 * 60 * 1000 // 15분
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
   });
 
   // 리프레시 토큰 쿠키 저장
@@ -392,7 +392,8 @@ exports.refreshAccessToken = async (refreshToken, res) => {
       secure: isProduction,
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
-      maxAge: 15 * 60 * 1000 // 15분
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
+      // maxAge: 15 * 60 * 1000  15분
     });
 
     return newAccessToken;

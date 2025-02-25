@@ -77,7 +77,8 @@ router.get(
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
-      maxAge: 15 * 60 * 1000 // 15분
+      // maxAge: 15 * 60 * 1000 // 15분
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
 
     // 리프레시 토큰을 httpOnly 쿠키로 저장
@@ -113,7 +114,8 @@ router.get(
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
-      maxAge: 15 * 60 * 1000 // 15분
+      // maxAge: 15 * 60 * 1000 // 15분
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
 
     // 리프레시 토큰 저장
@@ -148,7 +150,8 @@ router.get(
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
-      maxAge: 15 * 60 * 1000
+      // maxAge: 15 * 60 * 1000 //15분
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
