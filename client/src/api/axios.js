@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-  timeout: 5000,
+  timeout: 10000, // 서버 초기 로딩 시간 증가시켜 타임아웃 방지
   withCredentials: true // httpOnly 쿠키 전송 허용
 });
 

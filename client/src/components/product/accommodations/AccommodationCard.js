@@ -78,8 +78,6 @@ const AccommodationCard = ({
     imageUrl = `${SERVER_URL}${imageUrl}`;
   }
 
-  console.log('Accommodation Image:', imageUrl); // 디버깅용
-
   return (
     <div
       className="card accommodation-card mb-3"
