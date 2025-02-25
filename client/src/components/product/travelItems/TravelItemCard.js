@@ -64,6 +64,7 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
   return (
     <Card
       sx={{
+        width: '100%',
         maxWidth: 300,
         borderRadius: 3,
         boxShadow: 3,
