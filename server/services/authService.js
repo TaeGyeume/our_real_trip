@@ -392,7 +392,8 @@ exports.refreshAccessToken = async (refreshToken, res) => {
       secure: isProduction,
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
-      maxAge: 15 * 60 * 1000 // 15분
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
+      // maxAge: 15 * 60 * 1000  15분
     });
 
     return newAccessToken;
