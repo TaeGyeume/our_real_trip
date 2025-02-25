@@ -118,11 +118,6 @@ exports.addComment = async (reviewId, userId, commentContent) => {
     review = await Review.findById(reviewId)
       .populate('userId', 'username')
       .populate('comments.userId', 'username roles'); // 댓글 작성자 정보
-
-    console.log(`[서버] 리뷰 ${reviewId}에 댓글 추가 완료`);
-    console.log('[서버] 최종 리뷰 데이터:', JSON.stringify(review, null, 2));
-
-    return review;
   } catch (error) {
     console.error('[서버] 댓글 추가 실패:', error.message);
     throw error;
@@ -132,24 +127,23 @@ exports.addComment = async (reviewId, userId, commentContent) => {
 // 댓글 삭제
 exports.deleteComment = async (reviewId, commentId, userId) => {
   try {
-    // 리뷰 ID 유효성 검사
     if (!mongoose.Types.ObjectId.isValid(reviewId)) {
       throw new Error('유효하지 않은 리뷰 ID입니다.');
     }
 
-    // 댓글 ID 유효성 검사
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
       throw new Error('유효하지 않은 댓글 ID입니다.');
     }
 
-    // 리뷰 찾기
     const review = await Review.findById(reviewId);
+
     if (!review) {
       throw new Error('리뷰를 찾을 수 없습니다.');
     }
 
     // 사용자 정보 확인
     const user = await User.findById(userId);
+
     if (!user || !user.roles.includes('admin')) {
       throw new Error('댓글 삭제 권한이 없습니다.');
     }
@@ -169,6 +163,46 @@ exports.deleteComment = async (reviewId, commentId, userId) => {
     return review;
   } catch (error) {
     console.error('[서버] 댓글 삭제 실패:', error.message);
+    throw error;
+  }
+};
+
+exports.updateComment = async (reviewId, commentId, userId, newContent) => {
+  try {
+    if (
+      !mongoose.Types.ObjectId.isValid(reviewId) ||
+      !mongoose.Types.ObjectId.isValid(commentId)
+    ) {
+      throw new Error('유효하지 않은 ID입니다.');
+    }
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      throw new Error('리뷰를 찾을 수 없습니다.');
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user || !user.roles.includes('admin')) {
+      throw new Error('댓글 수정 권한이 없습니다.');
+    }
+
+    const comment = review.comments.id(commentId);
+    
+    if (!comment) {
+      throw new Error('댓글을 찾을 수 없습니다.');
+    }
+
+    // 댓글 내용 수정
+    comment.content = newContent;
+    comment.updatedAt = new Date();
+
+    await review.save();
+
+    console.log(`[서버] 댓글 ${commentId}가 성공적으로 수정되었습니다.`);
+    return review;
+  } catch (error) {
+    console.error('[서버] 댓글 수정 실패:', error.message);
     throw error;
   }
 };

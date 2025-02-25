@@ -83,6 +83,7 @@
   font-weight: 400;
   margin-top: 0;
   text-align: left;
+  line-height: 1.5;
 }
 
 .like-button {
@@ -255,4 +256,11 @@
 
 .delete-comment-btn:hover {
   text-decoration: underline;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 5px 0;
 }
