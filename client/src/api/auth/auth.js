@@ -3,7 +3,7 @@ import api from '../axios'; // axios.js에서 공통 설정을 가져옴
 const requestConfig = {
   withCredentials: true,
   headers: {
-    'Cache-Control': 'no-store', // 캐시 방지
+    'Cache-Control': 'no-store',
     'Content-Type': 'application/json'
   }
 };
