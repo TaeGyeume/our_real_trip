@@ -72,6 +72,14 @@ const Sidebar = ({activeSection, onSelectCategory}) => {
                   🎫 쿠폰 관리
                 </Nav.Link>
               </Nav.Item>
+
+              <Nav.Item style={{whiteSpace: 'nowrap'}}>
+                <Nav.Link
+                  style={defaultTabStyle} // 기본 탭 스타일 사용
+                  onClick={() => navigate('/package/create')}>
+                  📦 패키지 생성
+                </Nav.Link>
+              </Nav.Item>
             </Nav>
           </Col>
         </Row>
