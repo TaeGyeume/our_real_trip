@@ -5,6 +5,7 @@ import {
 } from '../../../api/tourTicket/tourTicketService';
 import {useParams, useNavigate} from 'react-router-dom';
 import './styles/TourTicketDetail.css';
+import ReviewList from '../../review/ReviewList';
 
 const TourTicketDetail = () => {
   const {id} = useParams();
@@ -118,6 +119,11 @@ const TourTicketDetail = () => {
         수정하기
       </button>
       <button onClick={() => navigate('/product/tourTicket/list')}>상품 목록</button>
+
+      <div>
+        <h2>📝 리뷰</h2>
+        <ReviewList productId={id} />
+      </div>
     </div>
   );
 };

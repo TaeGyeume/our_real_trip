@@ -87,8 +87,8 @@ const TourTicketList = () => {
               </div>
               <div className="ticket-info">
                 <h3 className="ticket-title">{ticket.title}</h3>
-                <p className="ticket-description">✏️ {ticket.description}</p>
-                <p className="ticket-location">지역: {ticket.location}</p>
+                {/* <p className="ticket-description">✏️ {ticket.description}</p> */}
+                {/* <p className="ticket-location">지역: {ticket.location}</p> */}
                 <p className="ticket-price">{ticket.price.toLocaleString()}원</p>
               </div>
             </div>
