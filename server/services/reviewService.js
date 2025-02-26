@@ -21,7 +21,26 @@ exports.getReviewsByProduct = async productId => {
       .populate('userId', 'username')
       .populate('comments.userId', 'username roles');
 
-    return reviews;
+    const totalReviews = reviews.length;
+
+    const averageRating = totalReviews
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviews
+      : 0;
+
+    const ratingDistribution = [0, 0, 0, 0, 0]; // [5성, 4성, 3성, 2성, 1성]
+
+    // 이미지 포함된 리뷰만 추출
+    const imageReviews = reviews.filter(
+      review => review.images && review.images.length > 0
+    );
+
+    return {
+      reviews,
+      totalReviews,
+      averageRating,
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      imageReviews
+    };
   } catch (error) {
     console.error('리뷰 조회 오류:', error);
     throw new Error(`리뷰 조회 오류: ${error.message}`);
