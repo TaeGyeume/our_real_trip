@@ -1,6 +1,4 @@
 const reviewService = require('../services/reviewService');
-const upload = require('../middleware/uploadMiddleware');
-const authorizeRoles = require('../middleware/authorizeRoles');
 
 exports.createReview = async (req, res) => {
   try {
@@ -42,10 +40,19 @@ exports.createReview = async (req, res) => {
 };
 
 exports.getReviews = async (req, res) => {
+  const {productId} = req.params;
+
   try {
-    const reviews = await reviewService.getReviewsByProduct(req.params.productId);
-    res.json(reviews);
+    const {reviews, totalReviews, averageRating} =
+      await reviewService.getReviewsByProduct(productId);
+
+    res.status(200).json({
+      reviews,
+      totalReviews,
+      averageRating
+    });
   } catch (error) {
+    console.error('리뷰 조회 오류:', error);
     res.status(500).json({message: error.message});
   }
 };
@@ -69,15 +76,25 @@ exports.deleteReview = async (req, res) => {
 };
 
 exports.updateReview = async (req, res) => {
-  upload(req, res, async err => {
-    if (err) return res.status(400).json({message: err.message});
-    try {
-      const review = await reviewService.updateReview(req.params.id, req.body, req.files);
-      res.json(review);
-    } catch (error) {
-      res.status(500).json({message: error.message});
-    }
-  });
+  const {id: reviewId} = req.params;
+  const {content} = req.body;
+  const imageFiles = req.files;
+
+  try {
+    const updatedReview = await reviewService.updateReview(
+      reviewId,
+      {content},
+      imageFiles
+    );
+
+    res.status(200).json({
+      message: '리뷰가 성공적으로 수정되었습니다.',
+      review: updatedReview
+    });
+  } catch (error) {
+    console.error('[서버] 리뷰 수정 컨트롤러 에러:', error.message);
+    res.status(400).json({message: error.message});
+  }
 };
 
 // 댓글 작성 (관리자 인증)

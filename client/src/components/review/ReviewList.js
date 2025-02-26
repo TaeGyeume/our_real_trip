@@ -3,6 +3,7 @@ import {
   getReviews,
   likeReview,
   deleteReview,
+  updateReview,
   addComment,
   deleteComment,
   updateComment
@@ -14,8 +15,15 @@ import authAPI from '../../api/auth/auth';
 
 const ReviewList = ({productId}) => {
   const [reviews, setReviews] = useState([]);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [ratingDistribution, setRatingDistribution] = useState([0, 0, 0, 0, 0]);
+
   const [currentUser, setCurrentUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [editedContent, setEditedContent] = useState('');
+  const [editedImages, setEditedImages] = useState([]);
   const [commentInput, setCommentInput] = useState('');
   const [activeCommentBox, setActiveCommentBox] = useState(null);
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -32,7 +40,12 @@ const ReviewList = ({productId}) => {
         ]);
 
         if (reviewsData.status === 'fulfilled') {
-          setReviews(reviewsData.value);
+          const {reviews = []} = reviewsData.value;
+
+          // ✅ 배열 확인 및 상태 업데이트
+          const validReviews = Array.isArray(reviews) ? reviews : [];
+          setReviews(validReviews);
+          calculateRatingStats(validReviews);
         } else {
           console.error('리뷰 불러오기 실패:', reviewsData.reason);
         }
@@ -50,7 +63,34 @@ const ReviewList = ({productId}) => {
     fetchData();
   }, [productId]);
 
-  const toggleMenu = reviewId => {
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setMenuOpen(null); // 외부 클릭 시 드롭다운 닫기
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, []);
+
+  // ✅ 평점 통계 계산
+  const calculateRatingStats = reviews => {
+    const total = reviews.length;
+    const sumRatings = reviews.reduce((acc, review) => acc + review.rating, 0);
+    const avgRating = total ? (sumRatings / total).toFixed(1) : 0;
+
+    const distribution = [0, 0, 0, 0, 0]; // 5~1점 순서
+    reviews.forEach(review => {
+      const idx = 5 - Math.round(review.rating);
+      distribution[idx]++;
+    });
+
+    setTotalReviews(total);
+    setAverageRating(avgRating);
+    setRatingDistribution(distribution);
+  };
+
+  const toggleMenu = (reviewId, e) => {
+    if (e) e.stopPropagation();
     setMenuOpen(prev => (prev === reviewId ? null : reviewId));
   };
 
@@ -69,73 +109,94 @@ const ReviewList = ({productId}) => {
     try {
       await deleteReview(reviewId);
       alert('리뷰가 삭제되었습니다.');
-      setReviews(prevReviews => prevReviews.filter(review => review._id !== reviewId));
+      const updatedReviews = reviews.filter(review => review._id !== reviewId);
+      setReviews(updatedReviews);
+      calculateRatingStats(updatedReviews);
     } catch (err) {
       alert(`리뷰 삭제 실패: ${err.message}`);
     }
   };
 
-  const handleDeleteComment = async (reviewId, commentId) => {
+  const handleEditReview = review => {
+    setEditingReviewId(review._id);
+    setEditedContent(review.content);
+    setEditedImages(review.images || []);
+  };
+
+  const handleUpdateReview = async reviewId => {
+    const formData = new FormData();
+    formData.append('content', editedContent);
+
+    editedImages.forEach(img => {
+      if (img instanceof File) {
+        formData.append('images', img);
+      }
+    });
+
     try {
-      await deleteComment(reviewId, commentId);
-      alert('댓글이 성공적으로 삭제되었습니다.');
+      await updateReview(reviewId, formData);
+      alert('리뷰가 성공적으로 수정되었습니다.');
+      setEditingReviewId(null);
 
       const updatedReviews = await getReviews(productId);
       setReviews(updatedReviews);
+      calculateRatingStats(updatedReviews);
     } catch (error) {
-      console.error('[프론트] 댓글 삭제 실패:', error.message);
-      alert(`댓글 삭제 실패: ${error.message}`);
+      alert(`리뷰 수정 실패: ${error.message}`);
     }
   };
 
-  const handleAddCommentClick = reviewId => {
-    setActiveCommentBox(reviewId);
-    setMenuOpen(null);
+  const handleImageChange = e => {
+    const files = Array.from(e.target.files);
+    setEditedImages(prevImages => [...prevImages, ...files]);
   };
 
-  const handleAddComment = async reviewId => {
-    if (!commentInput.trim()) {
-      alert('댓글을 입력해주세요.');
-      return;
-    }
-
-    try {
-      await addComment(reviewId, commentInput);
-      alert('댓글이 작성되었습니다.');
-      setCommentInput('');
-      setActiveCommentBox(null);
-
-      // 댓글 추가 후 리뷰 목록 새로고침
-      const updatedReviews = await getReviews(productId);
-      setReviews(updatedReviews);
-    } catch (error) {
-      alert(`댓글 추가 실패: ${error.message}`);
-    }
-  };
-
-  const handleUpdateComment = async (reviewId, commentId) => {
-    if (!editedCommentContent.trim()) {
-      alert('댓글 내용을 입력해주세요.');
-      return;
-    }
-
-    try {
-      await updateComment(reviewId, commentId, editedCommentContent);
-      alert('댓글이 성공적으로 수정되었습니다.');
-      setEditingCommentId(null);
-
-      // 리뷰 목록 새로고침
-      const updatedReviews = await getReviews(productId);
-      setReviews(updatedReviews);
-    } catch (error) {
-      alert(`댓글 수정 실패: ${error.message}`);
-    }
+  const handleRemoveImage = index => {
+    setEditedImages(prevImages => prevImages.filter((_, i) => i !== index));
   };
 
   const isAdmin = currentUser?.roles?.includes('admin');
 
   return (
     <div className="review-list">
+      {/* ✅ 평점 통계 결과 */}
+      <div className="review-summary">
+        <h2>리뷰 {totalReviews}</h2>
+        <div className="average-rating">
+          <h3>{averageRating}</h3>
+          <div className="stars">
+            {[...Array(5)].map((_, index) => (
+              <span key={index}>
+                {averageRating >= index + 1 ? (
+                  <AiFillStar color="#FFD700" size={20} />
+                ) : averageRating >= index + 0.5 ? (
+                  <FaStarHalfAlt color="#FFD700" size={20} />
+                ) : (
+                  <AiOutlineStar color="#E0E0E0" size={20} />
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* ✅ 별점 분포 */}
+        <div className="rating-distribution">
+          {ratingDistribution.map((count, idx) => (
+            <div key={5 - idx} className="rating-bar">
+              <span>{5 - idx} ★</span>
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{width: `${(count / totalReviews) * 100}%`}}
+                />
+              </div>
+              <span>{count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ✅ 리뷰 목록 */}
       {reviews.length === 0 ? (
         <p className="no-reviews">등록된 리뷰가 없습니다.</p>
       ) : (
@@ -144,68 +205,21 @@ const ReviewList = ({productId}) => {
             <div className="review-header">
               <div className="review-user-info">
                 <span className="review-username">
-                  {review.userId?.username || '익명 사용자'}
+                  👤 {review.userId?.username || '익명 사용자'}
                 </span>
                 <span className="review-date">
-                  &nbsp;
                   {new Date(review.createdAt).toISOString().substring(0, 10)}
                 </span>
               </div>
 
-              <div className="review-actions" ref={dropdownRef}>
-                <button className="like-button" onClick={() => handleLike(review._id)}>
-                  <AiOutlineLike /> {review.likes?.length || 0}
-                </button>
-
-                {(currentUser?._id === review.userId?._id ||
-                  currentUser?.roles?.includes('admin')) && (
-                  <div className="kebab-menu">
-                    <AiOutlineMore
-                      onClick={() => toggleMenu(review._id)}
-                      className="kebab-icon"
-                    />
-
-                    {menuOpen === review._id && (
-                      <div className="menu-options">
-                        {currentUser ? (
-                          <>
-                            {currentUser._id === review.userId._id && (
-                              <>
-                                <button
-                                  onClick={() => alert(`리뷰 ${review._id} 수정하기`)}>
-                                  수정하기
-                                </button>
-                                <button onClick={() => handleDelete(review._id)}>
-                                  삭제하기
-                                </button>
-                              </>
-                            )}
-
-                            {isAdmin && (
-                              <>
-                                <button onClick={() => handleAddCommentClick(review._id)}>
-                                  댓글 달기
-                                </button>
-                                <button onClick={() => handleDelete(review._id)}>
-                                  삭제하기
-                                </button>
-                              </>
-                            )}
-
-                            {!isAdmin && currentUser._id !== review.userId._id && (
-                              <p>권한이 없습니다</p>
-                            )}
-                          </>
-                        ) : (
-                          <p>로그인이 필요합니다</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              <button className="like-button" onClick={() => handleLike(review._id)}>
+                <AiOutlineLike /> {review.likes?.length || 0}
+              </button>
             </div>
 
+            <p className="review-text">{review.content}</p>
+
+            {/* 리뷰 이미지 */}
             {review.images && review.images.length > 0 && (
               <div className="review-images">
                 {review.images.map((image, index) => (
@@ -219,88 +233,20 @@ const ReviewList = ({productId}) => {
               </div>
             )}
 
+            {/* 별점 표시 */}
             <div className="review-rating">
-              {[...Array(5)].map((_, index) => {
-                const currentStar = index + 1;
-                return (
-                  <span key={index}>
-                    {review.rating >= currentStar ? (
-                      <AiFillStar color="#FFD700" size={20} />
-                    ) : review.rating >= currentStar - 0.5 ? (
-                      <FaStarHalfAlt color="#FFD700" size={20} />
-                    ) : (
-                      <AiOutlineStar color="#E0E0E0" size={20} />
-                    )}
-                  </span>
-                );
-              })}
+              {[...Array(5)].map((_, index) => (
+                <span key={index}>
+                  {review.rating >= index + 1 ? (
+                    <AiFillStar color="#FFD700" size={20} />
+                  ) : review.rating >= index + 0.5 ? (
+                    <FaStarHalfAlt color="#FFD700" size={20} />
+                  ) : (
+                    <AiOutlineStar color="#E0E0E0" size={20} />
+                  )}
+                </span>
+              ))}
             </div>
-
-            <p className="review-text">{review.content}</p>
-
-            {activeCommentBox === review._id && (
-              <div className="comment-box">
-                <textarea
-                  placeholder="댓글을 입력하세요..."
-                  value={commentInput}
-                  onChange={e => setCommentInput(e.target.value)}
-                />
-                <button onClick={() => handleAddComment(review._id)}>댓글 등록</button>
-              </div>
-            )}
-
-            {review.comments && review.comments.length > 0 && (
-              <div className="comment-list">
-                {review.comments.map((comment, index) => (
-                  <div key={comment._id || index} className="comment">
-                    {editingCommentId === comment._id ? (
-                      <>
-                        <textarea
-                          value={editedCommentContent}
-                          onChange={e => setEditedCommentContent(e.target.value)}
-                          placeholder="댓글을 수정하세요..."
-                        />
-                        <button
-                          onClick={() => handleUpdateComment(review._id, comment._id)}>
-                          저장
-                        </button>
-                        <button onClick={() => setEditingCommentId(null)}>취소</button>
-                      </>
-                    ) : (
-                      <>
-                        <p>
-                          <strong>
-                            {comment.userId?.roles?.includes('admin')
-                              ? '관리자'
-                              : comment.userId?.username || '익명 사용자'}
-                          </strong>
-                          : {comment.content}
-                        </p>
-
-                        {/* 관리자일 때만 수정/삭제 버튼 노출 */}
-                        {currentUser?.roles?.includes('admin') && (
-                          <div className="comment-actions">
-                            <button
-                              onClick={() => {
-                                setEditingCommentId(comment._id);
-                                setEditedCommentContent(comment.content);
-                              }}>
-                              수정
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleDeleteComment(review._id, comment._id)
-                              }>
-                              삭제
-                            </button>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         ))
       )}
