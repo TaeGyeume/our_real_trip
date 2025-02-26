@@ -1,11 +1,35 @@
 const packageService = require('../services/packageService');
 const mongoose = require('mongoose');
-const Flight = require('../models/Flight'); // ✅ Flight 모델 추가
+const Flight = require('../models/Flight'); // Flight 모델 추가
 const Accommodation = require('../models/Accommodation');
 const TourTicket = require('../models/TourTicket');
 
 /**
- * ✅ 패키지 상품 생성 (관리자만 가능)
+ * 패키지 생성에 필요한 데이터 불러오기 (숙소, 투어/티켓, 항공)
+ */
+exports.getPackageCreateData = async (req, res) => {
+  try {
+    // 숙소, 투어/티켓, 항공 데이터 불러오기
+    const accommodations = await Accommodation.find({});
+    const tourTickets = await TourTicket.find({});
+    const flights = await Flight.find({});
+
+    // 데이터가 제대로 불러와졌다면 응답으로 반환
+    return res.status(200).json({
+      accommodations,
+      tourTickets,
+      flights
+    });
+  } catch (error) {
+    console.error('[ERROR] 패키지 생성 데이터 불러오기 실패:', error);
+    return res
+      .status(500)
+      .json({message: '패키지 생성 데이터 불러오기 실패', error: error.message});
+  }
+};
+
+/**
+ *  패키지 상품 생성 (관리자만 가능)
  */
 exports.createPackage = async (req, res) => {
   try {

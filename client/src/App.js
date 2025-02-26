@@ -199,7 +199,7 @@ const App = () => {
           </Route>
           {/* 어드민 전용 페이지 */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
-            <Route path="/package/new" element={<PackageCreate />} />
+            <Route path="/product/package/create" element={<PackageCreate />} />
             <Route path="/package/edit/:id" element={<PackageEdit />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/product/tourTicket/list" element={<TourTicketList />} />

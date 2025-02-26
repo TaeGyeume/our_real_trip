@@ -52,6 +52,7 @@ const PackageEdit = () => {
         onChange={e => setPackageData({...packageData, description: e.target.value})}
         sx={{mt: 2}}
       />
+
       <Button variant="contained" color="primary" onClick={handleUpdate} sx={{mt: 2}}>
         수정 완료
       </Button>

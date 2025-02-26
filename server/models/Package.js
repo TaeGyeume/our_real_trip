@@ -16,7 +16,7 @@ const PackageSchema = new mongoose.Schema(
       }
     ],
 
-    // ✅ seatsToUse를 포함하는 flights 배열
+    // ✅seatsToUse를 포함하는 flights 배열
     flights: [
       {
         flightId: {

@@ -76,7 +76,7 @@ const Sidebar = ({activeSection, onSelectCategory}) => {
               <Nav.Item style={{whiteSpace: 'nowrap'}}>
                 <Nav.Link
                   style={defaultTabStyle} // 기본 탭 스타일 사용
-                  onClick={() => navigate('/package/create')}>
+                  onClick={() => navigate('/product/package/create')}>
                   📦 패키지 생성
                 </Nav.Link>
               </Nav.Item>

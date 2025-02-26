@@ -2,13 +2,15 @@ import React, {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {getPackageById} from '../../../api/package/packageService';
 import {fetchFlights} from '../../../api/flight/flights'; // 기존 API 호출 사용
-import {Container, Typography, Button, Grid, Card, CardContent} from '@mui/material';
+import {Container, Typography, Button, Grid, Card, CardContent, Box} from '@mui/material';
 
 const PackageDetail = () => {
   const {id} = useParams();
   const [packageData, setPackageData] = useState(null);
   const [flightsData, setFlightsData] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [finalPrice, setFinalPrice] = useState(0); // 할인 적용 후 최종 가격
+  const [discountRate, setDiscountRate] = useState(0); // 할인율 상태 추가
 
   useEffect(() => {
     fetchPackage();
@@ -69,7 +71,17 @@ const PackageDetail = () => {
     }
 
     // 최종 가격 계산
-    setTotalPrice(accommodationPrice + flightPrice + tourPrice);
+    const calculatedTotalPrice = accommodationPrice + flightPrice + tourPrice;
+    setTotalPrice(calculatedTotalPrice);
+
+    // 할인율이 있을 경우 적용
+    if (packageData.discountRate) {
+      const discount = (calculatedTotalPrice * packageData.discountRate) / 100;
+      setDiscountRate(packageData.discountRate); // 할인율 상태 업데이트
+      setFinalPrice(calculatedTotalPrice - discount); // 할인 적용된 가격
+    } else {
+      setFinalPrice(calculatedTotalPrice); // 할인 없으면 그냥 totalPrice
+    }
   };
 
   useEffect(() => {
@@ -86,8 +98,26 @@ const PackageDetail = () => {
       <Typography variant="body1" sx={{mt: 2}}>
         {packageData.description}
       </Typography>
-      <Typography variant="h6" sx={{mt: 2}}>
-        가격: {totalPrice.toLocaleString()} 원
+
+      {/* 원래 가격 (취소선 표시) */}
+      <Box sx={{mt: 2, display: 'flex', alignItems: 'center'}}>
+        <Typography
+          variant="h6"
+          color="text.secondary"
+          sx={{textDecoration: 'line-through', mr: 2}}>
+          원래 가격: {totalPrice.toLocaleString()} 원
+        </Typography>
+        {discountRate > 0 && (
+          <Typography variant="h6" color="primary">
+            할인율: {discountRate}% 적용
+          </Typography>
+        )}
+      </Box>
+
+      {/* 할인 적용 후 최종 가격 */}
+      <Typography variant="h6" sx={{mt: 1}}>
+        최종 가격 (할인 적용):{' '}
+        <span style={{fontWeight: 'bold'}}>{finalPrice.toLocaleString()} 원</span>
       </Typography>
 
       {/* 상품 이미지 목록 */}
