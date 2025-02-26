@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {fetchPopularProducts} from '../../api/views/viewsService';
 import Slider from 'react-slick';
-import ProductCard from './PopularProductsCard'; // 분리된 ProductCard 컴포넌트 사용
+import ProductCard from './PopularProductsCard';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import './styles/PopularProductsSlider.css';
@@ -65,7 +65,7 @@ const PopularProductsSlider = () => {
 
   return (
     <div className="popular-products-container">
-      <h2 className="section-title">🔥 인기 상품</h2>
+      <h2 className="section-title">🔥 다른 회원이 많이 본 상품</h2>
       <Slider {...settings} className="popular-products-slider">
         {products.map(product => (
           <ProductCard key={product._id} product={product} />

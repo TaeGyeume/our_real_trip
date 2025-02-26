@@ -25,8 +25,8 @@ const TravelItemList = ({limit = null}) => {
   }, []);
 
   return (
-    <Box sx={{maxWidth: 1000, mx: 'auto', mt: 4, px: 2}}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom textAlign="center">
+    <Box sx={{maxWidth: 1200, mx: 'auto', mt: 4, px: 2}}>
+      <Typography variant="h4" fontWeight="bold" gutterBottom>
         🛍️ 여행용품 리스트
       </Typography>
 
@@ -49,7 +49,6 @@ const TravelItemList = ({limit = null}) => {
         <Box
           display="flex"
           flexWrap="wrap"
-          justifyContent="center"
           gap={3} // 카드 간 간격 조정
           mt={3}>
           {items.length > 0 ? (

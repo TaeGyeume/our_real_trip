@@ -1,99 +1,89 @@
 const jwt = require('jsonwebtoken');
-const cookieOptions = require('../config/cookieConfig');
 const RefreshToken = require('../models/RefreshToken');
-const User = require('../models/User'); // ✅ 유저 정보 가져오기 위해 추가
+const User = require('../models/User');
+
+// 🔹 인증이 필요하지 않은 API 목록 (조회용 API는 로그인 없이 접근 가능)
+const PUBLIC_ROUTES = ['/api/favorites', '/api/public-data'];
 
 const authMiddleware = async (req, res, next) => {
-  console.log('📝 요청된 쿠키:', req.cookies);
-  console.log('📝 요청된 헤더:', req.headers);
+  // console.log('🛠 [Middleware] 요청된 쿠키:', req.cookies);
+  // console.log('🛠 [Middleware] 요청된 헤더:', req.headers);
 
-  const accessToken = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
-  const refreshToken = req.cookies.refreshToken;
+  let accessToken = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
 
-  if (!accessToken) {
-    console.log('❌ 액세스 토큰이 없음. 401 Unauthorized 발생');
-    return res.status(401).json({message: '인증이 필요합니다.'});
+  // ✅ 1️⃣ 인증이 필요 없는 API 요청이면 인증 없이 진행 (next() 호출)
+  if (PUBLIC_ROUTES.includes(req.path)) {
+    // console.log('🔓 [Middleware] 인증이 필요 없는 요청 → 인증 없이 진행');
+    return next(); // 바로 컨트롤러로 이동
   }
 
-  try {
-    // 액세스 토큰 검증 및 user 정보 추출
-    const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
-    req.user = decodedToken; // decodedToken에서 user 정보 추출 후 req.user에 설정
+  // ✅ 2️⃣ accessToken이 없을 경우, refreshToken을 검사하여 새 accessToken 발급
+  if (!accessToken) {
+    // console.log('⚠️ [Middleware] 액세스 토큰이 없음 → 리프레시 토큰 확인');
 
-    console.log('✅ 인증된 사용자:', req.user);
-
-    next(); // 인증 성공 시 다음 미들웨어 실행
-  } catch (error) {
-    console.error('❌ 액세스 토큰 검증 실패:', error.message);
-
-    // 액세스 토큰 만료 시 리프레시 토큰 검증
-    if (error.name === 'TokenExpiredError' && refreshToken) {
-      try {
-        console.log('🔄 리프레시 토큰 검증 시작');
-
-        // 리프레시 토큰 검증
-        const decodedRefreshToken = jwt.verify(
-          refreshToken,
-          process.env.REFRESH_TOKEN_SECRET
-        );
-        console.log('✅ 리프레시 토큰 디코딩 완료:', decodedRefreshToken);
-
-        // DB에서 리프레시 토큰 확인
-        const storedToken = await RefreshToken.findOne({userId: decodedRefreshToken.id});
-
-        if (!storedToken || storedToken.token !== refreshToken) {
-          console.error('❌ DB에서 리프레시 토큰을 찾을 수 없습니다.');
-          throw new Error('DB에 저장된 리프레시 토큰이 없거나 일치하지 않습니다.');
-        }
-
-        // 유저 정보 가져오기
-        const user = await User.findById(decodedRefreshToken.id);
-        if (!user) {
-          throw new Error('유저 정보를 찾을 수 없습니다.');
-        }
-
-        console.log('✅ 새로운 액세스 토큰 발급 - 사용자 정보:', user);
-
-        // 새로운 액세스 토큰 발급 (`roles` 포함)
-        const newAccessToken = jwt.sign(
-          {id: user._id, roles: user.roles || ['user']}, // `roles` 포함
-          process.env.JWT_SECRET,
-          {expiresIn: '1h'}
-        );
-
-        res.cookie('accessToken', newAccessToken, {
-          ...cookieOptions,
-          secure: process.env.NODE_ENV === 'production',
-          httpOnly: true,
-          maxAge: 15 * 60 * 1000, // 15분
-          sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
-        });
-
-        // 클라이언트에서 쿠키를 받을 수 있도록 설정 추가
-        res.setHeader('Access-Control-Expose-Headers', 'Set-Cookie');
-
-        req.user = jwt.verify(newAccessToken, process.env.JWT_SECRET);
-        console.log('✅ 새 액세스 토큰 발급 완료:', req.user);
-
-        next(); // 새로운 액세스 토큰 발급 후 다음 미들웨어 실행
-      } catch (refreshError) {
-        console.error('❌ 리프레시 토큰 검증 실패:', refreshError.message);
-
-        res.clearCookie('accessToken', {path: '/'});
-        res.clearCookie('refreshToken', {path: '/'});
-
-        return res
-          .status(403)
-          .json({message: '세션이 만료되었습니다. 다시 로그인해주세요.'});
-      }
-    } else {
-      res.clearCookie('accessToken', {path: '/'});
-      res.clearCookie('refreshToken', {path: '/'});
-
-      return res
-        .status(401)
-        .json({message: '인증 정보가 유효하지 않습니다. 다시 로그인해주세요.'});
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      // console.warn('⛔ [Middleware] 리프레시 토큰도 없음 → 로그인 필요');
+      req.user = null; // 로그인하지 않은 사용자
+      return next();
+      return res.status(401).json({message: '로그인이 필요합니다.'});
     }
+
+    try {
+      // ✅ 3️⃣ 리프레시 토큰 검증
+      const decodedRefreshToken = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET
+      );
+      // console.log('✅ [Middleware] 리프레시 토큰 검증 성공:', decodedRefreshToken);
+
+      // ✅ 4️⃣ DB에서 리프레시 토큰 확인
+      const storedToken = await RefreshToken.findOne({
+        userId: decodedRefreshToken.id,
+        token: refreshToken
+      });
+
+      if (!storedToken) {
+        // console.error('⛔ [Middleware] 리프레시 토큰이 DB에 없음 → 403 Forbidden');
+        return res.status(403).json({message: '유효하지 않은 리프레시 토큰입니다.'});
+      }
+
+      // ✅ 5️⃣ 새로운 accessToken 발급
+      accessToken = jwt.sign(
+        {id: decodedRefreshToken.id, roles: decodedRefreshToken.roles},
+        process.env.JWT_SECRET,
+        {expiresIn: '15m'}
+      );
+
+      // console.log('🔄 [Middleware] 새로 발급된 액세스 토큰:', accessToken);
+
+      // ✅ 6️⃣ 새로운 accessToken을 쿠키에 저장
+      res.cookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+        path: '/',
+        maxAge: 15 * 60 * 1000
+      });
+
+      // ✅ 7️⃣ accessToken이 발급되었으므로 요청에 추가하여 계속 진행
+      req.user = jwt.verify(accessToken, process.env.JWT_SECRET);
+      return next();
+    } catch (error) {
+      // console.error('⛔ [Middleware] 리프레시 토큰 검증 실패:', error.message);
+      return res.status(403).json({message: '유효하지 않은 리프레시 토큰입니다.'});
+    }
+  }
+
+  // ✅ 8️⃣ accessToken이 있으면 검증 후 요청 진행
+  try {
+    const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
+    req.user = decodedToken;
+    // console.log('✅ [Middleware] 인증된 사용자:', req.user);
+    next();
+  } catch (error) {
+    // console.error('⛔ [Middleware] 액세스 토큰 검증 실패:', error.message);
+    return res.status(401).json({message: '토큰이 만료되었습니다. 다시 로그인해주세요.'});
   }
 };
 

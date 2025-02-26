@@ -39,10 +39,18 @@ const AccommodationDetail = () => {
     const loadAccommodationDetail = async () => {
       try {
         const params = {startDate, endDate, adults, minPrice, maxPrice};
-        console.log('숙소 상세 요청 params:', params);
-
         const data = await fetchAccommodationDetail(accommodationId, params);
-        setAccommodationData(data);
+
+        const updatedRooms = data.availableRooms.map(room => ({
+          ...room,
+          checkInTime: room.checkInTime || '15:00',
+          checkOutTime: room.checkOutTime || '11:00'
+        }));
+
+        setAccommodationData({
+          ...data,
+          availableRooms: updatedRooms
+        });
       } catch (err) {
         setError(err.message);
       } finally {
@@ -144,7 +152,7 @@ const AccommodationDetail = () => {
         )}
       </Box>
 
-      {/* 리뷰 리스트 */}
+      {/* 리뷰 리스트  */}
       <Box sx={{mt: 4}}>
         <Typography variant="h5" fontWeight="bold" sx={{mb: 2}}>
           📝 리뷰

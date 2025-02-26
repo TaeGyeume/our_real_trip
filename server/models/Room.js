@@ -31,6 +31,16 @@ const RoomSchema = new mongoose.Schema({
       type: String // 객실 편의시설 리스트 (예: Wifi, TV, 에어컨 등)
     }
   ],
+  checkInTime: {
+    type: String, // 입실 시간 (기본값: 15:00)
+    default: '15:00',
+    required: true
+  },
+  checkOutTime: {
+    type: String, // 퇴실 시간 (기본값: 11:00)
+    default: '11:00',
+    required: true
+  },
   available: {
     type: Boolean, // 객실 예약 가능 여부
     default: true

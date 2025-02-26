@@ -20,7 +20,7 @@ const router = express.Router();
 // 회원가입 (공개 API)
 router.post('/register', register);
 
-// ✅ 인증 코드 검증 (공개 API)
+// 인증 코드 검증 (공개 API)
 router.post('/verify-code', verifyCode);
 
 // 로그인 (공개 API - httpOnly 쿠키 설정)

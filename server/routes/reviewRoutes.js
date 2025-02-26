@@ -8,4 +8,16 @@ router.post('/create', upload, reviewController.createReview);
 
 router.get('/:productId', reviewController.getReviews);
 
+router.delete('/delete/:id', authMiddleware, reviewController.deleteReview);
+
+router.put('/update/:id', upload, authMiddleware, reviewController.updateReview);
+
+router.post('/:reviewId/comments', authMiddleware, reviewController.addComment);
+
+router.delete(
+  '/:reviewId/comments/:commentId',
+  authMiddleware,
+  reviewController.deleteComment
+);
+
 module.exports = router;

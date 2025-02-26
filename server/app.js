@@ -12,6 +12,7 @@ require('./models/TourTicket');
 require('./models/Accommodation');
 require('./models/Flight');
 
+const packageRoutes = require('./routes/packageRoutes'); // ✅ 패키지 라우트 추가
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const authRoutes = require('./routes/authRoutes');
 const locationRoutes = require('./routes/locationRoutes');
@@ -31,6 +32,7 @@ const userMileageRoutes = require('./routes/userMileageRoutes');
 const qnaRoutes = require('./routes/qnaRoutes'); //
 const reviewRoutes = require('./routes/reviewRoutes');
 const viewsRoutes = require('./routes/viewsRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -43,7 +45,7 @@ connectDB();
 const corsOptions = {
   origin: `http://localhost:${process.env.CLIENT_PORT || 3000}`,
   credentials: true, // 쿠키를 포함한 요청 허용
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],
   exposedHeaders: ['set-cookie']
 };
@@ -68,6 +70,7 @@ app.use(passport.initialize()); // Passport 초기화 추가
 
 // 라우트 설정
 app.use('/', routes);
+app.use('/api/packages', packageRoutes); // ✅ 패키지 API
 app.use('/api/favorites', favoriteRoutes); // '/api/favorites' 경로로 라우터 연결
 app.use('/api/locations', locationRoutes);
 app.use('/api/accommodations', accommodationRoutes);
@@ -81,6 +84,7 @@ app.use('/api/travelItems', travelItemRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/user-coupons', userCouponRoutes);
 app.use('/api/views', viewsRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/product', productRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/tourTicket', userTourTicketRoutes);

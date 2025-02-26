@@ -3,7 +3,7 @@ import api from '../axios'; // axios.js에서 공통 설정을 가져옴
 const requestConfig = {
   withCredentials: true,
   headers: {
-    'Cache-Control': 'no-store', // 캐시 방지
+    'Cache-Control': 'no-store',
     'Content-Type': 'application/json'
   }
 };
@@ -40,7 +40,6 @@ const handleRequest = async (requestPromise, errorMessage) => {
 const clearCookiesManually = () => {
   document.cookie = 'accessToken=; Max-Age=0; path=/;';
   document.cookie = 'refreshToken=; Max-Age=0; path=/;';
-  console.log('브라우저 쿠키 수동 삭제 완료');
 };
 
 export const authAPI = {
@@ -50,11 +49,15 @@ export const authAPI = {
       '회원가입 요청 중 오류 발생'
     ),
 
-  loginUser: loginData =>
-    handleRequest(
-      api.post('/auth/login', loginData, requestConfig),
-      '로그인 요청 중 오류 발생'
-    ),
+  loginUser: async userData => {
+    try {
+      const response = await api.post('/auth/login', userData, {withCredentials: true});
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
 
   logoutUser: async () => {
     await handleRequest(
@@ -111,17 +114,42 @@ export const authAPI = {
       '비밀번호 변경 중 오류 발생'
     ),
 
+  // refreshToken: async () => {
+  //   try {
+  //     console.log('리프레시 토큰 갱신 중...');
+  //     const response = await handleRequest(
+  //       api.post('/auth/refresh-token', {}, requestConfig),
+  //       '리프레시 토큰 갱신 중 오류 발생'
+  //     );
+  //     console.log(' 새 액세스 토큰 수신:', response);
+
+  //     api.defaults.headers.common['Authorization'] = `Bearer ${response.accessToken}`;
+
+  //     return response;
+  //   } catch (error) {
+  //     console.error('리프레시 토큰 갱신 실패');
+  //     throw error;
+  //   }
+  // },
   refreshToken: async () => {
+    console.log('🚀 [클라이언트] 리프레시 토큰 요청 실행됨');
+
     try {
-      console.log('리프레시 토큰 갱신 중...');
-      const response = await handleRequest(
-        api.post('/auth/refresh-token', {}, requestConfig),
-        '리프레시 토큰 갱신 중 오류 발생'
+      const response = await api.post(
+        '/auth/refresh-token',
+        {},
+        {
+          withCredentials: true
+        }
       );
-      console.log('✅ 새 액세스 토큰 수신:', response);
-      return response;
+
+      console.log('✅ [클라이언트] 새 액세스 토큰 수신:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('리프레시 토큰 갱신 실패');
+      console.error(
+        '❌ [클라이언트] 리프레시 토큰 요청 실패:',
+        error.response?.data || error
+      );
       throw error;
     }
   },

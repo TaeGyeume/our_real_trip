@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import api from './api/axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {BrowserRouter as Router, Route, Routes, Navigate} from 'react-router-dom';
+import {useSocketStore} from './store/authStore';
 import {AuthPages, Main, UserPages} from './pages';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
@@ -15,6 +16,7 @@ import KakaoLoginCallback from './components/socialLogin/KakaoLoginCallback';
 import GoogleLoginCallback from './components/socialLogin/GoogleLoginCallback';
 import FindUserId from './pages/auth/FindUserId';
 import {useAuthStore} from './store/authStore'; // Zustand 스토어
+import {useNotificationStore} from './store/notificationStore';
 import PrivateRoute from './routes/PrivateRoute'; // 보호된 라우트 추가
 import Unauthorized from './pages/Unauthorized'; // 권한 없음 페이지 추가
 import AccommodationSearch from './pages/accommodations/AccommodationSearch';
@@ -64,12 +66,20 @@ import QnaBoardDetail from './pages/qna/QnaBoardDetail';
 import QnaBoardWrite from './pages/qna/QnaBoardWrite';
 import QnaBoardEdit from './pages/qna/QnaBoardEdit';
 import ReviewForm from './components/review/ReviewForm';
+import NotificationReceiver from './components/NotificationReceiver';
+import PackageList from './pages/package/PackageList';
+import PackageDetail from './pages/package/PackageDetail';
+import PackageEdit from './pages/package/PackageEdit';
+import PackageCreate from './pages/package/PackageCreate';
 import Modal from 'react-modal';
 
 const App = () => {
   const [serverMessage, setServerMessage] = useState('');
   const checkAuth = useAuthStore(state => state.checkAuth);
+  const user = useAuthStore(state => state.user);
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const {fetchNotifications, listenSocketNotifications} = useNotificationStore();
+  const {socket, connect, disconnect} = useSocketStore();
 
   Modal.setAppElement('#root');
 
@@ -89,8 +99,23 @@ const App = () => {
     checkAuth(); // 새로고침 시 인증 상태 확인 및 토큰 갱신
   }, [checkAuth]);
 
+  useEffect(() => {
+    if (isAuthenticated && user?._id) {
+      connect(user._id);
+    }
+    return () => disconnect();
+  }, [isAuthenticated, user, connect, disconnect]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+      if (socket) listenSocketNotifications(socket); // 소켓 실시간 이벤트 초기화
+    }
+  }, [isAuthenticated, fetchNotifications, listenSocketNotifications, socket]);
+
   return (
     <Router>
+      {isAuthenticated && <NotificationReceiver />}
       {/* <h1 className="text-center">Our Real Trip</h1> */}
       <ChannelTalk />
       {serverMessage && (
@@ -113,6 +138,8 @@ const App = () => {
             path="/login"
             element={isAuthenticated ? <Navigate to="/profile" /> : <AuthPages.Login />}
           />
+          <Route path="/packages" element={<PackageList />} />
+          <Route path="/package/:id" element={<PackageDetail />} />
           <Route path="/find-userid" element={<FindUserId />} />
           <Route path="/google/callback" element={<GoogleLoginCallback />} />
           <Route path="/kakao/callback" element={<KakaoLoginCallback />} />
@@ -168,6 +195,8 @@ const App = () => {
           </Route>
           {/* 어드민 전용 페이지 */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+            <Route path="/package/new" element={<PackageCreate />} />
+            <Route path="/package/edit/:id" element={<PackageEdit />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/product/tourTicket/list" element={<TourTicketList />} />
             <Route path="/product/tourTicket/new" element={<TourTicketForm />} />

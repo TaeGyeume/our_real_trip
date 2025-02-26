@@ -21,7 +21,7 @@ const generateTokens = user => {
   return {accessToken, refreshToken};
 };
 // =======================
-// ✅ Google 로그인 라우터
+//  Google 로그인 라우터
 // =======================
 
 // Google 로그인 시작
@@ -38,7 +38,7 @@ router.get(
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
@@ -47,7 +47,7 @@ router.get(
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
@@ -75,16 +75,17 @@ router.get(
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
-      maxAge: 15 * 60 * 1000 // 15분
+      // maxAge: 15 * 60 * 1000 // 15분
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
 
     // 리프레시 토큰을 httpOnly 쿠키로 저장
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
@@ -111,16 +112,17 @@ router.get(
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
-      maxAge: 15 * 60 * 1000 // 15분
+      // maxAge: 15 * 60 * 1000 // 15분
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
 
     // 리프레시 토큰 저장
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
@@ -146,15 +148,16 @@ router.get(
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
-      maxAge: 15 * 60 * 1000
+      // maxAge: 15 * 60 * 1000 //15분
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });

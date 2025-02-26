@@ -41,13 +41,13 @@ const ResetPassword = () => {
 
     try {
       if (token) {
-        // 🔹 비밀번호 찾기 후 재설정 (토큰 기반)
+        //  비밀번호 찾기 후 재설정 (토큰 기반)
         await authAPI.resetPassword({
           token: token,
           newPassword: formData.newPassword
         });
       } else if (isAuthenticated) {
-        // 🔹 로그인된 사용자 비밀번호 변경
+        //  로그인된 사용자 비밀번호 변경
         if (!formData.currentPassword) {
           setError('현재 비밀번호를 입력해주세요.');
           return;

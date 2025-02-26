@@ -37,7 +37,7 @@ const TravelItemListPage = () => {
         const response = await getUserFavorites();
         setFavorites(response.favorites.map(fav => fav.itemId));
       } catch (error) {
-        console.error('즐겨찾기 목록 가져오기 오류:', error);
+        // console.error('즐겨찾기 목록 가져오기 오류:', error);
       }
     };
 
@@ -151,7 +151,7 @@ const TravelItemListPage = () => {
 
       {/* 상품 리스트 */}
       {!loading && !error && (
-        <Box display="flex" flexWrap="wrap" justifyContent="center" gap={2} mb={3}>
+        <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
           {items.length > 0 ? (
             items.map(item => (
               <TravelItemCard
