@@ -12,6 +12,9 @@ router.get('/autocomplete', accommodationController.autocompleteSearch);
 // 날짜 및 인원수에 맞는 숙소 검색
 router.get('/search', accommodationController.getAccommodationsBySearch);
 
+// 조회수 순으로 가져오기
+router.get('/popular', accommodationController.getPopularAccommodations);
+
 // 특정 숙소의 검색 조건에 맞는 객실 조회 API
 router.get(
   '/:accommodationId/rooms',

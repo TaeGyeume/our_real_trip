@@ -126,7 +126,6 @@ const AccommodationList = ({limit = 6}) => {
           <SearchBar onSearch={setSearchTerm} />
 
           <Button
-            // variant="contained"
             color="secondary"
             sx={{
               height: '56px',
@@ -134,14 +133,12 @@ const AccommodationList = ({limit = 6}) => {
               px: 3,
               borderRadius: 2,
               transition: '0.3s'
-              // '&:hover': {backgroundColor: '#218838'}
             }}
             onClick={() => navigate('/product/accommodations/new')}>
             ➕ 숙소 등록
           </Button>
 
           <Button
-            // variant="contained"
             color="primary"
             sx={{
               height: '56px',
@@ -149,7 +146,6 @@ const AccommodationList = ({limit = 6}) => {
               px: 3,
               borderRadius: 2,
               transition: '0.3s'
-              // '&:hover': {backgroundColor: '#0056b3'}
             }}
             onClick={() => navigate('/product/locations/list')}>
             📍 위치 리스트

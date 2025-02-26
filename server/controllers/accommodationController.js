@@ -213,15 +213,26 @@ exports.getAccommodationById = async (req, res) => {
     }
 
     // 조회수 증가
-    const updatedViews = await accommodationService.incrementViews(accommodationId);
+    // const updatedViews = await accommodationService.incrementViews(accommodationId);
 
     res.status(200).json({
-      ...accommodation.toObject(), // 기존 숙소 정보 반환
-      views: updatedViews // 증가된 조회수 포함
+      ...accommodation.toObject() // 기존 숙소 정보 반환
+      // views: updatedViews
     });
   } catch (error) {
     console.error('숙소 조회 오류:', error.message);
     res.status(404).json({message: error.message});
+  }
+};
+
+// 조회수 순으로 가져오기
+exports.getPopularAccommodations = async (req, res) => {
+  try {
+    const accommodations = await accommodationService.getPopularAccommodations();
+    res.status(200).json({accommodations});
+  } catch (error) {
+    console.error('인기 숙소 조회 오류:', error.message);
+    res.status(500).json({message: '인기 숙소 조회 중 오류 발생'});
   }
 };
 

@@ -538,6 +538,20 @@ exports.incrementViews = async accommodationId => {
   }
 };
 
+// 조회수 순으로 가져오기
+exports.getPopularAccommodations = async () => {
+  try {
+    const accommodations = await Accommodation.find()
+      .sort({views: -1}) // 조회수 내림차순 정렬
+      .limit(10) // 인기 숙소 10개만 가져옴
+      .lean();
+
+    return accommodations;
+  } catch (error) {
+    throw new Error('인기 숙소 조회 중 오류 발생: ' + error.message);
+  }
+};
+
 exports.deleteImage = async (accommodationId, imageUrl) => {
   try {
     const baseUrl = 'http://localhost:5000';
