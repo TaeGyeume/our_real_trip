@@ -200,7 +200,8 @@ const App = () => {
           {/* 어드민 전용 페이지 */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
             <Route path="/product/package/create" element={<PackageCreate />} />
-            <Route path="/package/edit/:id" element={<PackageEdit />} />
+            {/* <Route path="/package/edit/:id" element={<PackageEdit />} /> */}
+            <Route path="/packages/:id/edit" element={<PackageEdit />} />{' '}
             <Route path="/product" element={<ProductPage />} />
             <Route path="/product/tourTicket/list" element={<TourTicketList />} />
             <Route path="/product/tourTicket/new" element={<TourTicketForm />} />
