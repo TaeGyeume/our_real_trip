@@ -107,7 +107,7 @@ const RoomCard = ({room, onRoomDeleted}) => {
       {/* 객실 이미지 */}
       <CardMedia
         component="img"
-        sx={{width: '35%', height: '230px', objectFit: 'cover'}}
+        sx={{width: '35%', height: '250px', objectFit: 'cover'}}
         image={imageUrl}
         alt={room.name}
       />
