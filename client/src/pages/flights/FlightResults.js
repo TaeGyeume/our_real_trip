@@ -1,3 +1,4 @@
+// 편도 검색후 나오는 페이지
 import React from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import SearchResultsList from '../../components/flights/SearchResultsList';

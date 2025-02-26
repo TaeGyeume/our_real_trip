@@ -6,6 +6,7 @@ import {authAPI} from '../../api/auth/index';
 import {fetchUserCoupons} from '../../api/coupon/couponService';
 import {cancelBooking} from '../../api/booking/bookingService';
 import CouponSelector from './CouponSelector';
+import MileageInput from '../mileage/MileageInput';
 
 const BookingForm = () => {
   const {roomId} = useParams();
@@ -16,7 +17,6 @@ const BookingForm = () => {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [usedMileage, setUsedMileage] = useState(0);
-  const [remainingMileage, setRemainingMileage] = useState(0);
 
   const defaultStartDate = searchParams.get('startDate') || '';
   const defaultEndDate = searchParams.get('endDate') || '';
@@ -41,7 +41,6 @@ const BookingForm = () => {
       try {
         const userData = await authAPI.getUserProfile();
         setUser(userData);
-        setRemainingMileage(userData.mileage);
         const coupons = await fetchUserCoupons(userData._id);
 
         // 최소 예약 금액 충족하는 쿠폰만 필터링
@@ -97,22 +96,6 @@ const BookingForm = () => {
     );
     return sum + nights * room.pricePerNight * roomData.count;
   }, 0);
-
-  const maxUsableMileage = Math.min(user?.mileage || 0, totalPrice - discountAmount);
-
-  // 마일리지 입력 핸들러
-  const handleMileageChange = e => {
-    const inputMileage = Number(e.target.value);
-    const validMileage =
-      inputMileage > maxUsableMileage ? maxUsableMileage : inputMileage;
-    setUsedMileage(validMileage);
-    setRemainingMileage((user?.mileage || 0) - validMileage); // 🔥 보유 마일리지 업데이트
-  };
-
-  const handleUseAllMileage = () => {
-    setUsedMileage(maxUsableMileage);
-    setRemainingMileage((user?.mileage || 0) - maxUsableMileage); // 🔥 보유 마일리지 즉시 반영
-  };
 
   /* 예약 생성 및 결제 요청 */
   const handlePayment = async () => {
@@ -269,22 +252,12 @@ const BookingForm = () => {
             onCouponSelect={handleCouponSelect}
           />
 
-          <div className="mileage-section">
-            <label>🎯 사용할 마일리지:</label>
-            <input
-              type="number"
-              value={usedMileage}
-              onChange={handleMileageChange}
-              min="0"
-              max={maxUsableMileage}
-            />
-            <button
-              className="btn btn-sm btn-outline-primary"
-              onClick={handleUseAllMileage}>
-              모두 사용
-            </button>
-            <p>보유 마일리지: {remainingMileage.toLocaleString()}P</p>
-          </div>
+          <MileageInput
+            userMileage={user.mileage}
+            totalPrice={totalPrice}
+            discountAmount={discountAmount}
+            onMileageChange={setUsedMileage}
+          />
 
           <p>
             최종 결제 금액:{' '}
