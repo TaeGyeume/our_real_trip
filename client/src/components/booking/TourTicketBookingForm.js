@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useParams, useNavigate} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import {getTourTicketById} from '../../api/tourTicket/tourTicketService';
 import {createBooking, verifyPayment} from '../../api/booking/bookingService';
 import {fetchUserCoupons} from '../../api/coupon/couponService';
@@ -33,14 +33,6 @@ const TourTicketBookingForm = () => {
       try {
         const userData = await authAPI.getUserProfile();
         setUser(userData);
-
-        // 초기 예약자 정보 설정
-        setReservationInfo({
-          name: userData.username,
-          email: userData.email,
-          phone: userData.phone
-        });
-
         const coupons = await fetchUserCoupons(userData._id);
 
         const validCoupons = coupons.filter(
@@ -61,18 +53,6 @@ const TourTicketBookingForm = () => {
   const handleCouponSelect = (coupon, discount) => {
     setSelectedCoupon(coupon);
     setDiscountAmount(discount);
-  };
-
-  const handleQuantityChange = newCount => {
-    setFormData({...formData, count: newCount});
-  };
-
-  const handleReservationChange = e => {
-    const {name, value} = e.target;
-    setReservationInfo(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   const handlePayment = async () => {
@@ -99,7 +79,11 @@ const TourTicketBookingForm = () => {
         usedMileage,
         userId: user._id,
         couponId: selectedCoupon ? selectedCoupon._id : null,
-        reservationInfo
+        reservationInfo: {
+          name: user.username,
+          email: user.email,
+          phone: user.phone
+        }
       });
 
       if (!bookingResponse || !bookingResponse.booking) {
@@ -136,11 +120,7 @@ const TourTicketBookingForm = () => {
             });
 
             if (verifyResponse.message === '결제 검증 성공') {
-              setOpenAlert(true);
-
-              setTimeout(() => {
-                navigate('/');
-              }, 2000);
+              alert(' 투어 티켓 예약이 완료되었습니다.');
             } else {
               alert(` 결제 검증 실패: ${verifyResponse.message}`);
             }
@@ -149,7 +129,6 @@ const TourTicketBookingForm = () => {
           }
         } else {
           alert(` 결제 실패: ${rsp.error_msg}`);
-
           if (selectedCoupon) {
             console.log('[클라이언트] 결제 취소, 예약 취소 요청 보냄:', merchant_uid);
             await cancelBooking(merchant_uid);
@@ -200,23 +179,10 @@ const TourTicketBookingForm = () => {
         원
       </p>
 
-            <button onClick={handlePayment} className="payment-btn">
-              {(ticket.price * formData.count - discountAmount).toLocaleString()}원
-              결제하기
-            </button>
-          </div>
-        </div>
-      </div>
-      <Snackbar
-        open={openAlert}
-        autoHideDuration={2000}
-        onClose={() => setOpenAlert(false)}
-        anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
-        <Alert onClose={() => setOpenAlert(false)} severity="success" variant="filled">
-          투어 티켓 예약이 완료되었습니다.
-        </Alert>
-      </Snackbar>
-    </>
+      <button onClick={handlePayment} className="payment-btn">
+        결제하기
+      </button>
+    </div>
   );
 };
 
