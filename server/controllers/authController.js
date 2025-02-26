@@ -196,7 +196,7 @@ exports.logout = async (req, res) => {
 exports.refreshToken = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    console.log(' [리프레시 요청] 전달된 리프레시 토큰:', refreshToken);
+    // console.log(' [리프레시 요청] 전달된 리프레시 토큰:', refreshToken);
 
     if (!refreshToken) {
       console.error(' 리프레시 토큰이 없습니다.');
@@ -204,14 +204,14 @@ exports.refreshToken = async (req, res) => {
     }
 
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    console.log(' [리프레시 요청] 디코딩된 정보:', decoded);
+    // console.log(' [리프레시 요청] 디코딩된 정보:', decoded);
 
     const storedToken = await RefreshToken.findOne({
       userId: decoded.id,
       token: refreshToken
     });
 
-    console.log(' [리프레시 요청] DB에 저장된 리프레시 토큰:', storedToken);
+    // console.log(' [리프레시 요청] DB에 저장된 리프레시 토큰:', storedToken);
 
     if (!storedToken) {
       console.error(' DB에서 리프레시 토큰을 찾을 수 없습니다.');
@@ -226,7 +226,7 @@ exports.refreshToken = async (req, res) => {
       {expiresIn: '1h'}
     );
 
-    console.log(' [리프레시 요청] 새로 발급된 액세스 토큰:', newAccessToken);
+    // console.log(' [리프레시 요청] 새로 발급된 액세스 토큰:', newAccessToken);
 
     res.cookie('accessToken', newAccessToken, {
       httpOnly: true,
