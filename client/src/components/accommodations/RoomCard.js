@@ -119,6 +119,11 @@ const RoomCard = ({room, onRoomDeleted}) => {
               <strong>편의시설:</strong> {room.amenities.join(', ')}
             </Typography>
           )}
+          {room.availableCount <= 3 && (
+            <Typography variant="body2" color="error" sx={{mt: 1}}>
+              해당 객실이 얼마 남지 않았어요! 남은 객실: {room.availableCount}개
+            </Typography>
+          )}
         </CardContent>
 
         {/* 액션 버튼 (예약, 수정, 삭제) */}

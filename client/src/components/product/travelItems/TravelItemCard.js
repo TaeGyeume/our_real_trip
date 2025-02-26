@@ -64,6 +64,7 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
   return (
     <Card
       sx={{
+        width: '100%',
         maxWidth: 300,
         borderRadius: 3,
         boxShadow: 3,
@@ -125,7 +126,7 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
             size="small"
             onClick={e => {
               e.stopPropagation();
-              handleModifyClick();
+              handleModifyClick(e);
             }}>
             ✏️ 수정
           </Button>
@@ -135,7 +136,7 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
             size="small"
             onClick={e => {
               e.stopPropagation();
-              handleDeleteClick();
+              handleDeleteClick(e);
             }}>
             ❌ 삭제
           </Button>
