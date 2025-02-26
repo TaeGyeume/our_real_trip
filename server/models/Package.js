@@ -2,95 +2,63 @@ const mongoose = require('mongoose');
 
 const PackageSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    description: {
-      type: String,
-      trim: true
-    },
-    type: {
-      type: String,
-      enum: ['Basic'],
-      default: 'Basic',
-      required: true
-    },
-    price: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-    discountRate: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100
-    },
-    finalPrice: {
-      type: Number,
-      required: true
-    },
+    name: {type: String, required: true, trim: true},
+    description: {type: String, trim: true},
+    type: {type: String, enum: ['Basic'], default: 'Basic', required: true},
+    price: {type: Number, required: true, min: 0},
+    discountRate: {type: Number, default: 0, min: 0, max: 100},
+    finalPrice: {type: Number, required: true},
+
     accommodations: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'accommodation'
       }
     ],
+
+    // ✅ seatsToUse를 포함하는 flights 배열
     flights: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'flight'
+        flightId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'flight',
+          required: true
+        },
+        seatsToUse: {
+          type: Number,
+          required: true,
+          min: 1
+        }
       }
     ],
+
     tours: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'tourTicket'
       }
     ],
-    images: [
-      {
-        type: String
-      }
-    ],
-    startDate: {
-      type: Date,
-      required: true
-    },
-    endDate: {
-      type: Date,
-      required: true
-    },
-    duration: {
-      type: Number
-    },
-    availableDates: [
-      {
-        type: Date
-      }
-    ],
+
+    images: [{type: String}],
+    startDate: {type: Date, required: true},
+    endDate: {type: Date, required: true},
+    duration: {type: Number},
+    availableDates: [{type: Date}],
+
     category: {
       type: String,
       enum: ['Self-Guided', 'Tour Package'],
       required: true
     },
-    minPeople: {
-      type: Number,
-      default: 1,
-      min: 1
-    },
-    maxPeople: {
-      type: Number,
-      default: 20,
-      min: 1
-    },
+
+    minPeople: {type: Number, default: 1, min: 1},
+    maxPeople: {type: Number, default: 20, min: 1},
     status: {
       type: String,
       enum: ['Available', 'Sold Out', 'Ongoing', 'Cancelled'],
       default: 'Available'
     },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -100,11 +68,11 @@ const PackageSchema = new mongoose.Schema(
   {timestamps: true}
 );
 
-// 인덱스 설정
+// ✅ 인덱스 설정
 PackageSchema.index({name: 'text', description: 'text', category: 'text'});
 
 /**
- * 패키지 저장 전에 유효성 검증
+ * ✅ 패키지 저장 전에 유효성 검증
  */
 PackageSchema.pre('save', function (next) {
   const totalItems =

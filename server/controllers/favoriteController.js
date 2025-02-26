@@ -28,9 +28,10 @@ const toggleFavorite = async (req, res) => {
     let {itemId, itemType} = req.body;
     const userId = req.user.id;
 
-    console.log(
-      `📌 [서버] 즐겨찾기 요청 - userId: ${userId}, itemId: ${itemId}, itemType: ${itemType}`
-    );
+    console
+      .log
+      // `📌 [서버] 즐겨찾기 요청 - userId: ${userId}, itemId: ${itemId}, itemType: ${itemType}`
+      ();
 
     if (!itemId || !itemType) {
       return res.status(400).json({error: 'itemId and itemType are required'});
