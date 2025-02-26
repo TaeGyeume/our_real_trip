@@ -3,6 +3,21 @@ import {useParams, useNavigate} from 'react-router-dom';
 import {fetchRoomList} from '../../../api/accommodation/accommodationService';
 import axios from '../../../api/axios';
 import RoomCard from '../../../components/accommodations/RoomCard';
+import {
+  Box,
+  Typography,
+  TextField,
+  Select,
+  MenuItem,
+  Button,
+  Stack,
+  FormControl,
+  InputLabel,
+  IconButton
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 const AccommodationModify = () => {
   const {accommodationId} = useParams();
@@ -201,8 +216,6 @@ const AccommodationModify = () => {
       ]
     };
 
-    console.log('변환된 좌표 데이터:', JSON.stringify(coordinates));
-
     try {
       // 이미지 삭제 요청을 먼저 보낸다.
       if (imagesToDelete.length > 0) {
@@ -213,12 +226,8 @@ const AccommodationModify = () => {
             data: {imageUrl: image}, // DELETE 요청에서는 `data` 속성을 사용해야 한다.
             headers: {'Content-Type': 'application/json'}
           });
-
-          console.log('이미지 삭제 성공:', image);
         }
       }
-
-      console.log('삭제된 이미지 리스트:', imagesToDelete);
 
       // 숙소 업데이트 요청
       const updatedFormData = new FormData();
@@ -239,10 +248,10 @@ const AccommodationModify = () => {
       // 새로 업로드한 이미지 중 삭제되지 않은 파일만 추가
       newImages.forEach(image => updatedFormData.append('images', image.file));
 
-      console.log('전송할 FormData 확인:');
-      for (let pair of updatedFormData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
+      // console.log('전송할 FormData 확인:');
+      // for (let pair of updatedFormData.entries()) {
+      //   console.log(pair[0], pair[1]);
+      // }
 
       // 숙소 정보 수정 요청
       await axios.patch(`/accommodations/${accommodationId}`, updatedFormData, {
@@ -265,201 +274,178 @@ const AccommodationModify = () => {
         img.startsWith('/uploads/') ? `${SERVER_URL}${img}` : img
       )
     );
-    navigate(-1);
+    navigate(`/product/accommodations/list`);
   };
 
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="container mt-4">
-      <h2>숙소 수정</h2>
-      <form onSubmit={handleSubmit}>
-        {/* 국가 선택 */}
-        <div className="mb-3">
-          <label className="form-label">국가 선택</label>
-          <select
-            className="form-control"
+    <Box sx={{maxWidth: 800, mx: 'auto', mt: 4}}>
+      <Typography variant="h4" sx={{mb: 3, fontWeight: 'bold', textAlign: 'center'}}>
+        숙소 수정
+      </Typography>
+
+      <Stack spacing={2} component="form" onSubmit={handleSubmit}>
+        <FormControl fullWidth>
+          <InputLabel>국가 선택</InputLabel>
+          <Select
             value={selectedCountry}
-            onChange={handleCountryChange}>
-            <option value="">국가를 선택하세요</option>
+            onChange={handleCountryChange}
+            label="국가 선택">
+            <MenuItem value="">국가를 선택하세요</MenuItem>
             {countries.map((country, index) => (
-              <option key={index} value={country}>
+              <MenuItem key={index} value={country}>
                 {country}
-              </option>
+              </MenuItem>
             ))}
-          </select>
-        </div>
-        {/* 도시 선택 */}
-        <div className="mb-3">
-          <label className="form-label">도시 선택</label>
-          <select
-            className="form-control"
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel>도시 선택</InputLabel>
+          <Select
             name="location"
             value={formData.location}
             onChange={handleCityChange}
+            label="도시 선택"
             required>
-            <option value="">도시를 선택하세요</option>
+            <MenuItem value="">도시를 선택하세요</MenuItem>
             {cities.map(city => (
-              <option key={city._id} value={city._id}>
+              <MenuItem key={city._id} value={city._id}>
                 {city.name}
-              </option> // city.name 표시
+              </MenuItem>
             ))}
-          </select>
-        </div>
+          </Select>
+        </FormControl>
 
-        {/* 숙소명 */}
-        <div className="mb-3">
-          <label className="form-label">숙소명</label>
-          <input
-            type="text"
-            className="form-control"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <TextField
+          label="숙소명"
+          fullWidth
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
+        <TextField
+          label="설명"
+          fullWidth
+          multiline
+          rows={3}
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+        />
+        <TextField
+          label="주소"
+          fullWidth
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          required
+        />
 
-        {/* 설명 */}
-        <div className="mb-3">
-          <label className="form-label">설명</label>
-          <textarea
-            className="form-control"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <TextField
+          label="위도 (Latitude)"
+          fullWidth
+          type="number"
+          name="lat"
+          value={formData.coordinates.lat}
+          onChange={handleCoordinateChange}
+          required
+        />
+        <TextField
+          label="경도 (Longitude)"
+          fullWidth
+          type="number"
+          name="lng"
+          value={formData.coordinates.lng}
+          onChange={handleCoordinateChange}
+          required
+        />
 
-        {/* 주소 */}
-        <div className="mb-3">
-          <label className="form-label">주소</label>
-          <input
-            type="text"
-            className="form-control"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        {/* 좌표 입력 */}
-        <div className="mb-3">
-          <label className="form-label">위도 (Latitude)</label>
-          <input
-            type="number"
-            className="form-control"
-            name="lat"
-            value={formData.coordinates.lat}
-            onChange={handleCoordinateChange}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">경도 (Longitude)</label>
-          <input
-            type="number"
-            className="form-control"
-            name="lng"
-            value={formData.coordinates.lng}
-            onChange={handleCoordinateChange}
-            required
-          />
-        </div>
-
-        {/* 카테고리 선택 */}
-        <div className="mb-3">
-          <label className="form-label">카테고리</label>
-          <select
-            className="form-control"
+        <FormControl fullWidth>
+          <InputLabel>카테고리</InputLabel>
+          <Select
             name="category"
             value={formData.category}
-            onChange={handleChange}>
-            <option value="Hotel">호텔</option>
-            <option value="Pension">펜션</option>
-            <option value="Resort">리조트</option>
-            <option value="Motel">모텔</option>
-          </select>
-        </div>
+            onChange={handleChange}
+            label="카테고리">
+            <MenuItem value="Hotel">호텔</MenuItem>
+            <MenuItem value="Pension">펜션</MenuItem>
+            <MenuItem value="Resort">리조트</MenuItem>
+            <MenuItem value="Motel">모텔</MenuItem>
+          </Select>
+        </FormControl>
 
-        {/* 편의시설 */}
-        <div className="mb-3">
-          <label className="form-label">편의시설</label>
-          {formData.amenities.map((amenity, index) => (
-            <div key={index}>
-              <input
-                type="text"
-                value={amenity}
-                onChange={e => handleAmenityChange(index, e.target.value)}
-                className="form-control"
+        <Typography variant="h6">편의시설</Typography>
+        {formData.amenities.map((amenity, index) => (
+          <Stack key={index} direction="row" spacing={1} alignItems="center">
+            <TextField
+              fullWidth
+              value={amenity}
+              onChange={e => handleAmenityChange(index, e.target.value)}
+            />
+            <IconButton color="error" onClick={() => handleRemoveAmenity(index)}>
+              <DeleteIcon />
+            </IconButton>
+          </Stack>
+        ))}
+        <Button startIcon={<AddIcon />} onClick={handleAddAmenity}>
+          편의시설 추가
+        </Button>
+
+        <Typography variant="h6">숙소 이미지</Typography>
+        <Button component="label" variant="contained" startIcon={<UploadFileIcon />}>
+          이미지 업로드
+          <input type="file" hidden multiple onChange={handleFileChange} />
+        </Button>
+
+        <Stack direction="row" spacing={2} flexWrap="wrap">
+          {previewImages.map((image, index) => (
+            <Box key={index} sx={{position: 'relative'}}>
+              <img
+                src={image}
+                alt={`preview-${index}`}
+                width={80}
+                height={80}
+                style={{borderRadius: 8}}
               />
-              <button type="button" onClick={() => handleRemoveAmenity(index)}>
-                삭제
-              </button>
-            </div>
+              <IconButton
+                sx={{position: 'absolute', top: 0, right: 0}}
+                onClick={() => handleDeleteImage(image)}>
+                <DeleteIcon />
+              </IconButton>
+            </Box>
           ))}
-          <button type="button" onClick={handleAddAmenity}>
-            + 추가
-          </button>
-        </div>
+        </Stack>
 
-        {/* 숙소 이미지 업로드 */}
-        <div className="mb-3">
-          <label className="form-label">숙소 이미지</label>
-          <input
-            type="file"
-            className="form-control"
-            name="images"
-            multiple
-            onChange={handleFileChange}
-          />
-        </div>
-
-        {/* 업로드한 이미지 미리보기 및 삭제 */}
-        {previewImages.length > 0 && (
-          <div className="image-preview">
-            {previewImages.map((image, index) => (
-              <div key={index} className="preview-container">
-                <img src={image} alt={`preview-${index}`} className="preview-image" />
-                <button
-                  type="button"
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDeleteImage(image)}>
-                  삭제
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        {/* 객실 추가 버튼 */}
-        <button
-          type="button"
-          className="btn btn-primary mt-2"
+        <Button
+          variant="contained"
           onClick={() =>
             navigate(`/product/room/new?accommodationId=${accommodationId}`)
           }>
           + 객실 추가
-        </button>
+        </Button>
 
-        {/* 방 정보 표시 */}
-        <h3>객실 목록</h3>
+        <Typography variant="h6">객실 목록</Typography>
         {availableRooms.length > 0 ? (
           availableRooms.map(room => <RoomCard key={room._id} room={room} />)
         ) : (
-          <p>예약 가능한 객실이 없습니다.</p>
+          <Typography color="textSecondary">예약 가능한 객실이 없습니다.</Typography>
         )}
 
-        <button type="submit" className="btn btn-primary">
-          수정 완료
-        </button>
-        <button type="button" className="btn btn-secondary ms-2" onClick={handleCancel}>
-          취소
-        </button>
-      </form>
-    </div>
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button variant="contained" color="primary" type="submit">
+            수정 완료
+          </Button>
+          <Button variant="outlined" onClick={handleCancel}>
+            취소
+          </Button>
+        </Stack>
+      </Stack>
+    </Box>
   );
 };
 

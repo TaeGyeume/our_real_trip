@@ -108,9 +108,20 @@ const RoomCard = ({room, onRoomDeleted}) => {
           <Typography variant="body2" color="text.secondary">
             <strong>최대 수용 인원:</strong> {room.maxGuests}명
           </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <strong>체크인:</strong> {room.checkInTime}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <strong>체크아웃:</strong> {room.checkOutTime}
+          </Typography>
           {room.amenities?.length > 0 && (
             <Typography variant="body2" color="text.secondary">
               <strong>편의시설:</strong> {room.amenities.join(', ')}
+            </Typography>
+          )}
+          {room.availableCount <= 3 && (
+            <Typography variant="body2" color="error" sx={{mt: 1}}>
+              해당 객실이 얼마 남지 않았어요! 남은 객실: {room.availableCount}개
             </Typography>
           )}
         </CardContent>

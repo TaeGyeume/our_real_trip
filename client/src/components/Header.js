@@ -26,6 +26,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import HotelIcon from '@mui/icons-material/Hotel';
 import TourIcon from '@mui/icons-material/CardTravel';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
@@ -154,6 +155,15 @@ const Header = () => {
               color="#74b9ff"
               sx={{whiteSpace: 'nowrap'}}>
               여행 용품
+            </Button>
+            <Button
+              component={Link}
+              to="/packages"
+              startIcon={<TravelExploreIcon />}
+              variant="contained"
+              color="#74b9ff"
+              sx={{whiteSpace: 'nowrap'}}>
+              패키지
             </Button>
             <Button
               component={Link}

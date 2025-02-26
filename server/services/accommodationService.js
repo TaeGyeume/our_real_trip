@@ -246,7 +246,7 @@ exports.getAvailableRoomsByAccommodation = async ({
     if (!startDate || !endDate || !adults) {
       console.log('검색 조건이 없으므로 모든 객실 반환');
       const allRooms = await Room.find({accommodation: accommodationId}).select(
-        'name pricePerNight images maxGuests amenities availableCount reservedDates'
+        'name pricePerNight images maxGuests amenities availableCount reservedDates checkInTime checkOutTime'
       );
       return {accommodation, availableRooms: allRooms};
     }
@@ -270,7 +270,7 @@ exports.getAvailableRoomsByAccommodation = async ({
       _id: {$nin: bookedRooms}, // 예약된 방 제외
       pricePerNight: priceFilter // 가격 필터 적용
     }).select(
-      'name pricePerNight images maxGuests amenities availableCount reservedDates'
+      'name pricePerNight images maxGuests amenities availableCount reservedDates checkInTime checkOutTime'
     );
 
     // 특정 날짜에 예약이 꽉 찬 객실 제외
@@ -287,10 +287,8 @@ exports.getAvailableRoomsByAccommodation = async ({
         const reservedCountOnDate =
           reservedDates.find(d => d.date.toISOString().split('T')[0] === dateStr)
             ?.count || 0;
-
         // 가용 객실 개수보다 예약 개수가 많으면 제외
         if (reservedCountOnDate >= room.availableCount) return false;
-
         currentDate.setDate(currentDate.getDate() + 1);
       }
       return true;
