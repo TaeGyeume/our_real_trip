@@ -188,13 +188,9 @@ const SearchBar = ({onSearch}) => {
             sx={{
               flexShrink: 0,
               minWidth: '140px',
-              height: '56px',
-              backgroundColor: '#42a5f5', // 원하는 색상 적용
-              '&:hover': {
-                backgroundColor: '#1565c0' // 호버 시 색상 변경
-              }
+              height: '56px'
             }}>
-            숙소 검색
+            검색
           </Button>
         </Stack>
       </Paper>
