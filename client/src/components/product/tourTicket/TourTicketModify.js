@@ -5,6 +5,19 @@ import {
 } from '../../../api/tourTicket/tourTicketService';
 import {useParams, useNavigate} from 'react-router-dom';
 
+const locationOptions = [
+  '서울',
+  '경기도',
+  '강원도',
+  '충청북도',
+  '충청남도',
+  '전라북도',
+  '전라남도',
+  '경상북도',
+  '경상남도',
+  '제주도'
+];
+
 const TourTicketModify = () => {
   const {id} = useParams();
   const navigate = useNavigate();
@@ -13,6 +26,7 @@ const TourTicketModify = () => {
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
   const [newImages, setNewImages] = useState([]);
   const [deleteImages, setDeleteImages] = useState([]);
 
@@ -25,6 +39,7 @@ const TourTicketModify = () => {
         setDescription(data.description);
         setPrice(data.price);
         setStock(data.stock);
+        setLocation(data.location);
       } catch (error) {
         console.error('상품 정보를 불러오는 중 오류 발생:', error);
       }
@@ -52,6 +67,7 @@ const TourTicketModify = () => {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
+      formData.append('location', location);
       formData.append('price', price);
       formData.append('stock', stock);
       formData.append('deleteImages', JSON.stringify([image])); // 삭제할 이미지 배열 전송
@@ -76,6 +92,7 @@ const TourTicketModify = () => {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
+    formData.append('location', location);
     formData.append('price', price);
     formData.append('stock', stock);
 
@@ -111,6 +128,20 @@ const TourTicketModify = () => {
           required
         />
 
+        <label>지역:</label>
+        <select
+          name="location"
+          value={location}
+          onChange={e => setLocation(e.target.value)}
+          required>
+          <option value="">지역 선택</option>
+          {locationOptions.map(loc => (
+            <option key={loc} value={loc}>
+              {loc}
+            </option>
+          ))}
+        </select>
+
         <label>가격:</label>
         <input
           type="number"
@@ -140,8 +171,7 @@ const TourTicketModify = () => {
               <button
                 type="button"
                 onClick={() => handleRemoveImage(image)}
-                style={{marginLeft: '10px', cursor: 'pointer', color: 'red'}}
-              >
+                style={{marginLeft: '10px', cursor: 'pointer', color: 'red'}}>
                 삭제
               </button>
             </div>

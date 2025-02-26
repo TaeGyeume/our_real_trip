@@ -1,15 +1,19 @@
-import React, {useState} from 'react';
-import {useSearchParams} from 'react-router-dom';
-import {createReview} from '../../api/review/reviewService';
-import {useAuthStore} from '../../store/authStore';
+import React, { useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { createReview } from '../../api/review/reviewService';
+import { useAuthStore } from '../../store/authStore';
+import { useReviewContext } from '../../contexts/ReviewContext';
 
 const ReviewForm = () => {
   const [searchParams] = useSearchParams();
   const productId = searchParams.get('productId');
   const bookingId = searchParams.get('bookingId');
+  const navigate = useNavigate();
 
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
   const userId = user?._id;
+
+  const { setReviewStatus } = useReviewContext(); // ReviewContext 사용
 
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState('');
@@ -21,7 +25,8 @@ const ReviewForm = () => {
 
   const handleSubmit = async () => {
     if (!userId) {
-      console.error('로그인 필요');
+      alert('로그인이 필요합니다.');
+      return;
     }
 
     const formData = new FormData();
@@ -31,15 +36,23 @@ const ReviewForm = () => {
     formData.append('rating', rating);
     formData.append('content', content);
 
-    if (images.length > 0) {
-      for (let i = 0; i < images.length; i++) {
-        formData.append('images', images[i]);
-      }
-    }
+    images.forEach(image => formData.append('images', image));
 
     try {
       await createReview(formData);
       alert('리뷰 작성 완료!');
+
+      // ✅ 리뷰 상태 업데이트
+      setReviewStatus(prevStatus => ({
+        ...prevStatus,
+        [productId]: {
+          ...prevStatus[productId],
+          [bookingId]: true, // 리뷰 작성 완료 표시
+        },
+      }));
+
+      // ✅ 예약 목록으로 이동
+      navigate('/booking/my/?status=completed');
     } catch (error) {
       console.error('리뷰 작성 실패:', error.response ? error.response.data : error);
       alert('리뷰 작성 실패');
