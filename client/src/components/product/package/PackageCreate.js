@@ -93,7 +93,7 @@ const PackageCreate = () => {
 
     try {
       await createPackage(newPackage); // 패키지 생성 API 호출
-      navigate('/product/package/list'); // 패키지 목록 페이지로 리디렉션
+      navigate('/packages'); // 패키지 목록 페이지로 리디렉션
     } catch (error) {
       console.error('패키지 생성 실패:', error);
     } finally {
