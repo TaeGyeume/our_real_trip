@@ -157,3 +157,17 @@ export const fetchAccommodationById = async accommodationId => {
     throw new Error('숙소 정보를 불러오는 d중 오류 발생');
   }
 };
+
+/**
+ * 인기 숙소(조회수 높은 순) 가져오기
+ * @returns {Promise<Array>} 인기 숙소 리스트
+ */
+export const fetchPopularAccommodations = async () => {
+  try {
+    const response = await axios.get('/accommodations/popular');
+    return response.data.accommodations;
+  } catch (error) {
+    console.error('인기 숙소 불러오기 오류:', error);
+    throw new Error('인기 숙소 데이터를 불러오는 중 오류가 발생했습니다.');
+  }
+};
