@@ -278,6 +278,15 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
       await userCoupon.save();
     }
 
+    // 결제 예상 금액 재계산 (쿠폰 & 마일리지 동시 적용)
+    expectedFinalAmount = Math.max(
+      totalOriginalPrice - discountAmount - totalUsedMileage,
+      0
+    );
+    console.log(
+      `[서버] 예상 결제 금액: ${expectedFinalAmount}원 (쿠폰 ${discountAmount}원 적용, 마일리지 ${totalUsedMileage}P 적용)`
+    );
+
     if (Math.abs(paymentData.amount - expectedFinalAmount) >= 0.01) {
       console.error(
         `결제 금액 불일치! 포트원: ${paymentData.amount}, 예상 결제 금액: ${expectedFinalAmount}`

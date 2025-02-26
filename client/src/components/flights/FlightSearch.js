@@ -34,7 +34,21 @@ const AIRPORT_CODES = {
   광주: 'KWJ',
   청주: 'CJJ',
   여수: 'RSU',
-  무안: 'MWX'
+  무안: 'MWX',
+  도쿄: 'HND',
+  도쿄: 'NRT',
+  뉴욕: 'JFK',
+  뉴욕: 'EWR',
+  뉴욕: 'LGA',
+  파리: 'CDG',
+  베이징: 'PEK',
+  베이징: 'PKX',
+  타이베이: 'TSA',
+  런던: 'LGW',
+  런던: 'LHR',
+  런던: 'LCY',
+  시드니: 'SYD',
+  방콕: 'BKK'
 };
 
 const AIRPORT_LIST = Object.keys(AIRPORT_CODES);
