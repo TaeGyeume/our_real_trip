@@ -69,6 +69,11 @@ const PackageList = () => {
     navigate(`/packages/${id}/edit`);
   };
 
+  // 패키지 상세 페이지로 이동
+  const handleDetail = id => {
+    navigate(`/package/${id}`);
+  };
+
   return (
     <Container>
       <Typography variant="h4" gutterBottom>
@@ -102,8 +107,16 @@ const PackageList = () => {
               return (
                 <Grid item xs={12} sm={6} md={4} key={pkg._id}>
                   <Card sx={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-                    <div style={{width: '100%', height: '250px', overflow: 'hidden'}}>
-                      {images.length > 1 ? (
+                    {/* 이미지 클릭 시 상세보기 이동 */}
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '250px',
+                        overflow: 'hidden',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => handleDetail(pkg._id)}>
+                      {images.length > 0 ? (
                         <img
                           src={`${SERVER_URL}${images[0]}`}
                           alt={`패키지 ${pkg.name}`}
@@ -116,11 +129,7 @@ const PackageList = () => {
                         />
                       ) : (
                         <img
-                          src={
-                            images.length > 0
-                              ? `${SERVER_URL}${images[0]}`
-                              : '/default-image.jpg'
-                          }
+                          src={'/default-image.jpg'}
                           alt={`패키지 ${pkg.name}`}
                           style={{
                             width: '100%',
