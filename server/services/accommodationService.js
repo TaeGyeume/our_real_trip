@@ -242,6 +242,8 @@ exports.getAvailableRoomsByAccommodation = async ({
       throw new Error('해당 숙소를 찾을 수 없습니다.');
     }
 
+    const updatedViews = await exports.incrementViews(accommodationId);
+
     // **검색 조건이 없을 경우 모든 객실 반환**
     if (!startDate || !endDate || !adults) {
       console.log('검색 조건이 없으므로 모든 객실 반환');
@@ -294,7 +296,10 @@ exports.getAvailableRoomsByAccommodation = async ({
       return true;
     });
 
-    return {accommodation, availableRooms};
+    return {
+      accommodation: {...accommodation.toObject(), views: updatedViews}, // 업데이트된 조회수 포함
+      availableRooms
+    };
   } catch (error) {
     console.error('특정 숙소의 객실 검색 중 오류 발생:', error);
     throw new Error('객실 검색 중 오류 발생: ' + error.message);
@@ -516,6 +521,21 @@ exports.getAccommodationById = async accommodationId => {
   }
 
   return accommodation;
+};
+
+// 숙소 조회수 증가 서비스
+exports.incrementViews = async accommodationId => {
+  try {
+    const updatedAccommodation = await Accommodation.findByIdAndUpdate(
+      accommodationId,
+      {$inc: {views: 1}}, // 조회수 증가
+      {new: true}
+    );
+    return updatedAccommodation.views; // 증가된 조회수 반환
+  } catch (error) {
+    console.error('숙소 조회수 증가 오류:', error);
+    throw new Error('조회수 증가 중 오류 발생');
+  }
 };
 
 exports.deleteImage = async (accommodationId, imageUrl) => {

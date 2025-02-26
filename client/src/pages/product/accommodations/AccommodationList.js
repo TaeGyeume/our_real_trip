@@ -3,6 +3,7 @@ import {useNavigate, useLocation} from 'react-router-dom';
 import axios from '../../../api/axios';
 import AccommodationCard from '../../../components/product/accommodations/AccommodationCard';
 import SearchBar from '../../../components/product/accommodations/SearchBar';
+import {Box, Typography, Button, CircularProgress} from '@mui/material';
 
 const AccommodationList = ({limit = 6}) => {
   const [accommodations, setAccommodations] = useState([]);
@@ -105,44 +106,90 @@ const AccommodationList = ({limit = 6}) => {
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="container mt-3">
-      <h2>숙소 목록</h2>
+    <Box sx={{maxWidth: 1200, mx: 'auto', mt: 3, px: 2}}>
+      {/* 숙소 목록 제목 */}
+      <Typography variant="h4" fontWeight="bold" mb={3} sx={{textAlign: 'center'}}>
+        🏨 숙소 목록
+      </Typography>
 
+      {/* 검색 및 숙소 등록, 위치 리스트 버튼 */}
       {location.pathname !== '/product' && (
-        <>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            mb: 3,
+            flexWrap: 'wrap'
+          }}>
           <SearchBar onSearch={setSearchTerm} />
-          <button
-            className="btn btn-success"
+
+          <Button
+            // variant="contained"
+            color="secondary"
+            sx={{
+              height: '56px',
+              fontWeight: 'bold',
+              px: 3,
+              borderRadius: 2,
+              transition: '0.3s'
+              // '&:hover': {backgroundColor: '#218838'}
+            }}
             onClick={() => navigate('/product/accommodations/new')}>
-            + 숙소 등록
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary ml-2"
+            ➕ 숙소 등록
+          </Button>
+
+          <Button
+            // variant="contained"
+            color="primary"
+            sx={{
+              height: '56px',
+              fontWeight: 'bold',
+              px: 3,
+              borderRadius: 2,
+              transition: '0.3s'
+              // '&:hover': {backgroundColor: '#0056b3'}
+            }}
             onClick={() => navigate('/product/locations/list')}>
             📍 위치 리스트
-          </button>
-        </>
+          </Button>
+        </Box>
       )}
 
-      <div className="row">
+      {/* 숙소 카드 리스트 (한 줄에 3개씩 정렬) */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2, // 카드 간격 조정
+          justifyContent: 'center'
+        }}>
         {accommodations.length > 0 ? (
           accommodations.map(acc => (
-            <div key={acc._id} className="col-md-4">
+            <Box
+              key={acc._id}
+              sx={{width: {xs: '100%', sm: '48%', md: '32%'}, minWidth: 300}}>
               <AccommodationCard accommodation={acc} />
-            </div>
+            </Box>
           ))
         ) : (
-          <p>숙소가 없습니다.</p>
+          <Typography variant="body1" textAlign="center" sx={{mt: 4, width: '100%'}}>
+            숙소가 없습니다.
+          </Typography>
         )}
-      </div>
+      </Box>
 
-      {/* 무한 스크롤을 위한 감지 요소 (높이 조정) */}
-      <div ref={observerRef} style={{height: '80px', background: 'transparent'}} />
+      {/* 무한 스크롤 감지 요소 */}
+      <Box ref={observerRef} sx={{height: '80px', background: 'transparent'}} />
 
-      {/* 로딩 상태 표시 */}
-      {loading && <div style={{textAlign: 'center', marginTop: '10px'}}>로딩 중...</div>}
-    </div>
+      {/* 로딩 표시 */}
+      {loading && (
+        <Box sx={{display: 'flex', justifyContent: 'center', mt: 2}}>
+          <CircularProgress />
+        </Box>
+      )}
+    </Box>
   );
 };
 

@@ -204,10 +204,21 @@ exports.getAccommodationById = async (req, res) => {
     const {accommodationId} = req.params;
     console.log('숙소 ID 조회 요청:', accommodationId);
 
+    // 숙소 조회
     const accommodation =
       await accommodationService.getAccommodationById(accommodationId);
 
-    res.status(200).json(accommodation);
+    if (!accommodation) {
+      return res.status(404).json({message: '숙소를 찾을 수 없습니다.'});
+    }
+
+    // 조회수 증가
+    const updatedViews = await accommodationService.incrementViews(accommodationId);
+
+    res.status(200).json({
+      ...accommodation.toObject(), // 기존 숙소 정보 반환
+      views: updatedViews // 증가된 조회수 포함
+    });
   } catch (error) {
     console.error('숙소 조회 오류:', error.message);
     res.status(404).json({message: error.message});
