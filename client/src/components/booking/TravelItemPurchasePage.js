@@ -51,10 +51,6 @@ const TravelItemPurchaseForm = () => {
   }, [itemId, formData.count]);
 
   const handlePayment = async () => {
-    if (!reservationInfo.name || !reservationInfo.email || !reservationInfo.phone) {
-      alert('예약자 정보를 모두 입력해주세요.');
-      return;
-    }
     const totalPrice = item.price * formData.count;
     const finalPrice = totalPrice - discountAmount - usedMileage;
 
@@ -78,7 +74,12 @@ const TravelItemPurchaseForm = () => {
         usedMileage,
         userId: user._id,
         couponId: selectedCoupon ? selectedCoupon._id : null,
-        reservationInfo
+        reservationInfo: {
+          name: user.username,
+          email: user.email,
+          phone: user.phone,
+          address: user.address
+        }
       });
 
       if (!bookingResponse || !bookingResponse.booking) {
@@ -146,66 +147,19 @@ const TravelItemPurchaseForm = () => {
   };
 
   return (
-    <Box sx={{maxWidth: 600, mx: 'auto', mt: 4}}>
-      <Typography variant="h4" sx={{mb: 3, fontWeight: 'bold', textAlign: 'center'}}>
-        여행 상품 구매
-      </Typography>
+    <div className="purchase-form">
+      <h3>상품명: {item.name}</h3>
+      <p>가격: {item?.price ? item.price.toLocaleString() : '가격 정보 없음'} 원</p>
 
-      <Card sx={{mb: 3, p: 2}}>
-        <CardContent>
-          <Typography variant="h5" sx={{fontWeight: 'bold'}}>
-            {item.name}
-          </Typography>
-          <Typography variant="subtitle1" sx={{color: 'text.secondary'}}>
-            💰 가격: {item.price.toLocaleString()} 원
-          </Typography>
-        </CardContent>
-      </Card>
-
-      <Stack spacing={2} sx={{mb: 3}}>
-        <TextField
-          label="구매 수량"
-          type="number"
-          fullWidth
-          value={formData.count}
-          onChange={e => setFormData({...formData, count: e.target.value})}
-          inputProps={{min: 1, max: item.stock || 50}}
-        />
-
-        <FormControlLabel
-          control={<Checkbox checked={useUserInfo} onChange={handleUseUserInfo} />}
-          label="로그인한 사용자 정보 사용"
-        />
-
-        <TextField
-          label="예약자 이름"
-          fullWidth
-          value={reservationInfo.name}
-          onChange={handleInputChange}
-          name="name"
-        />
-        <TextField
-          label="이메일"
-          fullWidth
-          value={reservationInfo.email}
-          onChange={handleInputChange}
-          name="email"
-        />
-        <TextField
-          label="연락처"
-          fullWidth
-          value={reservationInfo.phone}
-          onChange={handleInputChange}
-          name="phone"
-        />
-        <TextField
-          label="주소"
-          fullWidth
-          value={reservationInfo.address}
-          onChange={handleInputChange}
-          name="address"
-        />
-      </Stack>
+      <label>구매 수량</label>
+      <input
+        type="number"
+        name="count"
+        value={formData.count}
+        min="1"
+        max={item.stock || 50}
+        onChange={e => setFormData({...formData, count: e.target.value})}
+      />
 
       <CouponSelector
         userCoupons={userCoupons}
@@ -226,15 +180,10 @@ const TravelItemPurchaseForm = () => {
         {(item.price * formData.count - discountAmount - usedMileage).toLocaleString()} 원
       </p>
 
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{mt: 3}}
-        color="primary"
-        onClick={handlePayment}>
+      <button onClick={handlePayment} className="payment-btn">
         🛒 결제하기
-      </Button>
-    </Box>
+      </button>
+    </div>
   );
 };
 
