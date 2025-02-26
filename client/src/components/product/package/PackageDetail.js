@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
-import {getPackageById} from '../../api/package/packageService';
-import {fetchFlights} from '../../api/flight/flights'; // 기존 API 호출 사용
+import {getPackageById} from '../../../api/package/packageService';
+import {fetchFlights} from '../../../api/flight/flights'; // 기존 API 호출 사용
 import {Container, Typography, Button, Grid, Card, CardContent} from '@mui/material';
 
 const PackageDetail = () => {

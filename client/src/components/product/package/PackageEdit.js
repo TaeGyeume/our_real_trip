@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
-import {getPackageById, updatePackage} from '../../api/package/packageService';
+import {getPackageById, updatePackage} from '../../../api/package/packageService';
 import {Container, TextField, Button, Typography} from '@mui/material';
 
 const PackageEdit = () => {

@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {createPackage} from '../../api/package/packageService';
+import {createPackage} from '../../../api/package/packageService';
 import {Container, TextField, Button, Typography, Grid} from '@mui/material';
 
 const PackageCreate = () => {

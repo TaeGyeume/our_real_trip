@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {getPackages} from '../../api/package/packageService';
+import {getPackages} from '../../../api/package/packageService';
 import {
   Container,
   Typography,
