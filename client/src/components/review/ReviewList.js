@@ -42,7 +42,6 @@ const ReviewList = ({productId}) => {
         if (reviewsData.status === 'fulfilled') {
           const {reviews = []} = reviewsData.value;
 
-          // ✅ 배열 확인 및 상태 업데이트
           const validReviews = Array.isArray(reviews) ? reviews : [];
           setReviews(validReviews);
           calculateRatingStats(validReviews);
@@ -72,7 +71,6 @@ const ReviewList = ({productId}) => {
     return () => document.removeEventListener('mousedown', handleDocumentClick);
   }, []);
 
-  // ✅ 평점 통계 계산
   const calculateRatingStats = reviews => {
     const total = reviews.length;
     const sumRatings = reviews.reduce((acc, review) => acc + review.rating, 0);
@@ -138,12 +136,112 @@ const ReviewList = ({productId}) => {
       alert('리뷰가 성공적으로 수정되었습니다.');
       setEditingReviewId(null);
 
-      const updatedReviews = await getReviews(productId);
-      setReviews(updatedReviews);
-      calculateRatingStats(updatedReviews);
+      // const updatedReviews = await getReviews(productId);
+      // setReviews(updatedReviews);
+      // calculateRatingStats(updatedReviews);
+      setReviews(prevReviews =>
+        prevReviews.map(review =>
+          review._id === reviewId
+            ? { ...review, content: editedContent, images: editedImages }
+            : review
+        )
+      );
     } catch (error) {
       alert(`리뷰 수정 실패: ${error.message}`);
     }
+  };
+
+  const handleAddComment = async reviewId => {
+    if (!commentInput.trim()) {
+      alert('댓글을 입력해주세요.');
+      return;
+    }
+
+    try {
+      // await addComment(reviewId, commentInput);
+      const newComment = await addComment(reviewId, commentInput);
+      alert('댓글이 작성되었습니다.');
+      setCommentInput('');
+      setActiveCommentBox(null);
+
+      // 댓글 추가 후 리뷰 목록 새로고침
+      // const updatedReviews = await getReviews(productId);
+      // setReviews(updatedReviews);
+      setReviews(prevReviews =>
+        prevReviews.map(review =>
+          review._id === reviewId
+            ? { ...review, comments: [...review.comments, newComment] }
+            : review
+        )
+      );
+    } catch (error) {
+      alert(`댓글 추가 실패: ${error.message}`);
+    }
+  };
+
+  const handleDeleteComment = async (reviewId, commentId) => {
+    try {
+      await deleteComment(reviewId, commentId);
+      alert('댓글이 성공적으로 삭제되었습니다.');
+
+      // const updatedReviews = await getReviews(productId);
+      // setReviews(updatedReviews);
+      setReviews(prevReviews =>
+        prevReviews.map(review =>
+          review._id === reviewId
+            ? { ...review, comments: review.comments.filter(comment => comment._id !== commentId) }
+            : review
+        )
+      );
+    } catch (error) {
+      console.error('[프론트] 댓글 삭제 실패:', error.message);
+      alert(`댓글 삭제 실패: ${error.message}`);
+    }
+  };
+
+
+  const handleUpdateComment = async (reviewId, commentId) => {
+    if (!editedCommentContent.trim()) {
+      alert('댓글 내용을 입력해주세요.');
+      return;
+    }
+
+    console.log("댓글 수정 요청:", { reviewId, commentId, editedCommentContent });
+
+    if (!reviewId || !commentId) {
+      alert("잘못된 리뷰 ID 또는 댓글 ID입니다.");
+      return;
+    }
+
+    try {
+      await updateComment(reviewId, commentId, editedCommentContent);
+      alert('댓글이 성공적으로 수정되었습니다.');
+      setEditingCommentId(null);
+
+      // 리뷰 목록 새로고침
+      // const updatedReviews = await getReviews(productId);
+      // setReviews(updatedReviews);
+
+      setReviews(prevReviews =>
+        prevReviews.map(review =>
+          review._id === reviewId
+            ? {
+                ...review,
+                comments: review.comments.map(comment =>
+                  comment._id === commentId ? { ...comment, content: editedCommentContent } : comment
+                ),
+              }
+            : review
+        )
+      );
+    } catch (error) {
+      alert(`댓글 수정 실패: ${error.message}`);
+    }
+  };
+
+  const handleAddCommentClick = reviewId => {
+    setActiveCommentBox(reviewId);
+    setMenuOpen(null);
   };
 
   const handleImageChange = e => {
@@ -159,94 +257,217 @@ const ReviewList = ({productId}) => {
 
   return (
     <div className="review-list">
-      {/* ✅ 평점 통계 결과 */}
-      <div className="review-summary">
-        <h2>리뷰 {totalReviews}</h2>
-        <div className="average-rating">
-          <h3>{averageRating}</h3>
-          <div className="stars">
-            {[...Array(5)].map((_, index) => (
-              <span key={index}>
-                {averageRating >= index + 1 ? (
-                  <AiFillStar color="#FFD700" size={20} />
-                ) : averageRating >= index + 0.5 ? (
-                  <FaStarHalfAlt color="#FFD700" size={20} />
-                ) : (
-                  <AiOutlineStar color="#E0E0E0" size={20} />
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ✅ 별점 분포 */}
-        <div className="rating-distribution">
-          {ratingDistribution.map((count, idx) => (
-            <div key={5 - idx} className="rating-bar">
-              <span>{5 - idx} ★</span>
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{width: `${(count / totalReviews) * 100}%`}}
-                />
-              </div>
-              <span>{count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ✅ 리뷰 목록 */}
       {reviews.length === 0 ? (
         <p className="no-reviews">등록된 리뷰가 없습니다.</p>
       ) : (
         reviews.map(review => (
-          <div key={review._id} className="review-card">
+          <div
+            key={review._id}
+            className="review-card"
+            onMouseDown={e => e.stopPropagation()}>
             <div className="review-header">
               <div className="review-user-info">
                 <span className="review-username">
                   👤 {review.userId?.username || '익명 사용자'}
                 </span>
                 <span className="review-date">
+                  &nbsp;
                   {new Date(review.createdAt).toISOString().substring(0, 10)}
                 </span>
               </div>
 
-              <button className="like-button" onClick={() => handleLike(review._id)}>
-                <AiOutlineLike /> {review.likes?.length || 0}
-              </button>
+              <div className="review-actions" ref={dropdownRef}>
+                <button className="like-button" onClick={() => handleLike(review._id)}>
+                  <AiOutlineLike /> {review.likes?.length || 0}
+                </button>
+
+                {(currentUser?._id === review.userId?._id || isAdmin) && (
+                  <div className="kebab-menu" onMouseDown={e => e.stopPropagation()}>
+                    <AiOutlineMore
+                      onClick={e => toggleMenu(review._id, e)}
+                      className="kebab-icon"
+                    />
+
+                    {menuOpen === review._id && (
+                      <div
+                        className="menu-options"
+                        onMouseDown={e => e.stopPropagation()}>
+                        {currentUser ? (
+                          <>
+                            {currentUser._id === review.userId._id && (
+                              <>
+                                <button onClick={() => handleEditReview(review)}>
+                                  수정하기
+                                </button>
+                                <button onClick={() => handleDelete(review._id)}>
+                                  삭제하기
+                                </button>
+                              </>
+                            )}
+
+                            {isAdmin && (
+                              <>
+                                <button onClick={() => handleAddCommentClick(review._id)}>
+                                  댓글 달기
+                                </button>
+                                <button onClick={() => handleDelete(review._id)}>
+                                  삭제하기
+                                </button>
+                              </>
+                            )}
+
+                            {!isAdmin && currentUser._id !== review.userId._id && (
+                              <p>권한이 없습니다</p>
+                            )}
+                          </>
+                        ) : (
+                          <p>로그인이 필요합니다</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <p className="review-text">{review.content}</p>
+            {/* 리뷰 수정 모드 */}
+            {editingReviewId === review._id ? (
+              <div className="edit-review">
+                <textarea
+                  value={editedContent}
+                  onChange={e => setEditedContent(e.target.value)}
+                  placeholder="리뷰를 수정하세요..."
+                />
 
-            {/* 리뷰 이미지 */}
-            {review.images && review.images.length > 0 && (
-              <div className="review-images">
-                {review.images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={`http://localhost:5000${image}`}
-                    alt={`리뷰 이미지 ${index + 1}`}
-                    className="review-thumbnail"
-                  />
-                ))}
+                <div className="edit-images">
+                  {editedImages.map((img, index) => (
+                    <div key={index} className="edit-image">
+                      {img instanceof File ? (
+                        <img
+                          src={URL.createObjectURL(img)}
+                          alt={`업로드 이미지 ${index + 1}`}
+                          width="100"
+                        />
+                      ) : (
+                        <img
+                          src={`http://localhost:5000${img}`}
+                          alt={`기존 이미지 ${index + 1}`}
+                          width="100"
+                        />
+                      )}
+                      <button onClick={() => handleRemoveImage(index)}>삭제</button>
+                    </div>
+                  ))}
+                </div>
+
+                <input type="file" multiple onChange={handleImageChange} />
+
+                <button onClick={() => handleUpdateReview(review._id)}>저장</button>
+                <button onClick={() => setEditingReviewId(null)}>취소</button>
               </div>
+            ) : (
+              <>
+                {/* 리뷰 내용 및 이미지 표시 */}
+                <p className="review-text">{review.content}</p>
+
+                {review.images && review.images.length > 0 && (
+                  <div className="review-images">
+                    {review.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={`http://localhost:5000${image}`}
+                        alt={`리뷰 이미지 ${index + 1}`}
+                        className="review-thumbnail"
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
 
             {/* 별점 표시 */}
             <div className="review-rating">
-              {[...Array(5)].map((_, index) => (
-                <span key={index}>
-                  {review.rating >= index + 1 ? (
-                    <AiFillStar color="#FFD700" size={20} />
-                  ) : review.rating >= index + 0.5 ? (
-                    <FaStarHalfAlt color="#FFD700" size={20} />
-                  ) : (
-                    <AiOutlineStar color="#E0E0E0" size={20} />
-                  )}
-                </span>
-              ))}
+              {[...Array(5)].map((_, index) => {
+                const currentStar = index + 1;
+                return (
+                  <span key={index}>
+                    {review.rating >= currentStar ? (
+                      <AiFillStar color="#FFD700" size={20} />
+                    ) : review.rating >= currentStar - 0.5 ? (
+                      <FaStarHalfAlt color="#FFD700" size={20} />
+                    ) : (
+                      <AiOutlineStar color="#E0E0E0" size={20} />
+                    )}
+                  </span>
+                );
+              })}
             </div>
+
+            {/* 댓글 작성 */}
+            {activeCommentBox === review._id && (
+              <div className="comment-box">
+                <textarea
+                  placeholder="댓글을 입력하세요..."
+                  value={commentInput}
+                  onChange={e => setCommentInput(e.target.value)}
+                />
+                <button onClick={() => handleAddComment(review._id)}>댓글 등록</button>
+              </div>
+            )}
+
+            {/* 댓글 리스트 */}
+            {review.comments && review.comments.length > 0 && (
+              <div className="comment-list">
+                {review.comments.map((comment, index) => (
+                  <div key={comment._id || index} className="comment">
+                    {editingCommentId === comment._id ? (
+                      <>
+                        <textarea
+                          value={editedCommentContent}
+                          onChange={e => setEditedCommentContent(e.target.value)}
+                          placeholder="댓글을 수정하세요..."
+                        />
+                        <button
+                          onClick={() => handleUpdateComment(review._id, comment._id)}>
+                          저장
+                        </button>
+                        <button onClick={() => setEditingCommentId(null)}>취소</button>
+                      </>
+                    ) : (
+                      <>
+                        <p>
+                          <strong>
+                            {comment.userId?.roles?.includes('admin')
+                              ? '관리자'
+                              : comment.userId?.username || '익명 사용자'}
+                          </strong>
+                          : {comment.content}
+                        </p>
+
+                        {/* 관리자일 때만 수정/삭제 버튼 표시 */}
+                        {currentUser?.roles?.includes('admin') && (
+                          <div className="comment-actions">
+                            <button
+                              onClick={() => {
+                                setEditingCommentId(comment._id);
+                                setEditedCommentContent(comment.content);
+                              }}>
+                              수정
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteComment(review._id, comment._id)
+                              }>
+                              삭제
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))
       )}

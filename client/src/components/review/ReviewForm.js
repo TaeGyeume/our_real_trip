@@ -42,7 +42,6 @@ const ReviewForm = () => {
       await createReview(formData);
       alert('리뷰 작성 완료!');
 
-      // ✅ 리뷰 상태 업데이트
       setReviewStatus(prevStatus => ({
         ...prevStatus,
         [productId]: {
@@ -51,7 +50,6 @@ const ReviewForm = () => {
         },
       }));
 
-      // ✅ 예약 목록으로 이동
       navigate('/booking/my/?status=completed');
     } catch (error) {
       console.error('리뷰 작성 실패:', error.response ? error.response.data : error);
