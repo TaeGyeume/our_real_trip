@@ -798,8 +798,12 @@ exports.getBookingDetails = async bookingId => {
 };
 
 //패키지 부분
+// ─────────────────────────────────────────────────────────────
+// 패키지 예약 생성 함수
+// ─────────────────────────────────────────────────────────────
 exports.bookPackage = async (packageId, userId) => {
   try {
+    // 패키지 데이터 조회 (숙소, 투어, 항공편 정보를 포함하여 populate)
     const packageData = await Package.findById(packageId)
       .populate('accommodations')
       .populate('tours')
@@ -809,11 +813,11 @@ exports.bookPackage = async (packageId, userId) => {
       return {status: 404, message: '패키지를 찾을 수 없습니다.'};
     }
 
-    // 기존 예약 확인 (같은 패키지를 이미 예약했는지)
+    // 같은 패키지가 이미 예약되어있는지 확인 (취소되지 않은 예약)
     const existingBooking = await Booking.findOne({
       userId,
       productIds: packageId,
-      paymentStatus: {$ne: 'CANCELED'} // 취소된 예약은 제외
+      paymentStatus: {$ne: 'CANCELED'}
     });
 
     if (existingBooking) {
@@ -827,12 +831,12 @@ exports.bookPackage = async (packageId, userId) => {
       : 0;
     const finalPrice = totalPrice - discountAmount;
 
-    // 패키지 포함 상품 IDs
+    // 패키지에 포함된 상품들의 ID 추출
     const accommodationIds = packageData.accommodations.map(a => a._id);
     const tourIds = packageData.tours.map(t => t._id);
     const flightIds = packageData.flights.map(f => f._id);
 
-    // 예약 생성
+    // 예약 생성 (각 상품은 기본적으로 1개씩 예약)
     const newBooking = new Booking({
       userId,
       types: [
@@ -845,7 +849,7 @@ exports.bookPackage = async (packageId, userId) => {
       counts: [
         1,
         ...Array(accommodationIds.length + tourIds.length + flightIds.length).fill(1)
-      ], // 기본적으로 1개씩 예약
+      ],
       totalPrice,
       discountAmount,
       finalPrice,
@@ -854,6 +858,7 @@ exports.bookPackage = async (packageId, userId) => {
     });
 
     await newBooking.save();
+
     return {status: 200, booking: newBooking, message: '패키지 예약이 완료되었습니다.'};
   } catch (error) {
     console.error('패키지 예약 오류:', error);
@@ -861,7 +866,9 @@ exports.bookPackage = async (packageId, userId) => {
   }
 };
 
-// 패키지 예약 상세 조회
+// ─────────────────────────────────────────────────────────────
+// 패키지 예약 상세 조회 함수
+// ─────────────────────────────────────────────────────────────
 exports.getPackageBookingDetails = async bookingId => {
   try {
     const booking = await Booking.findById(bookingId)
@@ -874,6 +881,7 @@ exports.getPackageBookingDetails = async bookingId => {
         }
       });
 
+    // 예약 데이터가 없거나, 예약 타입에 'package'가 포함되어 있지 않으면 오류 반환
     if (!booking || !booking.types.includes('package')) {
       return {status: 404, message: '패키지 예약 정보를 찾을 수 없습니다.'};
     }
