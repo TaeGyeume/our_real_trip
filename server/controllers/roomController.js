@@ -188,3 +188,16 @@ exports.deleteRoomImage = async (req, res) => {
     return res.status(500).json({message: '서버 오류로 인해 이미지 삭제 실패'});
   }
 };
+
+// 특정 날짜의 예약 가능한 객실 개수 조회
+exports.getAvailableRoomsByDate = async (req, res) => {
+  try {
+    const {roomId, date} = req.params;
+    if (!date) return res.status(400).json({message: '예약 날짜를 입력하세요.'});
+
+    const result = await roomService.getAvailableRoomsByDate(roomId, date);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({message: error.message});
+  }
+};

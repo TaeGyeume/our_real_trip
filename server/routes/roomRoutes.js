@@ -18,4 +18,7 @@ router.post('/:roomId/images/delete', roomController.deleteRoomImage);
 // 특정 객실 조회 (GET /api/rooms/:roomId)
 router.get('/:roomId', roomController.getRoomById);
 
+// 특정 날짜의 예약 가능 객실 개수 조회
+router.get('/:roomId/availability/:date', roomController.getAvailableRoomsByDate);
+
 module.exports = router;

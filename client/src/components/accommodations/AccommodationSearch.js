@@ -1,5 +1,6 @@
 // src/components/accommodations/AccommodationSearch.js
-import React from 'react';
+import React, {useEffect} from 'react';
+import {useSearchParams} from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import {TextField, Button, Box, Stack, InputAdornment} from '@mui/material';
@@ -14,6 +15,25 @@ const AccommodationSearch = ({
   setAdults,
   onSearch
 }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // 체크인 날짜 변경 시, 체크아웃 날짜가 이전이면 조정
+  useEffect(() => {
+    if (endDate <= startDate) {
+      setEndDate(new Date(startDate.getTime() + 86400000)); // 체크아웃을 체크인 날짜 + 1일로 변경
+    }
+  }, [startDate, endDate, setEndDate]);
+
+  // 날짜 또는 인원 변경 시 자동으로 URL 업데이트 및 검색 실행
+  useEffect(() => {
+    const newParams = {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      adults
+    };
+    setSearchParams(newParams); // URL 자동 업데이트
+  }, [startDate, endDate, adults, setSearchParams]);
+
   return (
     <Box
       sx={{
@@ -60,6 +80,7 @@ const AccommodationSearch = ({
           selected={endDate}
           onChange={date => setEndDate(date)}
           dateFormat="yyyy-MM-dd"
+          minDate={new Date()}
           customInput={
             <TextField
               fullWidth
