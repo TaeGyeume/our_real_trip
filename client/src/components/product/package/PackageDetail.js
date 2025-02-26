@@ -1,11 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {useParams} from 'react-router-dom';
+import {useParams, useNavigate} from 'react-router-dom';
 import {getPackageById} from '../../../api/package/packageService';
 import {fetchFlights} from '../../../api/flight/flights'; // 기존 API 호출 사용
 import {Container, Typography, Button, Grid, Card, CardContent, Box} from '@mui/material';
 
 const PackageDetail = () => {
   const {id} = useParams();
+  const navigate = useNavigate();
+
   const [packageData, setPackageData] = useState(null);
   const [flightsData, setFlightsData] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
@@ -238,7 +240,11 @@ const PackageDetail = () => {
       </Card>
 
       {/* 예약 버튼 */}
-      <Button variant="contained" color="primary" sx={{mt: 3}}>
+      <Button
+        variant="contained"
+        color="primary"
+        sx={{mt: 3}}
+        onClick={() => navigate(`/package/booking/${id}`)}>
         예약하기
       </Button>
     </Container>
