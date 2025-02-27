@@ -4,7 +4,6 @@ import Slider from 'react-slick';
 import ProductCard from './PopularProductsCard';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import './styles/PopularProductsSlider.css';
 
 const PopularProductsSlider = () => {
   const [products, setProducts] = useState([]);
@@ -68,7 +67,9 @@ const PopularProductsSlider = () => {
       <h2 className="section-title">🔥 다른 회원이 많이 본 상품</h2>
       <Slider {...settings} className="popular-products-slider">
         {products.map(product => (
-          <ProductCard key={product._id} product={product} />
+          <div key={product._id} style={{margin: '0 10px'}}>
+            <ProductCard product={product} />
+          </div>
         ))}
       </Slider>
     </div>

@@ -8,6 +8,7 @@ import ReviewList from '../../components/review/ReviewList';
 import AccommodationAmenities from '../../components/accommodations/AccommodationAmenities';
 import AccommodationImageGallery from '../../components/accommodations/AccommodationImageGallery';
 import AccommodationSearch from '../../components/accommodations/AccommodationSearch';
+import NearbyAccommodations from '../../components/accommodations/NearbyAccommodations';
 import {Box, Typography, Card, CardContent, Stack, Divider} from '@mui/material';
 
 // 기본 날짜 설정 함수 (오늘 + n일)
@@ -40,6 +41,7 @@ const AccommodationDetail = () => {
       try {
         const params = {startDate, endDate, adults, minPrice, maxPrice};
         const data = await fetchAccommodationDetail(accommodationId, params);
+        console.log('🏨 불러온 숙소 데이터:', data);
 
         const updatedRooms = data.availableRooms.map(room => ({
           ...room,
@@ -160,6 +162,14 @@ const AccommodationDetail = () => {
         <Divider sx={{mb: 2}} />
         <ReviewList productId={accommodationId} />
       </Box>
+
+      {/* 주변 숙소 컴포넌트 추가 */}
+      {accommodation.coordinates?.coordinates && (
+        <NearbyAccommodations
+          lat={accommodation.coordinates.coordinates[1]}
+          lng={accommodation.coordinates.coordinates[0]}
+        />
+      )}
     </Box>
   );
 };

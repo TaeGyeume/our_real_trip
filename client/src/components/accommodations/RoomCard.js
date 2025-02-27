@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {useAuthStore} from '../../store/authStore';
-import {deleteRoom} from '../../api/room/roomService';
+import {deleteRoom, getAvailableRoomsByDate} from '../../api/room/roomService';
 import {
   Card,
   CardMedia,
@@ -17,6 +17,7 @@ const RoomCard = ({room, onRoomDeleted}) => {
   const {user, isAuthenticated} = useAuthStore();
   const [searchParams] = useSearchParams();
   const SERVER_URL = 'http://localhost:5000';
+  const [availableRooms, setAvailableRooms] = useState(null);
 
   // 이미지가 없는 경우 기본 이미지 설정
   let imageUrl = room.images?.[0] || '/default-image.jpg';
@@ -30,6 +31,21 @@ const RoomCard = ({room, onRoomDeleted}) => {
   const startDate = searchParams.get('startDate') || '';
   const endDate = searchParams.get('endDate') || '';
   const adults = searchParams.get('adults') || 1;
+
+  // 특정 날짜의 예약 가능 객실 조회
+  useEffect(() => {
+    if (startDate) {
+      const fetchAvailability = async () => {
+        try {
+          const available = await getAvailableRoomsByDate(room._id, startDate);
+          setAvailableRooms(available);
+        } catch (error) {
+          console.error('객실 예약 가능 여부 조회 실패:', error);
+        }
+      };
+      fetchAvailability();
+    }
+  }, [room._id, startDate]);
 
   // 객실 상세 페이지 이동
   const handleRoomDetail = () => {
@@ -91,7 +107,7 @@ const RoomCard = ({room, onRoomDeleted}) => {
       {/* 객실 이미지 */}
       <CardMedia
         component="img"
-        sx={{width: '35%', height: '230px', objectFit: 'cover'}}
+        sx={{width: '35%', height: '250px', objectFit: 'cover'}}
         image={imageUrl}
         alt={room.name}
       />
@@ -119,9 +135,13 @@ const RoomCard = ({room, onRoomDeleted}) => {
               <strong>편의시설:</strong> {room.amenities.join(', ')}
             </Typography>
           )}
-          {room.availableCount <= 3 && (
-            <Typography variant="body2" color="error" sx={{mt: 1}}>
-              해당 객실이 얼마 남지 않았어요! 남은 객실: {room.availableCount}개
+          {startDate && (
+            <Typography
+              variant="body2"
+              color={availableRooms > 0 ? 'success.main' : 'error.main'}>
+              {availableRooms !== null
+                ? `예약 가능 객실: ${availableRooms}개`
+                : '로딩 중...'}
             </Typography>
           )}
         </CardContent>

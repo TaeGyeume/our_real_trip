@@ -246,3 +246,21 @@ exports.deleteAccommodationImage = async (req, res) => {
     .status(result.status)
     .json({message: result.message, images: result.images || []});
 };
+
+// 특정 좌표 기준으로 주변 숙소 검색 API
+exports.getNearbyAccommodations = async (req, res) => {
+  try {
+    const {lat, lng, maxDistance, limit} = req.query;
+    const accommodations = await accommodationService.getNearbyAccommodations(
+      lat,
+      lng,
+      maxDistance,
+      limit
+    );
+
+    res.status(200).json(accommodations);
+  } catch (error) {
+    console.error('🚨 주변 숙소 조회 오류:', error);
+    res.status(500).json({error: error.message});
+  }
+};

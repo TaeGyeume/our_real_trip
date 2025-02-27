@@ -42,8 +42,20 @@ const app = express();
 // DB 연결
 connectDB();
 
+const allowedOrigins = [
+  `http://localhost:${process.env.CLIENT_PORT || 3000}`, // 개발환경
+  'http://52.90.103.200' // 운영환경 (EC2 IP 직접 접근)
+  // 'https://your-domain.com' // 운영환경 (도메인)
+];
+
 const corsOptions = {
-  origin: `http://localhost:${process.env.CLIENT_PORT || 3000}`,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS 정책에 의해 차단됨'));
+    }
+  },
   credentials: true, // 쿠키를 포함한 요청 허용
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],

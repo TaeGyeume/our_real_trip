@@ -600,3 +600,25 @@ exports.deleteImage = async (accommodationId, imageUrl) => {
     return {status: 500, message: '이미지 삭제 중 오류 발생'};
   }
 };
+
+// 특정 좌표 기준으로 반경 내 숙소 리스트 조회
+exports.getNearbyAccommodations = async (lat, lng, maxDistance = 5000, limit = 10) => {
+  try {
+    if (!lat || !lng) {
+      throw new Error('위도(lat)와 경도(lng)를 입력하세요.');
+    }
+
+    const accommodations = await Accommodation.find({
+      coordinates: {
+        $near: {
+          $geometry: {type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)]},
+          $maxDistance: parseInt(maxDistance) // 기본 반경 5km
+        }
+      }
+    }).limit(parseInt(limit));
+
+    return accommodations;
+  } catch (error) {
+    throw new Error(`주변 숙소 조회 실패: ${error.message}`);
+  }
+};
