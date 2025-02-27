@@ -9,6 +9,7 @@ services:
       - mongodb
     volumes:
       - ./server:/app
+      - /app/node_modules
     restart: always
 
   mongodb:
