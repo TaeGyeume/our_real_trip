@@ -25,12 +25,12 @@ import AccommodationDetail from './pages/accommodations/AccommodationDetail';
 import RoomDetail from './pages/accommodations/RoomDetail';
 import Flights from './pages/flights/Flights';
 import FlightResults from './pages/flights/FlightResults';
-import RoundTripResults from './pages/flights/RoundTripResults';
 import RoundTripDeparture from './pages/flights/RoundTripDeparture';
 import RoundTripReturn from './pages/flights/RoundTripReturn';
 import RoundTripConfirm from './pages/flights/RoundTripConfirm';
-import BookingPage from './pages/flights/BookingPage';
 import FlightBookingPage from './pages/booking/FlightBookingPage';
+import FlightsList from './pages/flights/FlightsList';
+import FlightForm from './pages/flights/FlightForm';
 import TravelItemList from './pages/travelItem/TravelItemListPage';
 import TravelItemDetail from './pages/travelItem/TravelItemDetailPage';
 import MyCouponsPage from './pages/coupons/MyCouponsPage';
@@ -75,6 +75,7 @@ import PackageEdit from './components/product/package/PackageEdit';
 import PackageCreate from './components/product/package/PackageCreate';
 import PackageBookingForm from './components/booking/PackageBookingForm';
 import Modal from 'react-modal';
+// import FlightList from './components/flights/FlightList';
 
 const App = () => {
   const [serverMessage, setServerMessage] = useState('');
@@ -161,11 +162,13 @@ const App = () => {
           {/* 항공편 목록 페이지 추가 */}
           <Route path="/flights" element={<Flights />} />
           <Route path="/flights/results" element={<FlightResults />} />
-          <Route path="/flights/roundtrip-results" element={<RoundTripResults />} />
           <Route path="/flights/roundtrip-departure" element={<RoundTripDeparture />} />
           <Route path="/flights/roundtrip-return" element={<RoundTripReturn />} />
           <Route path="/flights/roundtrip-confirm" element={<RoundTripConfirm />} />
-          <Route path="/flights/before/booking" element={<BookingPage />} />
+          <Route path="/flights/list" element={<FlightsList />} />
+          <Route path="/flights/create" element={<FlightForm />} />
+          <Route path="/flights/edit/:id" element={<FlightForm />} />
+
           <Route path="/travelItems" element={<TravelItemList />} />
           <Route path="/travelItems/:itemId" element={<TravelItemDetail />} />
 

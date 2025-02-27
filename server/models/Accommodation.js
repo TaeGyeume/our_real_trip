@@ -64,7 +64,11 @@ const AccommodationSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Room'
     }
-  ]
+  ],
+  views: {
+    type: Number,
+    default: 0
+  }
 });
 
 // 위치 기반 검색을 위한 2dsphere 인덱스 추가

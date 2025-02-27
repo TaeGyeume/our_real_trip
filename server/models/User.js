@@ -45,6 +45,7 @@ const UserSchema = new mongoose.Schema(
       default: undefined,
       sparse: true
     },
+    totalSpent: {type: Number, default: 0}, // 누적 결제 금액
     membershipLevel: {
       type: String, // 회원 등급
       enum: ['길초보', '길잡이', '모험왕'],
@@ -71,5 +72,15 @@ const UserSchema = new mongoose.Schema(
   },
   {timestamps: true} // 자동으로 createdAt, updatedAt 필드 추가
 );
+
+UserSchema.methods.updateMembership = function () {
+  if (this.totalSpent >= 5_000_000) {
+    this.membershipLevel = '모험왕';
+  } else if (this.totalSpent >= 1_000_000) {
+    this.membershipLevel = '길잡이';
+  } else {
+    this.membershipLevel = '길초보';
+  }
+};
 
 module.exports = mongoose.model('User', UserSchema);

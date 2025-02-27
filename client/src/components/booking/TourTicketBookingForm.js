@@ -6,6 +6,7 @@ import {fetchUserCoupons} from '../../api/coupon/couponService';
 import {cancelBooking} from '../../api/booking/bookingService';
 import {authAPI} from '../../api/auth/index';
 import CouponSelector from './CouponSelector';
+import MileageInput from '../mileage/MileageInput';
 import QuantitySelector from './QuantitySelector';
 import './styles/TourTicketBookingForm.css';
 import {Alert, Snackbar, Button, TextField} from '@mui/material';
@@ -18,6 +19,7 @@ const TourTicketBookingForm = () => {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [formData, setFormData] = useState({count: 0});
+  const [usedMileage, setUsedMileage] = useState(0);
   const [reservationInfo, setReservationInfo] = useState({
     name: '',
     email: '',
@@ -42,9 +44,8 @@ const TourTicketBookingForm = () => {
     const fetchUserData = async itemPrice => {
       try {
         const userData = await authAPI.getUserProfile();
-        setUser(userData);
+        setUser(userData); // 초기 예약자 정보 설정
 
-        // 초기 예약자 정보 설정
         setReservationInfo({
           name: userData.username,
           email: userData.email,
@@ -87,7 +88,7 @@ const TourTicketBookingForm = () => {
 
   const handlePayment = async () => {
     const totalPrice = ticket.price * formData.count;
-    const finalPrice = totalPrice - discountAmount;
+    const finalPrice = totalPrice - discountAmount - usedMileage;
 
     const now = new Date(Date.now() + 9 * 60 * 60 * 1000); // 한국 시간
     const formattedDate = now
@@ -106,6 +107,7 @@ const TourTicketBookingForm = () => {
         totalPrice,
         discountAmount,
         finalPrice, // 최종 결제 금액 (할인 후) 추가
+        usedMileage,
         userId: user._id,
         couponId: selectedCoupon ? selectedCoupon._id : null,
         reservationInfo
@@ -140,6 +142,7 @@ const TourTicketBookingForm = () => {
               imp_uid: rsp.imp_uid,
               merchant_uid,
               couponId: selectedCoupon ? selectedCoupon._id : null,
+              usedMileage,
               userId: user._id
             });
 
@@ -157,7 +160,6 @@ const TourTicketBookingForm = () => {
           }
         } else {
           alert(` 결제 실패: ${rsp.error_msg}`);
-
           if (selectedCoupon) {
             console.log('[클라이언트] 결제 취소, 예약 취소 요청 보냄:', merchant_uid);
             await cancelBooking(merchant_uid);
@@ -170,6 +172,8 @@ const TourTicketBookingForm = () => {
   if (!ticket || !user) {
     return <p> 상품 정보를 불러오는 중...</p>;
   }
+
+  const totalPrice = ticket.price * formData.count;
 
   return (
     <>
@@ -215,8 +219,12 @@ const TourTicketBookingForm = () => {
             </div>
             <hr className="divider" />
             <div className="point-section">
-              <h4>마일리지 사용</h4>
-              <p>내 포인트: 0원</p>
+              <MileageInput
+                userMileage={user.mileage}
+                totalPrice={totalPrice}
+                discountAmount={discountAmount}
+                onMileageChange={setUsedMileage}
+              />
               <br />
               <br />
             </div>
@@ -290,7 +298,12 @@ const TourTicketBookingForm = () => {
               <div>
                 <strong>
                   총 결제 금액:{' '}
-                  {(ticket.price * formData.count - discountAmount).toLocaleString()}원
+                  {(
+                    ticket.price * formData.count -
+                    discountAmount -
+                    usedMileage
+                  ).toLocaleString()}
+                  원
                 </strong>
               </div>
             </div>
