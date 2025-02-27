@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api'; // API 기본 URL
+const API_URL = 'http://localhost:5000/api/flights'; // API 기본 URL
 
 // 모든 항공편 가져오기
 export const fetchFlights = async () => {
   try {
-    const response = await axios.get(`${API_URL}/flights`); // URL 명확히 설정
+    const response = await axios.get(`${API_URL}`); // URL 명확히 설정
     return response.data;
   } catch (error) {
     console.error('모든 항공편 데이터를 불러오는 데 실패했습니다:', error);
@@ -20,7 +20,7 @@ export const searchFlights = async (departure, arrival, date, passengers) => {
       `검색 요청: ${departure} → ${arrival}, 날짜: ${date}, 인원: ${passengers}`
     );
 
-    const response = await axios.get(`${API_URL}/flights/search`, {
+    const response = await axios.get(`${API_URL}/search`, {
       params: {departure, arrival, date, passengers} // 쿼리 파라미터 적용
     });
 
@@ -38,5 +38,59 @@ export const searchFlights = async (departure, arrival, date, passengers) => {
       console.error('검색 API 요청 실패:', error.message);
     }
     return [];
+  }
+};
+
+// ✈️ 모든 항공편 조회 (GET)
+export const getFlights = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/list`);
+    return response.data;
+  } catch (error) {
+    console.error('항공편 목록 조회 오류:', error);
+    throw error;
+  }
+};
+
+// ✈️ 특정 항공편 조회 (GET)
+export const getFlightById = async id => {
+  try {
+    const response = await axios.get(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('항공편 조회 오류:', error);
+    throw error;
+  }
+};
+
+// ✈️ 항공편 추가 (POST)
+export const createFlight = async flightData => {
+  try {
+    const response = await axios.post(`${API_URL}/create`, flightData);
+    return response.data;
+  } catch (error) {
+    console.error('항공편 추가 오류:', error);
+    throw error;
+  }
+};
+
+// ✈️ 항공편 수정 (PUT)
+export const updateFlight = async (id, flightData) => {
+  try {
+    const response = await axios.put(`${API_URL}/${id}`, flightData);
+    return response.data;
+  } catch (error) {
+    console.error('항공편 수정 오류:', error);
+    throw error;
+  }
+};
+
+// ✈️ 항공편 삭제 (DELETE)
+export const deleteFlight = async id => {
+  try {
+    await axios.delete(`${API_URL}/${id}`);
+  } catch (error) {
+    console.error('항공편 삭제 오류:', error);
+    throw error;
   }
 };
