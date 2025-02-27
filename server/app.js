@@ -44,7 +44,7 @@ connectDB();
 
 const allowedOrigins = [
   `http://localhost:${process.env.CLIENT_PORT || 3000}`, // 개발환경
-  'http://52.90.103.200' // 운영환경 (EC2 IP 직접 접근)
+  'http://54.81.196.208' // 운영환경 (EC2 IP 직접 접근)
   // 'https://your-domain.com' // 운영환경 (도메인)
 ];
 
