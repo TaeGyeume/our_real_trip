@@ -51,7 +51,7 @@ const getUserFavorites = async (req, res) => {
     const userId = req.user?.id || null; // 🔹 로그인한 경우 userId 설정, 아니면 null
 
     if (!userId) {
-      console.log('🛠 [Controller] 비로그인 사용자 요청 → 빈 배열 반환');
+      // console.log('🛠 [Controller] 비로그인 사용자 요청 → 빈 배열 반환');
       return res.status(200).json({favorites: []}); // ✅ 로그인하지 않은 경우, 빈 배열 반환
     }
 

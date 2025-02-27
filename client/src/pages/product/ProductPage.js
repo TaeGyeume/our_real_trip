@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import TourTicketList from '../../components/product/tourTicket/TourTicketList';
 import AccommodationList from '../../components/product/accommodations/AccommodationList';
 import TravelItemListPage from '../../components/product/travelItems/TravelItemList';
+import PackageList from '../../pages/product/packges/PackageList';
 
 import {Button} from '@mui/material';
 import SendNotificationModal from '../../components/product/notification/SendNotificationModal';
@@ -22,6 +23,7 @@ const ProductPage = () => {
   const accommodationsRef = useRef(null);
   const tourTicketRef = useRef(null);
   const travelItemRef = useRef(null);
+  const packageRef = useRef(null);
 
   const {user} = useAuthStore();
 
@@ -29,7 +31,8 @@ const ProductPage = () => {
     const sectionRefs = {
       accommodations: accommodationsRef,
       tourTicket: tourTicketRef,
-      travelItem: travelItemRef
+      travelItem: travelItemRef,
+      package: packageRef
     };
 
     setActiveSection(section);
@@ -95,6 +98,17 @@ const ProductPage = () => {
             />
           </div>
           <TravelItemListPage limit={3} />
+        </div>
+
+        <div id="package" ref={packageRef} style={sectionStyle}>
+          <div style={headerContainerStyle}>
+            <FontAwesomeIcon
+              icon={faSquarePlus}
+              onClick={() => navigate('/packages')}
+              style={plusButtonStyle}
+            />
+          </div>
+          <PackageList limit={3} />
         </div>
       </div>
       {/* 알림 전송 모달 추가 */}

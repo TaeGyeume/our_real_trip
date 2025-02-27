@@ -69,10 +69,11 @@ import QnaBoardWrite from './pages/qna/QnaBoardWrite';
 import QnaBoardEdit from './pages/qna/QnaBoardEdit';
 import ReviewForm from './components/review/ReviewForm';
 import NotificationReceiver from './components/NotificationReceiver';
-import PackageList from './pages/package/PackageList';
-import PackageDetail from './pages/package/PackageDetail';
-import PackageEdit from './pages/package/PackageEdit';
-import PackageCreate from './pages/package/PackageCreate';
+import PackageList from './components/product/package/PackageList';
+import PackageDetail from './components/product/package/PackageDetail';
+import PackageEdit from './components/product/package/PackageEdit';
+import PackageCreate from './components/product/package/PackageCreate';
+import PackageBookingForm from './components/booking/PackageBookingForm';
 import Modal from 'react-modal';
 // import FlightList from './components/flights/FlightList';
 
@@ -175,6 +176,7 @@ const App = () => {
 
           {/* 인증된 사용자만 접근 가능 */}
           <Route element={<PrivateRoute />}>
+            <Route path="/package/booking/:id" element={<PackageBookingForm />} />
             {/* <Route path="/reservation/:flightId" element={<Reservation />} /> */}
             <Route path="/profile" element={<UserPages.Profile />} />
             <Route path="/profile/update" element={<EditProfile />} />
@@ -202,8 +204,9 @@ const App = () => {
           </Route>
           {/* 어드민 전용 페이지 */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
-            <Route path="/package/new" element={<PackageCreate />} />
-            <Route path="/package/edit/:id" element={<PackageEdit />} />
+            <Route path="/product/package/create" element={<PackageCreate />} />
+            {/* <Route path="/package/edit/:id" element={<PackageEdit />} /> */}
+            <Route path="/packages/:id/edit" element={<PackageEdit />} />{' '}
             <Route path="/product" element={<ProductPage />} />
             <Route path="/product/tourTicket/list" element={<TourTicketList />} />
             <Route path="/product/tourTicket/new" element={<TourTicketForm />} />

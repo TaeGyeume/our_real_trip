@@ -8,10 +8,22 @@ const api = axios.create({
   withCredentials: true //  쿠키 기반 인증 설정
 });
 
+// 패키지 생성에 필요한 데이터 가져오기 (숙소, 투어/티켓, 항공)
+export const getCreatePackageData = async () => {
+  try {
+    const response = await api.get('/create');
+    return response.data;
+  } catch (error) {
+    console.error('패키지 생성 데이터 가져오기 실패:', error);
+    throw error;
+  }
+};
+
 //  패키지 등록
 export const createPackage = async packageData => {
   try {
-    const response = await api.post('/', packageData);
+    // POST로 패키지 생성 요청
+    const response = await api.post('/', packageData); // 기존 경로 '/api/packages/create' 대신 '/api/packages'로 수정
     return response.data;
   } catch (error) {
     console.error('패키지 등록 실패:', error);
