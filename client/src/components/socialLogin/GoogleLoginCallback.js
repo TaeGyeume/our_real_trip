@@ -14,7 +14,7 @@ const GoogleLoginCallback = () => {
       try {
         setAuthState({isAuthenticated: true});
         await checkAuth();
-        console.log(' Google 로그인 성공, 메인 페이지로 이동');
+        console.log(' Google 로그인 성공 메인 페이지로 이동');
         navigate('/main');
       } catch (error) {
         console.error(' Google 로그인 실패:', error);

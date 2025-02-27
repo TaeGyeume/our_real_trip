@@ -92,7 +92,7 @@ exports.login = async (req, res) => {
     res.status(200).json({user});
   } catch (error) {
     console.error('로그인 오류:', error.message);
-    res.status(400).json({message: '로그인에 실패했습니다.'});
+    res.status(400).json({message: '아이디 또는 비밀번호를 확인해주세요.'});
   }
 };
 

@@ -41,8 +41,16 @@ const CouponSidebar = () => {
 
         if (response?._id) {
           const userCoupons = await fetchUserCoupons(response._id);
-          const claimedSet = new Set(userCoupons.map(coupon => coupon.coupon._id));
-          setClaimedCoupons(claimedSet);
+          if (Array.isArray(userCoupons)) {
+            const claimedSet = new Set(
+              userCoupons
+                .filter(item => item?.coupon && item.coupon._id)
+                .map(item => item.coupon._id)
+            );
+            setClaimedCoupons(claimedSet);
+          } else {
+            console.error('fetchUserCoupons 응답이 배열이 아닙니다:', userCoupons);
+          }
         }
       } catch (error) {
         console.error('유저 정보 로드 오류:', error.message);
@@ -66,10 +74,16 @@ const CouponSidebar = () => {
       };
 
       getCoupons();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
   const handleClaimCoupon = async couponId => {
+    if (!user?._id) {
+      alert('사용자 정보가 없습니다. 로그인 후 다시 시도해주세요.');
+      return;
+    }
     try {
       const response = await claimCoupon(user._id, couponId);
       alert(response.message);
