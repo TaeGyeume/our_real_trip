@@ -29,6 +29,8 @@ import RoundTripDeparture from './pages/flights/RoundTripDeparture';
 import RoundTripReturn from './pages/flights/RoundTripReturn';
 import RoundTripConfirm from './pages/flights/RoundTripConfirm';
 import FlightBookingPage from './pages/booking/FlightBookingPage';
+import FlightsList from './pages/flights/FlightsList';
+import FlightForm from './pages/flights/FlightForm';
 import TravelItemList from './pages/travelItem/TravelItemListPage';
 import TravelItemDetail from './pages/travelItem/TravelItemDetailPage';
 import MyCouponsPage from './pages/coupons/MyCouponsPage';
@@ -72,6 +74,7 @@ import PackageDetail from './pages/package/PackageDetail';
 import PackageEdit from './pages/package/PackageEdit';
 import PackageCreate from './pages/package/PackageCreate';
 import Modal from 'react-modal';
+// import FlightList from './components/flights/FlightList';
 
 const App = () => {
   const [serverMessage, setServerMessage] = useState('');
@@ -161,6 +164,10 @@ const App = () => {
           <Route path="/flights/roundtrip-departure" element={<RoundTripDeparture />} />
           <Route path="/flights/roundtrip-return" element={<RoundTripReturn />} />
           <Route path="/flights/roundtrip-confirm" element={<RoundTripConfirm />} />
+          <Route path="/flights/list" element={<FlightsList />} />
+          <Route path="/flights/create" element={<FlightForm />} />
+          <Route path="/flights/edit/:id" element={<FlightForm />} />
+
           <Route path="/travelItems" element={<TravelItemList />} />
           <Route path="/travelItems/:itemId" element={<TravelItemDetail />} />
 
