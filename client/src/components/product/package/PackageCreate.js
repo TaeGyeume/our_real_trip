@@ -14,7 +14,9 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction
+  ListItemSecondaryAction,
+  Box,
+  Divider
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import {useNavigate} from 'react-router-dom';
@@ -159,13 +161,13 @@ const PackageCreate = () => {
   };
 
   return (
-    <Container>
-      <Typography variant="h4" sx={{mt: 3}}>
+    <Container sx={{py: 4}}>
+      <Typography variant="h4" sx={{mb: 3}}>
         패키지 생성
       </Typography>
 
       {/* 패키지 기본 정보 입력 */}
-      <Typography variant="h6" sx={{mt: 2}}>
+      <Typography variant="h6" sx={{mb: 1}}>
         패키지명
       </Typography>
       <TextField
@@ -173,10 +175,10 @@ const PackageCreate = () => {
         fullWidth
         value={packageName}
         onChange={e => setPackageName(e.target.value)}
-        sx={{mt: 1}}
+        sx={{mb: 2}}
       />
 
-      <Typography variant="h6" sx={{mt: 2}}>
+      <Typography variant="h6" sx={{mb: 1}}>
         설명
       </Typography>
       <TextField
@@ -186,10 +188,10 @@ const PackageCreate = () => {
         rows={4}
         value={packageDescription}
         onChange={e => setPackageDescription(e.target.value)}
-        sx={{mt: 1}}
+        sx={{mb: 2}}
       />
 
-      <Typography variant="h6" sx={{mt: 3}}>
+      <Typography variant="h6" sx={{mb: 1}}>
         할인율
       </Typography>
       <TextField
@@ -198,14 +200,14 @@ const PackageCreate = () => {
         type="number"
         value={discountRate}
         onChange={e => setDiscountRate(Number(e.target.value))}
-        sx={{mt: 1}}
+        sx={{mb: 3}}
       />
 
       {/* 상품 선택 버튼 및 선택된 항목 요약 */}
-      <Button variant="outlined" onClick={handleOpenAccommodationModal} sx={{mt: 3}}>
+      <Button variant="outlined" onClick={handleOpenAccommodationModal} sx={{mb: 1}}>
         숙소 및 방 선택
       </Button>
-      <Typography variant="body1" sx={{mt: 1}}>
+      <Typography variant="body1" sx={{mb: 2}}>
         선택된 숙소: {selectedAccommodations.join(', ')}
         {Object.keys(selectedRooms).length > 0 && (
           <>
@@ -217,17 +219,17 @@ const PackageCreate = () => {
         )}
       </Typography>
 
-      <Button variant="outlined" onClick={handleOpenTourModal} sx={{mt: 3}}>
+      <Button variant="outlined" onClick={handleOpenTourModal} sx={{mb: 1}}>
         투어/티켓 선택
       </Button>
-      <Typography variant="body1" sx={{mt: 1}}>
+      <Typography variant="body1" sx={{mb: 2}}>
         선택된 투어/티켓: {selectedTourTickets.join(', ')}
       </Typography>
 
-      <Button variant="outlined" onClick={handleOpenFlightModal} sx={{mt: 3}}>
+      <Button variant="outlined" onClick={handleOpenFlightModal} sx={{mb: 1}}>
         항공 선택
       </Button>
-      <Typography variant="body1" sx={{mt: 1}}>
+      <Typography variant="body1" sx={{mb: 3}}>
         선택된 항공: {selectedFlights.map(f => f.flightId).join(', ')}
       </Typography>
 
@@ -235,7 +237,7 @@ const PackageCreate = () => {
         variant="contained"
         color="primary"
         onClick={handleSubmit}
-        sx={{mt: 3}}
+        sx={{mb: 3}}
         disabled={loading}>
         {loading ? '패키지 생성 중...' : '패키지 생성'}
       </Button>
@@ -291,19 +293,21 @@ const PackageCreate = () => {
                 <ListItem
                   key={room._id}
                   button
-                  onClick={() => {
-                    setSelectedRooms(prev => ({
-                      ...prev,
-                      [currentAccommodation._id]: room._id
-                    }));
-                    handleCloseRoomModal();
-                  }}>
-                  <ListItemText primary={room.name} />
+                  onClick={() => selectRoom(currentAccommodation._id, room._id)}>
+                  <ListItemText
+                    primary={room.name}
+                    secondary={
+                      room.price ? room.price.toLocaleString() + '원' : '가격 정보 없음'
+                    }
+                    sx={{color: 'text.primary'}}
+                  />
                 </ListItem>
               ))}
             </List>
           ) : (
-            <Typography>선택 가능한 방이 없습니다.</Typography>
+            <Typography sx={{color: 'text.secondary'}}>
+              선택 가능한 방이 없습니다.
+            </Typography>
           )}
         </DialogContent>
         <DialogActions>
@@ -380,13 +384,14 @@ const PackageCreate = () => {
                             ?.seatsToUse || ''
                         }
                         onChange={e => handleFlightSeatChange(flight._id, e.target.value)}
+                        onClick={e => e.stopPropagation()}
                         sx={{ml: 2, width: '100px'}}
                       />
                     )}
                   </ListItem>
                 ))}
               </List>
-              <div style={{display: 'flex', justifyContent: 'center', marginTop: '16px'}}>
+              <Box sx={{display: 'flex', justifyContent: 'center', mt: 2}}>
                 <Button
                   disabled={flightPage === 1}
                   onClick={() => setFlightPage(flightPage - 1)}>
@@ -400,7 +405,7 @@ const PackageCreate = () => {
                   onClick={() => setFlightPage(flightPage + 1)}>
                   Next
                 </Button>
-              </div>
+              </Box>
             </>
           ) : (
             <Typography>항공 데이터가 없습니다.</Typography>
