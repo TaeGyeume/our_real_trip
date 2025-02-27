@@ -18,8 +18,8 @@ const reviewSchema = new mongoose.Schema(
     rating: {type: Number, required: true, min: 1.0, max: 5.0}, // 평점 (1 ~ 5)
     content: {type: String, required: true}, // 리뷰 내용
     images: [{type: String}], // 이미지 URL 배열
-    likes: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}], // 좋아요 기능
-    likedBy: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
+    likes: {type: Number, default: 0},
+    likedBy: [{type: mongoose.Schema.Types.ObjectId, ref: 'User', default: []}],
 
     comments: [commentSchema],
 

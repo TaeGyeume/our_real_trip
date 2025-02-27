@@ -1,24 +1,27 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {
   getReviews,
-  likeReview,
   deleteReview,
   updateReview,
   addComment,
   deleteComment,
-  updateComment
+  updateComment,
+  toggleLike
 } from '../../api/review/reviewService';
-import {AiOutlineLike, AiOutlineMore, AiFillStar, AiOutlineStar} from 'react-icons/ai';
+import {
+  AiOutlineLike,
+  AiFillLike,
+  AiOutlineMore,
+  AiFillStar,
+  AiOutlineStar
+} from 'react-icons/ai';
 import {FaStarHalfAlt} from 'react-icons/fa';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
+import {useAuthStore} from '../../store/authStore';
 
 const ReviewList = ({productId}) => {
   const [reviews, setReviews] = useState([]);
-  const [totalReviews, setTotalReviews] = useState(0);
-  const [averageRating, setAverageRating] = useState(0);
-  const [ratingDistribution, setRatingDistribution] = useState([0, 0, 0, 0, 0]);
-
   const [currentUser, setCurrentUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
   const [editingReviewId, setEditingReviewId] = useState(null);
@@ -44,7 +47,6 @@ const ReviewList = ({productId}) => {
 
           const validReviews = Array.isArray(reviews) ? reviews : [];
           setReviews(validReviews);
-          calculateRatingStats(validReviews);
         } else {
           console.error('리뷰 불러오기 실패:', reviewsData.reason);
         }
@@ -71,22 +73,6 @@ const ReviewList = ({productId}) => {
     return () => document.removeEventListener('mousedown', handleDocumentClick);
   }, []);
 
-  const calculateRatingStats = reviews => {
-    const total = reviews.length;
-    const sumRatings = reviews.reduce((acc, review) => acc + review.rating, 0);
-    const avgRating = total ? (sumRatings / total).toFixed(1) : 0;
-
-    const distribution = [0, 0, 0, 0, 0]; // 5~1점 순서
-    reviews.forEach(review => {
-      const idx = 5 - Math.round(review.rating);
-      distribution[idx]++;
-    });
-
-    setTotalReviews(total);
-    setAverageRating(avgRating);
-    setRatingDistribution(distribution);
-  };
-
   const toggleMenu = (reviewId, e) => {
     if (e) e.stopPropagation();
     setMenuOpen(prev => (prev === reviewId ? null : reviewId));
@@ -94,12 +80,15 @@ const ReviewList = ({productId}) => {
 
   const handleLike = async reviewId => {
     try {
-      const data = await likeReview(reviewId);
-      setReviews(prevReviews =>
-        prevReviews.map(r => (r._id === reviewId ? {...r, likes: data.likes} : r))
-      );
-    } catch (err) {
-      alert('좋아요 처리 실패');
+      const {user} = useAuthStore.getState();
+
+      if (!user || !user._id) {
+        return;
+      }
+
+      await toggleLike(reviewId, user._id);
+    } catch (error) {
+      console.error('좋아요 요청 실패:', error);
     }
   };
 
@@ -109,7 +98,6 @@ const ReviewList = ({productId}) => {
       alert('리뷰가 삭제되었습니다.');
       const updatedReviews = reviews.filter(review => review._id !== reviewId);
       setReviews(updatedReviews);
-      calculateRatingStats(updatedReviews);
     } catch (err) {
       alert(`리뷰 삭제 실패: ${err.message}`);
     }
@@ -136,13 +124,10 @@ const ReviewList = ({productId}) => {
       alert('리뷰가 성공적으로 수정되었습니다.');
       setEditingReviewId(null);
 
-      // const updatedReviews = await getReviews(productId);
-      // setReviews(updatedReviews);
-      // calculateRatingStats(updatedReviews);
       setReviews(prevReviews =>
         prevReviews.map(review =>
           review._id === reviewId
-            ? { ...review, content: editedContent, images: editedImages }
+            ? {...review, content: editedContent, images: editedImages}
             : review
         )
       );
@@ -158,19 +143,15 @@ const ReviewList = ({productId}) => {
     }
 
     try {
-      // await addComment(reviewId, commentInput);
       const newComment = await addComment(reviewId, commentInput);
       alert('댓글이 작성되었습니다.');
       setCommentInput('');
       setActiveCommentBox(null);
 
-      // 댓글 추가 후 리뷰 목록 새로고침
-      // const updatedReviews = await getReviews(productId);
-      // setReviews(updatedReviews);
       setReviews(prevReviews =>
         prevReviews.map(review =>
           review._id === reviewId
-            ? { ...review, comments: [...review.comments, newComment] }
+            ? {...review, comments: [...review.comments, newComment]}
             : review
         )
       );
@@ -184,12 +165,13 @@ const ReviewList = ({productId}) => {
       await deleteComment(reviewId, commentId);
       alert('댓글이 성공적으로 삭제되었습니다.');
 
-      // const updatedReviews = await getReviews(productId);
-      // setReviews(updatedReviews);
       setReviews(prevReviews =>
         prevReviews.map(review =>
           review._id === reviewId
-            ? { ...review, comments: review.comments.filter(comment => comment._id !== commentId) }
+            ? {
+                ...review,
+                comments: review.comments.filter(comment => comment._id !== commentId)
+              }
             : review
         )
       );
@@ -199,17 +181,16 @@ const ReviewList = ({productId}) => {
     }
   };
 
-
   const handleUpdateComment = async (reviewId, commentId) => {
     if (!editedCommentContent.trim()) {
       alert('댓글 내용을 입력해주세요.');
       return;
     }
 
-    console.log("댓글 수정 요청:", { reviewId, commentId, editedCommentContent });
+    console.log('댓글 수정 요청:', {reviewId, commentId, editedCommentContent});
 
     if (!reviewId || !commentId) {
-      alert("잘못된 리뷰 ID 또는 댓글 ID입니다.");
+      alert('잘못된 리뷰 ID 또는 댓글 ID입니다.');
       return;
     }
 
@@ -218,18 +199,16 @@ const ReviewList = ({productId}) => {
       alert('댓글이 성공적으로 수정되었습니다.');
       setEditingCommentId(null);
 
-      // 리뷰 목록 새로고침
-      // const updatedReviews = await getReviews(productId);
-      // setReviews(updatedReviews);
-
       setReviews(prevReviews =>
         prevReviews.map(review =>
           review._id === reviewId
             ? {
                 ...review,
                 comments: review.comments.map(comment =>
-                  comment._id === commentId ? { ...comment, content: editedCommentContent } : comment
-                ),
+                  comment._id === commentId
+                    ? {...comment, content: editedCommentContent}
+                    : comment
+                )
               }
             : review
         )
@@ -276,9 +255,14 @@ const ReviewList = ({productId}) => {
                 </span>
               </div>
 
-              <div className="review-actions" ref={dropdownRef}>
-                <button className="like-button" onClick={() => handleLike(review._id)}>
-                  <AiOutlineLike /> {review.likes?.length || 0}
+              <div className="review-actions">
+                <button onClick={() => handleLike(review._id)}>
+                  {review.likedBy.includes(currentUser?._id) ? (
+                    <AiFillLike color="blue" />
+                  ) : (
+                    <AiOutlineLike />
+                  )}
+                  {review.likes}
                 </button>
 
                 {(currentUser?._id === review.userId?._id || isAdmin) && (

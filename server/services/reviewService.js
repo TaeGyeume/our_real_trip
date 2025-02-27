@@ -1,7 +1,5 @@
 const Review = require('../models/Review');
 const User = require('../models/User');
-const fs = require('fs');
-const path = require('path');
 const mongoose = require('mongoose');
 
 exports.createReview = async reviewData => {
@@ -55,20 +53,6 @@ exports.checkExistingReview = async (userId, productId, bookingId) => {
     console.error('리뷰 확인 오류:', error);
     throw new Error(`리뷰 확인 오류: ${error.message}`);
   }
-};
-
-exports.toggleLike = async (reviewId, userId) => {
-  const review = await Review.findById(reviewId);
-  if (!review) throw new Error('리뷰를 찾을 수 없습니다.');
-
-  const index = review.likes.indexOf(userId);
-  if (index === -1) {
-    review.likes.push(userId);
-  } else {
-    review.likes.splice(index, 1);
-  }
-  await review.save();
-  return review;
 };
 
 exports.updateReview = async (reviewId, updateData, imageFiles) => {
@@ -245,4 +229,35 @@ exports.updateComment = async (reviewId, commentId, userId, newContent) => {
     console.error('[서버] 댓글 수정 실패:', error.message);
     throw error;
   }
+};
+
+exports.toggleLike = async (reviewId, userId) => {
+  if (!userId) throw new Error('유저 ID가 없습니다.');
+
+  const review = await Review.findById(reviewId);
+  if (!review) throw new Error('리뷰를 찾을 수 없습니다.');
+
+  // 사용자가 이미 좋아요를 눌렀는지 확인
+  const isLiked = review.likedBy.includes(userId);
+
+  if (isLiked) {
+    // 이미 눌렀다면 좋아요 취소
+    review.likes -= 1;
+    review.likedBy = review.likedBy.filter(id => id.toString() !== userId.toString());
+  } else {
+    // 좋아요 추가
+    review.likes += 1;
+    review.likedBy.push(userId);
+  }
+
+  await review.save();
+  return review;
+};
+
+exports.getBestReviews = async productId => {
+  const reviews = await Review.find({productId})
+    .populate('userId', 'username')
+    .sort({likes: -1, createdAt: -1});
+
+  return reviews;
 };

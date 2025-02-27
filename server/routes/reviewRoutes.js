@@ -26,4 +26,8 @@ router.patch(
   reviewController.updateComment
 );
 
+router.patch('/:reviewId/like', authMiddleware, reviewController.toggleLike);
+
+router.get('/:productId/best', reviewController.getBestReviews);
+
 module.exports = router;

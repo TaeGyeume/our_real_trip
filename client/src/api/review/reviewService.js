@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {authAPI} from '../auth/auth';
+import {useAuthStore} from '../../store/authStore';
 
 const BASE_URL = 'http://localhost:5000/reviews';
 
@@ -39,7 +40,7 @@ export const updateReview = async (reviewId, updatedData) => {
         'Content-Type': 'multipart/form-data'
       }
     });
-    
+
     return response.data;
   } catch (error) {
     console.error('[프론트] 리뷰 수정 실패:', error.response?.data || error.message);
@@ -129,7 +130,39 @@ export const updateComment = async (reviewId, commentId, newContent) => {
   }
 };
 
-export const likeReview = async reviewId => {
-  const response = await axios.post(`${BASE_URL}/${reviewId}/like`);
-  return response.data;
+export const toggleLike = async (reviewId, userId) => {
+  try {
+    console.log(`[프론트] 좋아요 요청 보냄`, reviewId);
+    console.log(`[프론트] 좋아요 요청 userId:`, userId);
+
+    const response = await axios.patch(
+      `${BASE_URL}/${reviewId}/like`,
+      {userId}, // ✅ 요청 본문에 userId 포함
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${useAuthStore.getState().user?.token}` // ✅ JWT 토큰 포함
+        },
+        withCredentials: true
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('좋아요 처리 실패:', error.response?.data?.message || error.message);
+    throw error.response?.data || {message: '좋아요 처리 중 오류가 발생했습니다.'};
+  }
+};
+
+export const getBestReviews = async productId => {
+  try {
+    const response = await axios.get(`${BASE_URL}/${productId}/best`);
+    return response.data.reviews;
+  } catch (error) {
+    console.error(
+      '베스트 리뷰 불러오기 실패:',
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
 };
