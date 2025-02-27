@@ -5,7 +5,6 @@ import {
   FormControlLabel,
   Typography,
   Container,
-  Grid,
   TextField,
   Dialog,
   DialogTitle,
@@ -15,8 +14,7 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Box,
-  Divider
+  Box
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import {useNavigate} from 'react-router-dom';
@@ -27,43 +25,48 @@ import {createPackage, getCreatePackageData} from '../../../api/package/packageS
 const PackageCreate = () => {
   const navigate = useNavigate();
 
-  // 데이터 상태
+  // 1) API로부터 불러오는 데이터 상태
   const [accommodations, setAccommodations] = useState([]);
   const [tourTickets, setTourTickets] = useState([]);
   const [flights, setFlights] = useState([]);
 
-  // 선택 상태
-  const [selectedAccommodations, setSelectedAccommodations] = useState([]); // 숙소 ID 배열
-  const [selectedRooms, setSelectedRooms] = useState({}); // { [accommodationId]: roomId }
+  // 2) 선택 상태
+  // 숙소( ID 배열 ), 객실({ [accommodationId]: roomId }), 투어/티켓( ID 배열 ), 항공편( [{ flightId, seatsToUse }] )
+  const [selectedAccommodations, setSelectedAccommodations] = useState([]);
+  const [selectedRooms, setSelectedRooms] = useState({});
   const [selectedTourTickets, setSelectedTourTickets] = useState([]);
-  const [selectedFlights, setSelectedFlights] = useState([]); // 배열: { flightId, seatsToUse }
+  const [selectedFlights, setSelectedFlights] = useState([]);
 
-  // 패키지 기본 정보 상태
+  // 3) 패키지 기본 정보
   const [packageName, setPackageName] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
   const [discountRate, setDiscountRate] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // 모달 열림 상태
+  // 4) 모달 열림/닫힘 상태
   const [openAccommodationModal, setOpenAccommodationModal] = useState(false);
   const [openRoomModal, setOpenRoomModal] = useState(false);
   const [openTourModal, setOpenTourModal] = useState(false);
   const [openFlightModal, setOpenFlightModal] = useState(false);
 
-  // 현재 숙소 선택 (방 선택 모달용)
+  // 현재 숙소(객실 모달용)
   const [currentAccommodation, setCurrentAccommodation] = useState(null);
 
-  // 항공 검색 및 페이징 상태
+  // 항공 검색/페이징
   const [flightSearchQuery, setFlightSearchQuery] = useState('');
   const [flightPage, setFlightPage] = useState(1);
   const flightsPerPage = 5;
 
-  // API 호출해서 데이터 불러오기
+  // -------------------------------
+  //  A) 데이터 로드: 숙소, 투어, 항공
+  // -------------------------------
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getCreatePackageData(); // 패키지 생성에 필요한 데이터 가져오기
-        // 숙소 데이터에는 rooms 배열이 포함되어 있다고 가정합니다.
+        const data = await getCreatePackageData();
+        // 숙소 데이터(rooms 포함), 투어/티켓, 항공 데이터
+        console.log('[DEBUG] 패키지 생성 데이터:', data);
+
         setAccommodations(data.accommodations);
         setTourTickets(data.tourTickets);
         setFlights(data.flights);
@@ -75,9 +78,18 @@ const PackageCreate = () => {
     fetchData();
   }, []);
 
-  // 모달 열기/닫기 함수
+  // -------------------------------
+  //  B) 모달 열기/닫기 함수
+  // -------------------------------
   const handleOpenAccommodationModal = () => setOpenAccommodationModal(true);
   const handleCloseAccommodationModal = () => setOpenAccommodationModal(false);
+
+  const handleOpenRoomModal = accommodation => {
+    console.log('[DEBUG] 현재 숙소의 rooms:', accommodation.rooms);
+    setCurrentAccommodation(accommodation);
+    setOpenRoomModal(true);
+  };
+  const handleCloseRoomModal = () => setOpenRoomModal(false);
 
   const handleOpenTourModal = () => setOpenTourModal(true);
   const handleCloseTourModal = () => setOpenTourModal(false);
@@ -85,32 +97,42 @@ const PackageCreate = () => {
   const handleOpenFlightModal = () => setOpenFlightModal(true);
   const handleCloseFlightModal = () => setOpenFlightModal(false);
 
-  const handleOpenRoomModal = accommodation => {
-    setCurrentAccommodation(accommodation);
-    setOpenRoomModal(true);
-  };
-  const handleCloseRoomModal = () => setOpenRoomModal(false);
-
-  // 선택 처리
+  // -------------------------------
+  //  C) 숙소 & 객실 선택 로직
+  // -------------------------------
   const toggleAccommodationSelection = id => {
     setSelectedAccommodations(prev =>
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
 
+  const selectRoom = (accommodationId, roomId) => {
+    setSelectedRooms(prev => ({
+      ...prev,
+      [accommodationId]: roomId
+    }));
+    handleCloseRoomModal();
+  };
+
+  // -------------------------------
+  //  D) 투어/티켓 선택 로직
+  // -------------------------------
   const toggleTourTicketSelection = id => {
     setSelectedTourTickets(prev =>
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
 
+  // -------------------------------
+  //  E) 항공 선택 & 좌석 수 로직
+  // -------------------------------
   const toggleFlightSelection = flight => {
     const exists = selectedFlights.find(f => f.flightId === flight._id);
     if (exists) {
-      setSelectedFlights(selectedFlights.filter(f => f.flightId !== flight._id));
+      setSelectedFlights(prev => prev.filter(f => f.flightId !== flight._id));
     } else {
       // 기본 좌석 수 1로 추가
-      setSelectedFlights([...selectedFlights, {flightId: flight._id, seatsToUse: 1}]);
+      setSelectedFlights(prev => [...prev, {flightId: flight._id, seatsToUse: 1}]);
     }
   };
 
@@ -120,7 +142,9 @@ const PackageCreate = () => {
     );
   };
 
-  // 항공 모달 내 필터 및 페이징 처리
+  // -------------------------------
+  //  F) 항공 검색/페이징 처리
+  // -------------------------------
   const filteredFlights = flights.filter(
     f =>
       f.flightNumber.toLowerCase().includes(flightSearchQuery.toLowerCase()) ||
@@ -132,7 +156,9 @@ const PackageCreate = () => {
     flightPage * flightsPerPage
   );
 
-  // 패키지 생성 폼 제출
+  // -------------------------------
+  //  G) 패키지 생성 요청
+  // -------------------------------
   const handleSubmit = async () => {
     setLoading(true);
 
@@ -143,16 +169,16 @@ const PackageCreate = () => {
       rooms: selectedRooms, // { [accommodationId]: roomId }
       tours: selectedTourTickets,
       flights: selectedFlights, // [{ flightId, seatsToUse }, ...]
-      discountRate: discountRate,
+      discountRate,
       startDate: '2025-01-01',
       endDate: '2025-12-31',
       category: 'Tour Package',
-      createdBy: '67a55e912cee4aadf2463b9c' // 예시, 실제로는 로그인된 사용자 ID
+      createdBy: '67a55e912cee4aadf2463b9c' // 예시
     };
 
     try {
-      await createPackage(newPackage); // 패키지 생성 API 호출
-      navigate('/packages'); // 패키지 목록 페이지로 리디렉션
+      await createPackage(newPackage);
+      navigate('/packages');
     } catch (error) {
       console.error('패키지 생성 실패:', error);
     } finally {
@@ -160,6 +186,9 @@ const PackageCreate = () => {
     }
   };
 
+  // -------------------------------
+  //  H) 렌더링
+  // -------------------------------
   return (
     <Container sx={{py: 4}}>
       <Typography variant="h4" sx={{mb: 3}}>
@@ -203,7 +232,7 @@ const PackageCreate = () => {
         sx={{mb: 3}}
       />
 
-      {/* 상품 선택 버튼 및 선택된 항목 요약 */}
+      {/* 숙소 & 객실 선택 */}
       <Button variant="outlined" onClick={handleOpenAccommodationModal} sx={{mb: 1}}>
         숙소 및 방 선택
       </Button>
@@ -219,6 +248,7 @@ const PackageCreate = () => {
         )}
       </Typography>
 
+      {/* 투어/티켓 선택 */}
       <Button variant="outlined" onClick={handleOpenTourModal} sx={{mb: 1}}>
         투어/티켓 선택
       </Button>
@@ -226,6 +256,7 @@ const PackageCreate = () => {
         선택된 투어/티켓: {selectedTourTickets.join(', ')}
       </Typography>
 
+      {/* 항공 선택 */}
       <Button variant="outlined" onClick={handleOpenFlightModal} sx={{mb: 1}}>
         항공 선택
       </Button>
@@ -233,6 +264,7 @@ const PackageCreate = () => {
         선택된 항공: {selectedFlights.map(f => f.flightId).join(', ')}
       </Typography>
 
+      {/* 패키지 생성 버튼 */}
       <Button
         variant="contained"
         color="primary"
@@ -285,19 +317,23 @@ const PackageCreate = () => {
           {currentAccommodation ? `${currentAccommodation.name} - 방 선택` : '방 선택'}
         </DialogTitle>
         <DialogContent>
-          {currentAccommodation &&
-          currentAccommodation.rooms &&
-          currentAccommodation.rooms.length > 0 ? (
+          {currentAccommodation?.rooms?.length > 0 ? (
             <List>
               {currentAccommodation.rooms.map(room => (
                 <ListItem
                   key={room._id}
                   button
-                  onClick={() => selectRoom(currentAccommodation._id, room._id)}>
+                  onClick={() => {
+                    setSelectedRooms(prev => ({
+                      ...prev,
+                      [currentAccommodation._id]: room._id
+                    }));
+                    handleCloseRoomModal();
+                  }}>
                   <ListItemText
                     primary={room.name}
                     secondary={
-                      room.price ? room.price.toLocaleString() + '원' : '가격 정보 없음'
+                      room.price ? `${room.price.toLocaleString()}원` : '가격 정보 없음'
                     }
                     sx={{color: 'text.primary'}}
                   />
@@ -325,7 +361,13 @@ const PackageCreate = () => {
                 <ListItem
                   key={ticket._id}
                   button
-                  onClick={() => toggleTourTicketSelection(ticket._id)}>
+                  onClick={() => {
+                    setSelectedTourTickets(prev =>
+                      prev.includes(ticket._id)
+                        ? prev.filter(id => id !== ticket._id)
+                        : [...prev, ticket._id]
+                    );
+                  }}>
                   <FormControlLabel
                     control={
                       <Checkbox checked={selectedTourTickets.includes(ticket._id)} />
@@ -344,7 +386,7 @@ const PackageCreate = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 항공 선택 모달 (검색 및 페이징 적용) */}
+      {/* 항공 선택 모달 (검색 & 페이징) */}
       <Dialog open={openFlightModal} onClose={handleCloseFlightModal} fullWidth>
         <DialogTitle>항공 선택</DialogTitle>
         <DialogContent>
@@ -366,7 +408,19 @@ const PackageCreate = () => {
                   <ListItem
                     key={flight._id}
                     button
-                    onClick={() => toggleFlightSelection(flight)}>
+                    onClick={() => {
+                      const exists = selectedFlights.find(f => f.flightId === flight._id);
+                      if (exists) {
+                        setSelectedFlights(prev =>
+                          prev.filter(f => f.flightId !== flight._id)
+                        );
+                      } else {
+                        setSelectedFlights(prev => [
+                          ...prev,
+                          {flightId: flight._id, seatsToUse: 1}
+                        ]);
+                      }
+                    }}>
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -375,6 +429,7 @@ const PackageCreate = () => {
                       }
                       label={`${flight.flightNumber} - ${flight.airline}`}
                     />
+                    {/* 좌석 수 입력 */}
                     {selectedFlights.some(f => f.flightId === flight._id) && (
                       <TextField
                         label="좌석 수"
@@ -383,7 +438,16 @@ const PackageCreate = () => {
                           selectedFlights.find(f => f.flightId === flight._id)
                             ?.seatsToUse || ''
                         }
-                        onChange={e => handleFlightSeatChange(flight._id, e.target.value)}
+                        onChange={e => {
+                          const val = Number(e.target.value);
+                          setSelectedFlights(prev =>
+                            prev.map(item =>
+                              item.flightId === flight._id
+                                ? {...item, seatsToUse: val}
+                                : item
+                            )
+                          );
+                        }}
                         onClick={e => e.stopPropagation()}
                         sx={{ml: 2, width: '100px'}}
                       />
