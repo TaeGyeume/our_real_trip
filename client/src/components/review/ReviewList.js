@@ -81,12 +81,19 @@ const ReviewList = ({productId}) => {
   const handleLike = async reviewId => {
     try {
       const {user} = useAuthStore.getState();
-
       if (!user || !user._id) {
         return;
       }
 
-      await toggleLike(reviewId, user._id);
+      const updatedReview = await toggleLike(reviewId, user._id);
+
+      setReviews(prevReviews =>
+        prevReviews.map(review =>
+          review._id === updatedReview._id
+            ? {...updatedReview, userId: review.userId}
+            : review
+        )
+      );
     } catch (error) {
       console.error('좋아요 요청 실패:', error);
     }

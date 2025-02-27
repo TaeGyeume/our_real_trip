@@ -237,21 +237,29 @@ exports.toggleLike = async (reviewId, userId) => {
   const review = await Review.findById(reviewId);
   if (!review) throw new Error('리뷰를 찾을 수 없습니다.');
 
-  // 사용자가 이미 좋아요를 눌렀는지 확인
+  if (!Array.isArray(review.likedBy)) {
+    review.likedBy = [];
+  }
+
   const isLiked = review.likedBy.includes(userId);
 
   if (isLiked) {
-    // 이미 눌렀다면 좋아요 취소
     review.likes -= 1;
     review.likedBy = review.likedBy.filter(id => id.toString() !== userId.toString());
   } else {
-    // 좋아요 추가
     review.likes += 1;
     review.likedBy.push(userId);
   }
 
   await review.save();
-  return review;
+
+  const updatedReview = await Review.findById(reviewId).populate('userId');
+
+  if (!updatedReview) {
+    throw new Error('리뷰 업데이트 후 데이터를 찾을 수 없습니다.');
+  }
+
+  return updatedReview;
 };
 
 exports.getBestReviews = async productId => {
