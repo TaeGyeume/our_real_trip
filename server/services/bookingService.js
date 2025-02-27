@@ -10,6 +10,7 @@ const schedule = require('node-schedule');
 const mongoose = require('mongoose');
 const userMileageService = require('./userMileageService');
 const User = require('../models/User');
+const Package = require('../models/Package');
 const usermembershipService = require('./usermembershipService');
 
 let cachedToken = null;
@@ -869,6 +870,102 @@ exports.getBookingDetails = async bookingId => {
     return {status: 200, data: bookingData};
   } catch (error) {
     console.error('예약 상세 조회 오류:', error);
+    return {status: 500, message: '서버 오류'};
+  }
+};
+
+//패키지 부분
+// ─────────────────────────────────────────────────────────────
+// 패키지 예약 생성 함수
+// ─────────────────────────────────────────────────────────────
+exports.bookPackage = async (packageId, userId) => {
+  try {
+    // 패키지 데이터 조회 (숙소, 투어, 항공편 정보를 포함하여 populate)
+    const packageData = await Package.findById(packageId)
+      .populate('accommodations')
+      .populate('tours')
+      .populate('flights');
+
+    if (!packageData) {
+      return {status: 404, message: '패키지를 찾을 수 없습니다.'};
+    }
+
+    // 같은 패키지가 이미 예약되어있는지 확인 (취소되지 않은 예약)
+    const existingBooking = await Booking.findOne({
+      userId,
+      productIds: packageId,
+      paymentStatus: {$ne: 'CANCELED'}
+    });
+
+    if (existingBooking) {
+      return {status: 400, message: '이미 예약된 패키지입니다.'};
+    }
+
+    // 가격 계산
+    const totalPrice = packageData.price || 0;
+    const discountAmount = packageData.discountRate
+      ? (totalPrice * packageData.discountRate) / 100
+      : 0;
+    const finalPrice = totalPrice - discountAmount;
+
+    // 패키지에 포함된 상품들의 ID 추출
+    const accommodationIds = packageData.accommodations.map(a => a._id);
+    const tourIds = packageData.tours.map(t => t._id);
+    const flightIds = packageData.flights.map(f => f._id);
+
+    // 예약 생성 (각 상품은 기본적으로 1개씩 예약)
+    const newBooking = new Booking({
+      userId,
+      types: [
+        'package',
+        ...Array(accommodationIds.length).fill('accommodation'),
+        ...Array(tourIds.length).fill('tour'),
+        ...Array(flightIds.length).fill('flight')
+      ],
+      productIds: [packageId, ...accommodationIds, ...tourIds, ...flightIds],
+      counts: [
+        1,
+        ...Array(accommodationIds.length + tourIds.length + flightIds.length).fill(1)
+      ],
+      totalPrice,
+      discountAmount,
+      finalPrice,
+      merchant_uid: `package_${new mongoose.Types.ObjectId()}`,
+      paymentStatus: 'PENDING'
+    });
+
+    await newBooking.save();
+
+    return {status: 200, booking: newBooking, message: '패키지 예약이 완료되었습니다.'};
+  } catch (error) {
+    console.error('패키지 예약 오류:', error);
+    return {status: 500, message: '패키지 예약 중 오류 발생'};
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// 패키지 예약 상세 조회 함수
+// ─────────────────────────────────────────────────────────────
+exports.getPackageBookingDetails = async bookingId => {
+  try {
+    const booking = await Booking.findById(bookingId)
+      .populate('userId', 'name email phone')
+      .populate({
+        path: 'productIds',
+        populate: {
+          path: 'accommodations tours flights',
+          select: 'name description price images'
+        }
+      });
+
+    // 예약 데이터가 없거나, 예약 타입에 'package'가 포함되어 있지 않으면 오류 반환
+    if (!booking || !booking.types.includes('package')) {
+      return {status: 404, message: '패키지 예약 정보를 찾을 수 없습니다.'};
+    }
+
+    return {status: 200, data: booking};
+  } catch (error) {
+    console.error('패키지 예약 상세 조회 오류:', error);
     return {status: 500, message: '서버 오류'};
   }
 };

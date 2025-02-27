@@ -12,7 +12,7 @@ require('./models/TourTicket');
 require('./models/Accommodation');
 require('./models/Flight');
 
-const packageRoutes = require('./routes/packageRoutes'); // 패키지 라우트 추가
+const packageRoutes = require('./routes/packageRoutes'); //  패키지 라우트 추가
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const authRoutes = require('./routes/authRoutes');
 const locationRoutes = require('./routes/locationRoutes');
@@ -82,7 +82,7 @@ app.use(passport.initialize()); // Passport 초기화 추가
 
 // 라우트 설정
 app.use('/', routes);
-app.use('/api/packages', packageRoutes); // ✅ 패키지 API
+app.use('/api/packages', packageRoutes); //  패키지 API
 app.use('/api/favorites', favoriteRoutes); // '/api/favorites' 경로로 라우터 연결
 app.use('/api/locations', locationRoutes);
 app.use('/api/accommodations', accommodationRoutes);

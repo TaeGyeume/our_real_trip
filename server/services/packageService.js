@@ -3,6 +3,7 @@ const Package = require('../models/Package');
 const Flight = require('../models/Flight');
 const Accommodation = require('../models/Accommodation');
 const TourTicket = require('../models/TourTicket');
+const Room = require('../models/Room');
 
 /**
  * ✅ 패키지 상품 생성
@@ -11,18 +12,31 @@ async function createPackage(packageData) {
   console.log('🔍 [DEBUG] 받은 packageData:', packageData);
 
   const {
-    accommodations,
-    flights,
-    tours,
+    name,
+    description,
     discountRate,
     startDate,
     endDate,
-    createdBy,
-    category
+    accommodations,
+    tours,
+    flights,
+    roomIds, // 객실 ID 배열 (문자열 배열)
+    startDates, // 객실 예약 시작일 배열 (문자열)
+    endDates, // 객실 예약 종료일 배열 (문자열)
+    category,
+    createdBy
   } = packageData;
 
-  // ✅ 필수 필드 검증
-  if (!packageData.name || !packageData.description || !category || !createdBy) {
+  // 필수 필드 검증
+  if (
+    !name ||
+    !description ||
+    !category ||
+    !createdBy ||
+    !accommodations ||
+    !tours ||
+    !flights
+  ) {
     throw new Error('필수 필드가 누락되었습니다.');
   }
 
@@ -30,41 +44,34 @@ async function createPackage(packageData) {
 
   let totalPrice = 0;
 
-  // ✅ 숙소 가격 계산 및 존재 여부 검증
+  // 숙소 가격 계산 및 존재 여부 검증 (기존 방식)
   if (Array.isArray(accommodations) && accommodations.length > 0) {
     console.log('🔍 [DEBUG] 숙소 ID 목록:', accommodations);
-
     const accommodationData = await Accommodation.find({_id: {$in: accommodations}});
-
     console.log('🔍 [DEBUG] 숙소 조회 결과:', accommodationData);
-
     if (!accommodationData || accommodationData.length !== accommodations.length) {
       throw new Error('숙소 정보를 찾을 수 없습니다.');
     }
-
-    totalPrice += accommodationData.reduce((sum, acc) => sum + (acc.minPrice || 0), 0);
-    console.log('✅ [DEBUG] 숙소 가격 합산 완료:', totalPrice);
+    // 기존에는 숙소의 minPrice를 기준으로 합산했지만, 객실 예약의 경우 아래에서 별도로 계산합니다.
+    // totalPrice += accommodationData.reduce((sum, acc) => sum + (acc.minPrice || 0), 0);
+    console.log('✅ [DEBUG] 숙소 기본 정보 검증 완료');
   }
 
-  // ✅ 투어 가격 계산
+  // 투어 가격 계산
   if (Array.isArray(tours) && tours.length > 0) {
     const tourData = await TourTicket.find({_id: {$in: tours}});
-
     if (!tourData || tourData.length !== tours.length) {
       throw new Error('투어 정보를 찾을 수 없습니다.');
     }
-
     totalPrice += tourData.reduce((sum, tour) => sum + (tour.price || 0), 0);
     console.log('✅ [DEBUG] 투어 가격 합산 완료:', totalPrice);
   }
 
-  // ✅ 항공 가격 계산
+  // 항공 가격 계산
   console.log('🔍 [DEBUG] flights before conversion:', flights);
-
   if (!Array.isArray(flights) || flights.length === 0) {
     throw new Error('항공 정보가 올바르지 않습니다.');
   }
-
   const flightDetails = flights.map(flight => {
     if (!flight.flightId || !flight.seatsToUse) {
       throw new Error(`항공 정보가 올바르지 않습니다: ${JSON.stringify(flight)}`);
@@ -74,39 +81,75 @@ async function createPackage(packageData) {
       seatsToUse: flight.seatsToUse
     };
   });
-
   console.log('🔍 [DEBUG] flights after conversion:', flightDetails);
-
   for (const flight of flightDetails) {
     const flightData = await Flight.findById(flight.flightId);
     if (!flightData) throw new Error(`항공 정보를 찾을 수 없습니다: ${flight.flightId}`);
-
     if (flight.seatsToUse > flightData.seatsAvailable) {
       throw new Error('좌석 수가 부족합니다.');
     }
-
     totalPrice += flightData.price * flight.seatsToUse;
     console.log('✅ [DEBUG] 항공 가격 합산 완료:', totalPrice);
   }
 
-  // ✅ 최종 가격 계산 (할인 적용)
-  // totalPrice가 유효한지 확인 후 finalPrice 계산
-  const finalPrice = totalPrice
-    ? Math.round(totalPrice - (totalPrice * discountRate) / 100)
-    : 0;
+  // ▶︎ **룸(객실) 가격 계산 추가**
+  // roomIds, startDates, endDates를 배열로 받아 ObjectId, Date로 변환하고, 각 객실의 pricePerNight와 예약 기간(일수)을 곱해서 합산
+  const roomIdArray = Array.isArray(roomIds)
+    ? roomIds.map(r => new mongoose.Types.ObjectId(r))
+    : [];
+  const startDatesArray = Array.isArray(startDates)
+    ? startDates.map(s => new Date(s))
+    : [];
+  const endDatesArray = Array.isArray(endDates) ? endDates.map(e => new Date(e)) : [];
+  console.log('🔍 [DEBUG] roomIds:', roomIdArray);
+  console.log('🔍 [DEBUG] startDates:', startDatesArray);
+  console.log('🔍 [DEBUG] endDates:', endDatesArray);
 
-  // finalPrice가 NaN이면 0으로 설정
-  if (isNaN(finalPrice)) {
-    throw new Error('계산된 최종 가격이 유효하지 않습니다.');
+  if (roomIdArray.length > 0) {
+    // 불러온 룸 데이터가 모두 있는지 확인
+    const roomData = await Room.find({_id: {$in: roomIdArray}});
+    if (!roomData || roomData.length !== roomIdArray.length) {
+      throw new Error('객실 정보를 찾을 수 없습니다.');
+    }
+    // 각 객실마다 숙박일수를 계산하여 가격 합산
+    for (let i = 0; i < roomData.length; i++) {
+      const room = roomData[i];
+      const start = startDatesArray[i];
+      const end = endDatesArray[i];
+      if (!start || !end) {
+        throw new Error('객실 예약 날짜가 누락되었습니다.');
+      }
+      // 숙박일수 계산 (종료일과 시작일의 차이, 보통 종료일은 체크아웃 날짜이므로 1일 빼거나 그대로 사용할지 결정)
+      const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+      // 예를 들어, pricePerNight를 곱합니다.
+      totalPrice += room.pricePerNight * nights;
+      console.log(
+        `✅ [DEBUG] 객실 (${room._id}) 가격: ${room.pricePerNight} * ${nights}일 = ${room.pricePerNight * nights}`
+      );
+    }
+    console.log('✅ [DEBUG] 객실 가격 합산 완료:', totalPrice);
   }
 
-  console.log('✅ [DEBUG] 최종 가격 계산 완료:', finalPrice);
+  // 최종 가격 계산 (할인 적용)
+  const calculatedFinalPrice = totalPrice
+    ? Math.round(totalPrice - (totalPrice * discountRate) / 100)
+    : 0;
+  if (isNaN(calculatedFinalPrice)) {
+    throw new Error('계산된 최종 가격이 유효하지 않습니다.');
+  }
+  console.log('✅ [DEBUG] 최종 가격 계산 완료:', calculatedFinalPrice);
 
+  // 새 패키지 데이터 생성 (룸 정보 포함)
   const newPackage = new Package({
     ...packageData,
-    flights: flightDetails, // ✅ 변환된 flights 저장
-    price: totalPrice, // ✅ 자동 계산된 가격 저장
-    finalPrice
+    accommodations: accommodations.map(id => new mongoose.Types.ObjectId(id)),
+    tours: tours.map(id => new mongoose.Types.ObjectId(id)),
+    flights: flightDetails,
+    roomIds: roomIdArray,
+    startDates: startDatesArray,
+    endDates: endDatesArray,
+    price: totalPrice,
+    finalPrice: calculatedFinalPrice
   });
 
   await newPackage.save();
@@ -121,7 +164,6 @@ async function createPackage(packageData) {
 async function getAllPackages({page = 1, limit = 10, search = ''}) {
   const query = {};
 
-  // ✅ 제목 검색 (이름 필드에 포함된 텍스트 검색)
   if (search) {
     query.name = {$regex: search, $options: 'i'};
   }
@@ -146,6 +188,7 @@ async function getAllPackages({page = 1, limit = 10, search = ''}) {
 /**
  * ✅ 특정 패키지 상품 조회
  */
+
 async function getPackageById(packageId) {
   const pkg = await Package.findById(packageId).populate(
     'accommodations flights tours createdBy'
@@ -162,7 +205,7 @@ async function getPackageById(packageId) {
 async function updatePackage(packageId, updateData) {
   console.log('🔍 [DEBUG] 요청 데이터:', updateData);
 
-  // 기존 패키지 데이터 가져오기
+  // 기존 패키지 데이터 조회
   const existingPackage = await Package.findById(packageId);
   if (!existingPackage) {
     throw new Error('패키지를 찾을 수 없습니다.');
@@ -184,11 +227,10 @@ async function updatePackage(packageId, updateData) {
     createdBy: existingPackage.createdBy // 작성자는 유지
   };
 
-  // ✅ 가격 관련 기존 값 유지
   let totalPrice = existingPackage.price;
   let finalPrice = existingPackage.finalPrice;
 
-  // ✅ 숙소 업데이트가 포함된 경우 가격 재계산, 없으면 기존 가격 유지
+  // 숙소 업데이트가 있는 경우: 숙소의 기본 가격은 여기서 계산(원래는 객실 가격은 따로 계산할 예정)
   if (updateData.accommodations) {
     const accommodationData = await Accommodation.find({
       _id: {$in: updateData.accommodations}
@@ -199,25 +241,25 @@ async function updatePackage(packageId, updateData) {
     ) {
       throw new Error('숙소 정보를 찾을 수 없습니다.');
     }
-    totalPrice = accommodationData.reduce((sum, acc) => sum + (acc.minPrice || 0), 0);
+    // 숙소 기본 가격은 여기서는 별도 계산하지 않고 객실(룸) 가격을 아래에서 계산하므로 기존 값 사용
     updatedFields.accommodations = updateData.accommodations;
   } else {
     updatedFields.accommodations = existingPackage.accommodations;
   }
 
-  // ✅ 투어 업데이트가 포함된 경우 가격 재계산, 없으면 기존 가격 유지
+  // 투어 업데이트
   if (updateData.tours) {
     const tourData = await TourTicket.find({_id: {$in: updateData.tours}});
     if (!tourData || tourData.length !== updateData.tours.length) {
       throw new Error('투어 정보를 찾을 수 없습니다.');
     }
-    totalPrice += tourData.reduce((sum, tour) => sum + (tour.price || 0), 0);
+    totalPrice = tourData.reduce((sum, tour) => sum + (tour.price || 0), 0);
     updatedFields.tours = updateData.tours;
   } else {
     updatedFields.tours = existingPackage.tours;
   }
 
-  // ✅ 항공 업데이트가 포함된 경우 가격 재계산, 없으면 기존 가격 유지
+  // 항공 업데이트
   if (updateData.flights) {
     for (const flight of updateData.flights) {
       const flightData = await Flight.findById(flight.flightId);
@@ -234,18 +276,60 @@ async function updatePackage(packageId, updateData) {
     updatedFields.flights = existingPackage.flights;
   }
 
-  // ✅ 할인율 적용 (할인율이 업데이트될 경우만 재계산, 아니면 기존 최종 가격 유지)
+  // **룸(객실) 업데이트 처리**
+  // 만약 updateData에 roomIds가 있다면, 객실 예약 정보(룸 ID, 예약 시작일, 예약 종료일)를 업데이트
+  if (updateData.roomIds) {
+    // 룸 정보 변환
+    const roomIdArray = Array.isArray(updateData.roomIds)
+      ? updateData.roomIds.map(r => new mongoose.Types.ObjectId(r))
+      : [];
+    const startDatesArray = Array.isArray(updateData.startDates)
+      ? updateData.startDates.map(s => new Date(s))
+      : [];
+    const endDatesArray = Array.isArray(updateData.endDates)
+      ? updateData.endDates.map(e => new Date(e))
+      : [];
+    updatedFields.roomIds = roomIdArray;
+    updatedFields.startDates = startDatesArray;
+    updatedFields.endDates = endDatesArray;
+
+    // 객실(룸) 가격 계산: 각 객실의 pricePerNight와 예약 기간(일수)를 곱해서 총 가격에 추가
+    if (roomIdArray.length > 0) {
+      const roomData = await Room.find({_id: {$in: roomIdArray}});
+      if (!roomData || roomData.length !== roomIdArray.length) {
+        throw new Error('객실 정보를 찾을 수 없습니다.');
+      }
+      for (let i = 0; i < roomData.length; i++) {
+        const room = roomData[i];
+        const start = startDatesArray[i];
+        const end = endDatesArray[i];
+        if (!start || !end) {
+          throw new Error('객실 예약 날짜가 누락되었습니다.');
+        }
+        // 숙박일수 계산 (예를 들어, 체크인부터 체크아웃까지의 일수)
+        const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        totalPrice += room.pricePerNight * nights;
+        console.log(
+          ` [DEBUG] 객실 (${room._id}) 가격: ${room.pricePerNight} * ${nights}일 = ${room.pricePerNight * nights}`
+        );
+      }
+    }
+  } else {
+    updatedFields.roomIds = existingPackage.roomIds;
+    updatedFields.startDates = existingPackage.startDates;
+    updatedFields.endDates = existingPackage.endDates;
+  }
+
+  // 할인율 적용하여 최종 가격 재계산
   if (updateData.discountRate !== undefined || totalPrice !== existingPackage.price) {
     finalPrice = Math.round(totalPrice - (totalPrice * updatedFields.discountRate) / 100);
   }
 
-  // ✅ 기존 가격 유지
   updatedFields.price = totalPrice ?? existingPackage.price;
   updatedFields.finalPrice = finalPrice ?? existingPackage.finalPrice;
 
-  console.log('✅ [DEBUG] 최종 가격:', updatedFields.finalPrice);
+  console.log(' [DEBUG] 최종 가격:', updatedFields.finalPrice);
 
-  // 패키지 데이터 업데이트
   const updatedPackage = await Package.findByIdAndUpdate(packageId, updatedFields, {
     new: true,
     runValidators: true
@@ -255,12 +339,12 @@ async function updatePackage(packageId, updateData) {
     throw new Error('패키지 수정 실패: 패키지를 찾을 수 없습니다.');
   }
 
-  console.log('✅ [SUCCESS] 패키지 수정 완료:', updatedPackage);
+  console.log(' [SUCCESS] 패키지 수정 완료:', updatedPackage);
   return updatedPackage;
 }
 
 /**
- * ✅ 패키지 상품 삭제 (관리자만 가능)
+ * 패키지 상품 삭제 (관리자만 가능)
  */
 async function deletePackage(packageId) {
   const deletedPackage = await Package.findByIdAndDelete(packageId);
