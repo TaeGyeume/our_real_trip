@@ -69,7 +69,7 @@ exports.createPackage = async (req, res) => {
       return res.status(400).json({message: '필수 필드가 누락되었습니다.'});
     }
 
-    console.log('🔍 [DEBUG] 요청 데이터:', req.body);
+    console.log(' [DEBUG] 요청 데이터:', req.body);
 
     // flights 배열 변환
     const flightDetails = Array.isArray(flights)
@@ -84,7 +84,7 @@ exports.createPackage = async (req, res) => {
         })
       : [];
 
-    console.log('🔍 [DEBUG] flights after conversion:', flightDetails);
+    console.log(' [DEBUG] flights after conversion:', flightDetails);
 
     // accommodations & tours 변환
     const accommodationIds = accommodations.map(acc => new mongoose.Types.ObjectId(acc));
@@ -94,10 +94,10 @@ exports.createPackage = async (req, res) => {
 
     // 숙소 가격 계산 및 존재 여부 검증
     if (Array.isArray(accommodations) && accommodations.length > 0) {
-      console.log('🔍 [DEBUG] 숙소 ID 목록:', accommodations);
+      console.log(' [DEBUG] 숙소 ID 목록:', accommodations);
 
       const accommodationData = await Accommodation.find({_id: {$in: accommodations}});
-      console.log('🔍 [DEBUG] 숙소 조회 결과:', accommodationData);
+      console.log(' [DEBUG] 숙소 조회 결과:', accommodationData);
 
       if (!accommodationData || accommodationData.length !== accommodations.length) {
         throw new Error('숙소 정보를 찾을 수 없습니다.');
@@ -121,12 +121,12 @@ exports.createPackage = async (req, res) => {
       createdBy: createdById
     };
 
-    console.log('✅ [DEBUG] 패키지 데이터 생성 완료:', packageData);
+    console.log(' [DEBUG] 패키지 데이터 생성 완료:', packageData);
 
     // 패키지 생성 서비스 호출 (price 자동 계산 등)
     const createdPackage = await packageService.createPackage(packageData);
 
-    console.log('✅ [SUCCESS] 패키지 생성 완료:', createdPackage);
+    console.log(' [SUCCESS] 패키지 생성 완료:', createdPackage);
 
     return res.status(201).json(createdPackage);
   } catch (error) {
