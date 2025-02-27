@@ -39,6 +39,16 @@ const PackageSchema = new mongoose.Schema(
       }
     ],
 
+    // 새로운 필드: 객실(룸) 정보
+    roomIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Room'
+      }
+    ],
+    startDates: [{type: Date}],
+    endDates: [{type: Date}],
+
     images: [{type: String}],
     startDate: {type: Date, required: true},
     endDate: {type: Date, required: true},
