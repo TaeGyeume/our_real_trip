@@ -93,9 +93,10 @@ const PackageBookingForm = () => {
           phone: userData.phone
         });
         const coupons = await fetchUserCoupons(userData._id);
-        // 사용 가능한 쿠폰: 패키지 가격(basePrice) 이상 구매 가능해야 함
+
+        //  **수정된 부분**: coupon이 null이 아닐 때만 필터링
         const validCoupons = coupons.filter(
-          c => !c.isUsed && c.coupon.minPurchaseAmount <= base
+          c => c.coupon && !c.isUsed && c.coupon.minPurchaseAmount <= base
         );
         setUserCoupons(validCoupons);
       } catch (error) {

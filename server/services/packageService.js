@@ -44,7 +44,7 @@ async function createPackage(packageData) {
 
   let totalPrice = 0;
 
-  // 숙소 가격 계산 및 존재 여부 검증 (기존 방식)
+  // 숙소 가격 계산 및 존재 여부 검증
   if (Array.isArray(accommodations) && accommodations.length > 0) {
     console.log('🔍 [DEBUG] 숙소 ID 목록:', accommodations);
     const accommodationData = await Accommodation.find({_id: {$in: accommodations}});
@@ -52,8 +52,6 @@ async function createPackage(packageData) {
     if (!accommodationData || accommodationData.length !== accommodations.length) {
       throw new Error('숙소 정보를 찾을 수 없습니다.');
     }
-    // 기존에는 숙소의 minPrice를 기준으로 합산했지만, 객실 예약의 경우 아래에서 별도로 계산합니다.
-    // totalPrice += accommodationData.reduce((sum, acc) => sum + (acc.minPrice || 0), 0);
     console.log('✅ [DEBUG] 숙소 기본 정보 검증 완료');
   }
 
@@ -106,12 +104,10 @@ async function createPackage(packageData) {
   console.log('🔍 [DEBUG] endDates:', endDatesArray);
 
   if (roomIdArray.length > 0) {
-    // 불러온 룸 데이터가 모두 있는지 확인
     const roomData = await Room.find({_id: {$in: roomIdArray}});
     if (!roomData || roomData.length !== roomIdArray.length) {
       throw new Error('객실 정보를 찾을 수 없습니다.');
     }
-    // 각 객실마다 숙박일수를 계산하여 가격 합산
     for (let i = 0; i < roomData.length; i++) {
       const room = roomData[i];
       const start = startDatesArray[i];
@@ -119,9 +115,7 @@ async function createPackage(packageData) {
       if (!start || !end) {
         throw new Error('객실 예약 날짜가 누락되었습니다.');
       }
-      // 숙박일수 계산 (종료일과 시작일의 차이, 보통 종료일은 체크아웃 날짜이므로 1일 빼거나 그대로 사용할지 결정)
       const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-      // 예를 들어, pricePerNight를 곱합니다.
       totalPrice += room.pricePerNight * nights;
       console.log(
         `✅ [DEBUG] 객실 (${room._id}) 가격: ${room.pricePerNight} * ${nights}일 = ${room.pricePerNight * nights}`
@@ -139,13 +133,13 @@ async function createPackage(packageData) {
   }
   console.log('✅ [DEBUG] 최종 가격 계산 완료:', calculatedFinalPrice);
 
-  // 새 패키지 데이터 생성 (룸 정보 포함)
+  // 새 패키지 데이터 생성 (룸 정보 포함, roomIds 대신 rooms 필드 사용)
   const newPackage = new Package({
     ...packageData,
     accommodations: accommodations.map(id => new mongoose.Types.ObjectId(id)),
     tours: tours.map(id => new mongoose.Types.ObjectId(id)),
     flights: flightDetails,
-    roomIds: roomIdArray,
+    rooms: roomIdArray,
     startDates: startDatesArray,
     endDates: endDatesArray,
     price: totalPrice,
@@ -188,11 +182,12 @@ async function getAllPackages({page = 1, limit = 10, search = ''}) {
 /**
  * ✅ 특정 패키지 상품 조회
  */
-
 async function getPackageById(packageId) {
-  const pkg = await Package.findById(packageId).populate(
-    'accommodations flights tours createdBy'
-  );
+  const pkg = await Package.findById(packageId)
+    .populate('accommodations') // 숙소 정보
+    .populate('flights') // 항공 정보
+    .populate('tours') // 투어 정보
+    .populate('rooms'); // 객실(Rooms) 데이터
   if (!pkg) {
     throw new Error('해당 패키지를 찾을 수 없습니다.');
   }
@@ -224,13 +219,13 @@ async function updatePackage(packageId, updateData) {
     status: updateData.status ?? existingPackage.status,
     images: updateData.images ?? existingPackage.images,
     availableDates: updateData.availableDates ?? existingPackage.availableDates,
-    createdBy: existingPackage.createdBy // 작성자는 유지
+    createdBy: existingPackage.createdBy // 작성자 유지
   };
 
   let totalPrice = existingPackage.price;
   let finalPrice = existingPackage.finalPrice;
 
-  // 숙소 업데이트가 있는 경우: 숙소의 기본 가격은 여기서 계산(원래는 객실 가격은 따로 계산할 예정)
+  // 숙소 업데이트
   if (updateData.accommodations) {
     const accommodationData = await Accommodation.find({
       _id: {$in: updateData.accommodations}
@@ -241,7 +236,6 @@ async function updatePackage(packageId, updateData) {
     ) {
       throw new Error('숙소 정보를 찾을 수 없습니다.');
     }
-    // 숙소 기본 가격은 여기서는 별도 계산하지 않고 객실(룸) 가격을 아래에서 계산하므로 기존 값 사용
     updatedFields.accommodations = updateData.accommodations;
   } else {
     updatedFields.accommodations = existingPackage.accommodations;
@@ -276,10 +270,8 @@ async function updatePackage(packageId, updateData) {
     updatedFields.flights = existingPackage.flights;
   }
 
-  // **룸(객실) 업데이트 처리**
-  // 만약 updateData에 roomIds가 있다면, 객실 예약 정보(룸 ID, 예약 시작일, 예약 종료일)를 업데이트
+  // **객실(룸) 업데이트 처리**
   if (updateData.roomIds) {
-    // 룸 정보 변환
     const roomIdArray = Array.isArray(updateData.roomIds)
       ? updateData.roomIds.map(r => new mongoose.Types.ObjectId(r))
       : [];
@@ -289,11 +281,10 @@ async function updatePackage(packageId, updateData) {
     const endDatesArray = Array.isArray(updateData.endDates)
       ? updateData.endDates.map(e => new Date(e))
       : [];
-    updatedFields.roomIds = roomIdArray;
+    updatedFields.rooms = roomIdArray; // 변경: roomIds → rooms
     updatedFields.startDates = startDatesArray;
     updatedFields.endDates = endDatesArray;
 
-    // 객실(룸) 가격 계산: 각 객실의 pricePerNight와 예약 기간(일수)를 곱해서 총 가격에 추가
     if (roomIdArray.length > 0) {
       const roomData = await Room.find({_id: {$in: roomIdArray}});
       if (!roomData || roomData.length !== roomIdArray.length) {
@@ -306,7 +297,6 @@ async function updatePackage(packageId, updateData) {
         if (!start || !end) {
           throw new Error('객실 예약 날짜가 누락되었습니다.');
         }
-        // 숙박일수 계산 (예를 들어, 체크인부터 체크아웃까지의 일수)
         const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
         totalPrice += room.pricePerNight * nights;
         console.log(
@@ -315,7 +305,7 @@ async function updatePackage(packageId, updateData) {
       }
     }
   } else {
-    updatedFields.roomIds = existingPackage.roomIds;
+    updatedFields.rooms = existingPackage.rooms;
     updatedFields.startDates = existingPackage.startDates;
     updatedFields.endDates = existingPackage.endDates;
   }
@@ -333,7 +323,11 @@ async function updatePackage(packageId, updateData) {
   const updatedPackage = await Package.findByIdAndUpdate(packageId, updatedFields, {
     new: true,
     runValidators: true
-  }).populate('accommodations flights tours createdBy');
+  })
+    .populate('accommodations')
+    .populate('flights')
+    .populate('tours')
+    .populate('rooms');
 
   if (!updatedPackage) {
     throw new Error('패키지 수정 실패: 패키지를 찾을 수 없습니다.');

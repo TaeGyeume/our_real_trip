@@ -13,7 +13,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   Box
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -66,6 +65,11 @@ const PackageCreate = () => {
         const data = await getCreatePackageData();
         // 숙소 데이터(rooms 포함), 투어/티켓, 항공 데이터
         console.log('[DEBUG] 패키지 생성 데이터:', data);
+
+        // 각 숙소의 객실 데이터가 populate되어 있는지 확인
+        data.accommodations.forEach(acc => {
+          console.log(`[DEBUG] 숙소(${acc.name})의 rooms:`, acc.rooms);
+        });
 
         setAccommodations(data.accommodations);
         setTourTickets(data.tourTickets);
@@ -173,7 +177,7 @@ const PackageCreate = () => {
       startDate: '2025-01-01',
       endDate: '2025-12-31',
       category: 'Tour Package',
-      createdBy: '67a55e912cee4aadf2463b9c' // 예시
+      createdBy: '67a55e912cee4aadf2463b9c' // 예시 ID
     };
 
     try {
@@ -286,7 +290,6 @@ const PackageCreate = () => {
               {accommodations.map(acc => (
                 <ListItem
                   key={acc._id}
-                  button
                   onClick={() => toggleAccommodationSelection(acc._id)}>
                   <FormControlLabel
                     control={
@@ -294,11 +297,9 @@ const PackageCreate = () => {
                     }
                     label={acc.name}
                   />
-                  <ListItemSecondaryAction>
-                    <Button variant="outlined" onClick={() => handleOpenRoomModal(acc)}>
-                      {selectedRooms[acc._id] ? '방 변경' : '방 선택'}
-                    </Button>
-                  </ListItemSecondaryAction>
+                  <Button variant="outlined" onClick={() => handleOpenRoomModal(acc)}>
+                    {selectedRooms[acc._id] ? '방 변경' : '방 선택'}
+                  </Button>
                 </ListItem>
               ))}
             </List>
@@ -317,12 +318,12 @@ const PackageCreate = () => {
           {currentAccommodation ? `${currentAccommodation.name} - 방 선택` : '방 선택'}
         </DialogTitle>
         <DialogContent>
-          {currentAccommodation?.rooms?.length > 0 ? (
+          {currentAccommodation?.rooms && currentAccommodation.rooms.length > 0 ? (
             <List>
               {currentAccommodation.rooms.map(room => (
                 <ListItem
                   key={room._id}
-                  button
+                  component="button"
                   onClick={() => {
                     setSelectedRooms(prev => ({
                       ...prev,
@@ -333,7 +334,9 @@ const PackageCreate = () => {
                   <ListItemText
                     primary={room.name}
                     secondary={
-                      room.price ? `${room.price.toLocaleString()}원` : '가격 정보 없음'
+                      room.pricePerNight
+                        ? `${room.pricePerNight.toLocaleString()}원`
+                        : '가격 정보 없음'
                     }
                     sx={{color: 'text.primary'}}
                   />
@@ -360,7 +363,7 @@ const PackageCreate = () => {
               {tourTickets.map(ticket => (
                 <ListItem
                   key={ticket._id}
-                  button
+                  component="button"
                   onClick={() => {
                     setSelectedTourTickets(prev =>
                       prev.includes(ticket._id)
@@ -407,7 +410,7 @@ const PackageCreate = () => {
                 {paginatedFlights.map(flight => (
                   <ListItem
                     key={flight._id}
-                    button
+                    component="button"
                     onClick={() => {
                       const exists = selectedFlights.find(f => f.flightId === flight._id);
                       if (exists) {
