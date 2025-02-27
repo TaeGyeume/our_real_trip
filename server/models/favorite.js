@@ -5,7 +5,7 @@ const FavoriteSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User', // 사용자 모델 참조
+      ref: 'User', // 사용자 모델 참조ㅇㅇㅇ
       required: true
     },
     item: {
