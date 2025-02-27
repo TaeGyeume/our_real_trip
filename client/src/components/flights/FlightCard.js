@@ -7,7 +7,26 @@ const AIRLINE_LOGOS = {
   이스타항공: 'eastar.png',
   진에어: 'jinair.png',
   티웨이항공: 'twayair.png',
-  제주항공: 'jejuair.png'
+  제주항공: 'jejuair.png',
+  에어부산: 'airbusan.png',
+  피치항공: 'peach.png',
+  '집에어 도쿄': 'zipair_tokyo.png',
+  에어재팬화물항공: 'airjapan.png',
+  전일본공수: 'ana.jpg',
+  일본항공: 'japanair.png',
+  에어로케이항공: 'airok.png',
+  프랑스항공: 'airfrance.png',
+  중국국제항공: 'airchina.png',
+  중국남방항공: 'chinaair.png',
+  중국동방항공: 'china.png',
+  중화항공: 'cchina.jpg',
+  '젯스타 에어웨이즈': 'jetstar_logo.png',
+  '호주항공(콴타스항공)': 'QF.png',
+  에어프레미아: 'YP.png',
+  타이항공: 'TG.png',
+  에바항공: 'BR.png',
+  '에바항공(장영항공)': 'BR.png',
+  춘추항공: 'chunchu.png'
 };
 
 const formatTime = timeString => {

@@ -24,34 +24,28 @@ import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {ko} from 'date-fns/locale';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
-// 공항 한글 → 코드 변환
-const AIRPORT_CODES = {
-  서울: 'GMP',
-  인천: 'ICN',
-  부산: 'PUS',
-  제주: 'CJU',
-  대구: 'TAE',
-  광주: 'KWJ',
-  청주: 'CJJ',
-  여수: 'RSU',
-  무안: 'MWX',
-  도쿄: 'HND',
-  도쿄: 'NRT',
-  뉴욕: 'JFK',
-  뉴욕: 'EWR',
-  뉴욕: 'LGA',
-  파리: 'CDG',
-  베이징: 'PEK',
-  베이징: 'PKX',
-  타이베이: 'TSA',
-  런던: 'LGW',
-  런던: 'LHR',
-  런던: 'LCY',
-  시드니: 'SYD',
-  방콕: 'BKK'
+const AIRPORT_GROUPS = {
+  서울: ['GMP'],
+  인천: ['ICN'],
+  부산: ['PUS'],
+  제주: ['CJU'],
+  대구: ['TAE'],
+  광주: ['KWJ'],
+  청주: ['CJJ'],
+  여수: ['RSU'],
+  무안: ['MWX'],
+  도쿄: ['HND', 'NRT'], // 도쿄: 두 개의 공항 포함
+  뉴욕: ['JFK', 'EWR', 'LGA'], // 뉴욕: 세 개의 공항 포함
+  파리: ['CDG'],
+  베이징: ['PEK', 'PKX'], // 베이징: 두 개의 공항 포함
+  타이베이: ['TSA'],
+  런던: ['LGW', 'LHR', 'LCY'], // 런던: 세 개의 공항 포함
+  시드니: ['SYD'],
+  방콕: ['BKK']
 };
 
-const AIRPORT_LIST = Object.keys(AIRPORT_CODES);
+// 공항 리스트 생성 (검색창에서 선택 가능하도록)
+const AIRPORT_LIST = Object.keys(AIRPORT_GROUPS);
 
 const FlightSearch = () => {
   const [departure, setDeparture] = useState('');
@@ -77,8 +71,9 @@ const FlightSearch = () => {
       return;
     }
 
-    const deptCode = AIRPORT_CODES[departure] || departure;
-    const arrCode = AIRPORT_CODES[arrival] || arrival;
+    // 여러 공항이 포함된 도시의 경우, 배열로 변환
+    const deptCodes = AIRPORT_GROUPS[departure] || [departure];
+    const arrCodes = AIRPORT_GROUPS[arrival] || [arrival];
     const formattedDate = moment(date).format('YYYY-MM-DD');
 
     // 날짜 형식 검증
@@ -92,22 +87,29 @@ const FlightSearch = () => {
     try {
       console.log(`변환된 검색 날짜: ${formattedDate}`);
 
-      // API 요청에 passengers 값 추가
-      const searchData = await searchFlights(
-        deptCode,
-        arrCode,
-        formattedDate,
-        passengers
-      );
+      let searchResults = [];
 
-      if (!searchData || searchData.length === 0) {
+      // 출발지 공항 코드마다 도착지 공항 코드마다 검색
+      for (const deptCode of deptCodes) {
+        for (const arrCode of arrCodes) {
+          const searchData = await searchFlights(
+            deptCode,
+            arrCode,
+            formattedDate,
+            passengers
+          );
+          searchResults = [...searchResults, ...searchData]; // 여러 결과 합치기
+        }
+      }
+
+      if (!searchResults || searchResults.length === 0) {
         setErrorMessage(`선택한 날짜 (${formattedDate})에 운항하는 항공편이 없습니다.`);
         setLoading(false);
       } else {
         setErrorMessage('');
-        console.log('검색된 데이터:', searchData);
+        console.log('검색된 데이터:', searchResults);
         setTimeout(() => {
-          navigate('/flights/results', {state: {flights: searchData, passengers}});
+          navigate('/flights/results', {state: {flights: searchResults, passengers}});
         }, 500);
       }
     } catch (error) {
