@@ -1,17 +1,22 @@
 import React, {useEffect, useState} from 'react';
 import {fetchPopularAccommodations} from '../../api/accommodation/accommodationService';
 import AccommodationCard from '../product/accommodations/AccommodationCard';
-import {Box, Typography, CircularProgress} from '@mui/material';
+import {Box, Typography, CircularProgress, IconButton} from '@mui/material';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+import {ArrowBackIos, ArrowForwardIos} from '@mui/icons-material';
 
 const PopularAccommodations = () => {
   const [accommodations, setAccommodations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const sliderRef = React.useRef(null); // 슬라이더 참조
 
   useEffect(() => {
     const loadPopularAccommodations = async () => {
       try {
         const data = await fetchPopularAccommodations();
-        setAccommodations(data);
+        setAccommodations(data.slice(0, 8)); // 최대 8개만 가져오기
       } catch (error) {
         console.error(error);
       } finally {
@@ -22,8 +27,32 @@ const PopularAccommodations = () => {
     loadPopularAccommodations();
   }, []);
 
+  // lick Slider 설정
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 4,
+    arrows: false, // 기본 화살표 버튼 숨김
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {slidesToShow: 3, slidesToScroll: 3}
+      },
+      {
+        breakpoint: 768,
+        settings: {slidesToShow: 2, slidesToScroll: 2}
+      },
+      {
+        breakpoint: 480,
+        settings: {slidesToShow: 1, slidesToScroll: 1}
+      }
+    ]
+  };
+
   return (
-    <Box sx={{maxWidth: 1200, mx: 'auto', mt: 3, px: 2}}>
+    <Box sx={{maxWidth: 1200, mx: 'auto', mt: 3, px: 2, position: 'relative'}}>
       {/* 제목 */}
       <Typography variant="h4" fontWeight="bold" mb={3} textAlign="center">
         다른 회원님들이 많이 본 숙소
@@ -34,26 +63,49 @@ const PopularAccommodations = () => {
         <Box sx={{display: 'flex', justifyContent: 'center', mt: 3}}>
           <CircularProgress />
         </Box>
-      ) : (
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center', // 가운데 정렬로 변경
-            gap: 2 // 간격 균등 조정
-          }}>
-          {accommodations.length > 0 ? (
-            accommodations.map(acc => (
-              <Box key={acc._id} sx={{width: {xs: '100%', sm: '48%', md: '32%'}}}>
+      ) : accommodations.length > 0 ? (
+        <Box sx={{position: 'relative'}}>
+          {/* 왼쪽 버튼 */}
+          <IconButton
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '-50px',
+              transform: 'translateY(-50%)',
+              zIndex: 2
+            }}
+            onClick={() => sliderRef.current.slickPrev()}>
+            <ArrowBackIos />
+          </IconButton>
+
+          {/* 슬라이더 */}
+          <Slider ref={sliderRef} {...settings}>
+            {accommodations.map(acc => (
+              <Box key={acc._id} sx={{px: 1}}>
+                {' '}
+                {/* 슬라이드 간격 조정 */}
                 <AccommodationCard accommodation={acc} />
               </Box>
-            ))
-          ) : (
-            <Typography variant="body1" textAlign="center" sx={{mt: 4}}>
-              조회수가 높은 숙소가 없습니다.
-            </Typography>
-          )}
+            ))}
+          </Slider>
+
+          {/* 오른쪽 버튼 */}
+          <IconButton
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              right: '-50px',
+              transform: 'translateY(-50%)',
+              zIndex: 2
+            }}
+            onClick={() => sliderRef.current.slickNext()}>
+            <ArrowForwardIos />
+          </IconButton>
         </Box>
+      ) : (
+        <Typography variant="body1" textAlign="center" sx={{mt: 4}}>
+          조회수가 높은 숙소가 없습니다.
+        </Typography>
       )}
     </Box>
   );

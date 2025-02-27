@@ -12,6 +12,9 @@ router.get('/autocomplete', accommodationController.autocompleteSearch);
 // 날짜 및 인원수에 맞는 숙소 검색
 router.get('/search', accommodationController.getAccommodationsBySearch);
 
+// 특정 좌표 기준으로 주변 숙소 리스트 조회 (GET /api/accommodations/nearby?lat=37.5665&lng=126.978&maxDistance=5000&limit=10)
+router.get('/nearby', accommodationController.getNearbyAccommodations);
+
 // 조회수 순으로 가져오기
 router.get('/popular', accommodationController.getPopularAccommodations);
 
