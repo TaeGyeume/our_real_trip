@@ -12,7 +12,16 @@ const AIRPORT_OPTIONS = [
   {code: 'CJJ', name: '청주공항'},
   {code: 'RSU', name: '여수공항'},
   {code: 'MWX', name: '무안공항'},
-  {code: 'HND', name: '하네다공항'}
+  {code: 'HND', name: '하네다공항'},
+  {code: 'NRT', name: '나리타공항'},
+  {code: 'JFK', name: '뉴욕 JFK공항'},
+  {code: 'CDG', name: '샤를 드골공항'},
+  {code: 'PEK', name: '베이징공항'},
+  {code: 'PKX', name: '베이징 다싱공항'},
+  {code: 'TSA', name: '타이베이 송산공항'},
+  {code: 'LHR', name: '런던 히드로공항'},
+  {code: 'SYD', name: '시드니공항'},
+  {code: 'BKK', name: '방콕공항'}
 ];
 
 const AIRLINES = [
@@ -22,7 +31,26 @@ const AIRLINES = [
   {code: '7C', name: '제주항공'},
   {code: 'TW', name: '티웨이항공'},
   {code: 'RS', name: '에어서울'},
-  {code: 'ZE', name: '이스타항공'}
+  {code: 'ZE', name: '이스타항공'},
+  {code: 'BX', name: '에어부산'},
+  {code: 'MM', name: '피치항공'},
+  {code: 'ZG', name: '집에어 도쿄'},
+  {code: 'JL', name: '일본항공'},
+  {code: 'NQ', name: '에어재팬화물항공'},
+  {code: 'NH', name: '전일본공수'},
+  {code: 'RF', name: '에어로케이항공'},
+  {code: 'AF', name: '프랑스항공'},
+  {code: 'CA', name: '중국국제항공'},
+  {code: 'CZ', name: '중국남방항공'},
+  {code: 'MU', name: '중국동방항공'},
+  {code: 'CI', name: '중화항공'},
+  {code: 'JQ', name: '젯스타 에어웨이즈'},
+  {code: 'QF', name: '호주항공(콴타스항공)'},
+  {code: 'YP', name: '에어프레미아'},
+  {code: 'TG', name: '타이항공'},
+  {code: 'BR', name: '에바항공'},
+  {code: 'JY', name: '에바항공(장영항공)'},
+  {code: '9C', name: '춘추항공'}
 ];
 
 const SEAT_CLASS_OPTIONS = ['이코노미석', '프리미엄 이코노미석', '비즈니스석'];
