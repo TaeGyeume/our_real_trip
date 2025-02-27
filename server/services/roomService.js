@@ -273,3 +273,24 @@ exports.deleteImage = async (roomId, imageUrl) => {
     return {status: 500, message: '서버 오류로 인해 이미지 삭제 실패'};
   }
 };
+
+// 특정 날짜의 예약 가능한 객실 개수 조회
+exports.getAvailableRoomsByDate = async (roomId, date) => {
+  try {
+    const room = await Room.findById(roomId);
+    if (!room) throw new Error('객실을 찾을 수 없습니다.');
+
+    // 해당 날짜의 예약 정보를 가져옴
+    const reservedDate = room.reservedDates.find(
+      d => d.date.toISOString().split('T')[0] === date
+    );
+
+    // 예약된 객실 개수 계산
+    const reservedCount = reservedDate ? reservedDate.count : 0;
+
+    // 남은 객실 개수 반환
+    return {availableRooms: room.availableCount - reservedCount};
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};

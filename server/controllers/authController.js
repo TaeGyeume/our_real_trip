@@ -173,14 +173,14 @@ exports.logout = async (req, res) => {
     // 액세스 토큰과 리프레시 토큰을 명확히 삭제
     res.clearCookie('accessToken', {
       ...cookieOptions,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/'
     });
 
     res.clearCookie('refreshToken', {
       ...cookieOptions,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
       path: '/'
     });

@@ -5,7 +5,7 @@ const bookingSchema = new mongoose.Schema(
     types: [
       {
         type: String,
-        enum: ['flight', 'accommodation', 'tourTicket', 'travelItem'],
+        enum: ['flight', 'accommodation', 'tourTicket', 'travelItem', 'package'],
         required: true
       }
     ],

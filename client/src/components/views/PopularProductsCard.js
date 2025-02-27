@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {Card, CardMedia, CardContent, Typography, Box} from '@mui/material';
-import './styles/PopularProductsCard.css';
 
 const SERVER_URL = 'http://localhost:5000';
 
@@ -63,10 +62,7 @@ const PopularProductsCard = ({product}) => {
             {product.description || '설명 없음'}
           </Typography>
           <Typography variant="h6" color="primary" sx={{mt: 1}}>
-            💰 {product.price.toLocaleString()} 원
-          </Typography>
-          <Typography variant="body2" sx={{color: 'green', mt: 1}}>
-            {product.stock > 0 ? '재고 있음' : '품절'}
+            {product.price.toLocaleString()} 원
           </Typography>
         </CardContent>
       </Link>

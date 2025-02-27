@@ -75,7 +75,7 @@ const CouponSelector = ({userCoupons, itemPrice, count, onCouponSelect}) => {
         <Typography variant="h6" fontWeight="bold" sx={{mb: 1}}>
           🎫 쿠폰 선택
         </Typography>
-        {/* ✅ 한 줄로 정렬된 쿠폰 선택 영역 */}
+        {/* 한 줄로 정렬된 쿠폰 선택 영역 */}
         <Stack direction="row" spacing={2} alignItems="center">
           <FormControl fullWidth variant="outlined" sx={{minWidth: '200px'}}>
             <InputLabel>쿠폰 선택</InputLabel>
@@ -96,7 +96,7 @@ const CouponSelector = ({userCoupons, itemPrice, count, onCouponSelect}) => {
             </Select>
           </FormControl>
         </Stack>
-        {/* ✅ 할인 금액 표시 (아래쪽 중앙 정렬 & 크기 축소) */}
+        {/* 할인 금액 표시 (아래쪽 중앙 정렬 & 크기 축소) */}
         <Box sx={{textAlign: 'center', p: 1.2, mt: 1}}>
           <Chip
             label={`할인 금액: ${discountAmount.toLocaleString()} 원`}

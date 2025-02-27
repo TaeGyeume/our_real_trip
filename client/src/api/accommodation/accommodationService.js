@@ -157,3 +157,42 @@ export const fetchAccommodationById = async accommodationId => {
     throw new Error('숙소 정보를 불러오는 d중 오류 발생');
   }
 };
+
+/**
+ * 인기 숙소(조회수 높은 순) 가져오기
+ * @returns {Promise<Array>} 인기 숙소 리스트
+ */
+export const fetchPopularAccommodations = async () => {
+  try {
+    const response = await axios.get('/accommodations/popular');
+    return response.data.accommodations;
+  } catch (error) {
+    console.error('인기 숙소 불러오기 오류:', error);
+    throw new Error('인기 숙소 데이터를 불러오는 중 오류가 발생했습니다.');
+  }
+};
+
+/**
+ * 특정 좌표 주변 숙소 가져오기
+ * @param {number} lat 위도
+ * @param {number} lng 경도
+ * @param {number} maxDistance 검색 반경 (미터 단위, 기본값 5000m)
+ * @param {number} limit 최대 결과 개수 (기본값 10개)
+ * @returns {Promise<Array>} 주변 숙소 리스트
+ */
+export const fetchNearbyAccommodations = async (
+  lat,
+  lng,
+  maxDistance = 5000,
+  limit = 10
+) => {
+  try {
+    const response = await axios.get('/accommodations/nearby', {
+      params: {lat, lng, maxDistance, limit}
+    });
+    return response.data;
+  } catch (error) {
+    console.error('🚨 주변 숙소 조회 오류:', error);
+    throw new Error('주변 숙소 데이터를 불러오는 중 오류 발생');
+  }
+};

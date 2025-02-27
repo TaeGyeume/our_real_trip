@@ -16,7 +16,7 @@ const PackageSchema = new mongoose.Schema(
       }
     ],
 
-    // ✅ seatsToUse를 포함하는 flights 배열
+    // ✅seatsToUse를 포함하는 flights 배열
     flights: [
       {
         flightId: {
@@ -38,6 +38,16 @@ const PackageSchema = new mongoose.Schema(
         ref: 'tourTicket'
       }
     ],
+
+    // 새로운 필드: 객실(룸) 정보
+    roomIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Room'
+      }
+    ],
+    startDates: [{type: Date}],
+    endDates: [{type: Date}],
 
     images: [{type: String}],
     startDate: {type: Date, required: true},

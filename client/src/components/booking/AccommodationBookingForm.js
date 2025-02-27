@@ -6,17 +6,9 @@ import {authAPI} from '../../api/auth/index';
 import {fetchUserCoupons} from '../../api/coupon/couponService';
 import {cancelBooking} from '../../api/booking/bookingService';
 import CouponSelector from './CouponSelector';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Checkbox,
-  FormControlLabel,
-  Button,
-  Stack
-} from '@mui/material';
+import MileageInput from '../mileage/MileageInput';
+import './styles/TourTicketBookingForm.css';
+import {Alert, Snackbar, Button, TextField} from '@mui/material';
 
 const BookingForm = () => {
   const {roomId} = useParams();
@@ -26,19 +18,20 @@ const BookingForm = () => {
   const [userCoupons, setUserCoupons] = useState([]);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [usedMileage, setUsedMileage] = useState(0);
+  const [reservationInfo, setReservationInfo] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [openAlert, setOpenAlert] = useState(false);
 
   const defaultStartDate = searchParams.get('startDate') || '';
   const defaultEndDate = searchParams.get('endDate') || '';
 
   const [formData, setFormData] = useState({
     rooms: [{startDate: defaultStartDate, endDate: defaultEndDate, count: 1}]
-  });
-
-  const [useUserInfo, setUseUserInfo] = useState(false); // 체크박스 상태 추가
-  const [reservationInfo, setReservationInfo] = useState({
-    name: '',
-    email: '',
-    phone: ''
   });
 
   useEffect(() => {
@@ -57,6 +50,11 @@ const BookingForm = () => {
       try {
         const userData = await authAPI.getUserProfile();
         setUser(userData);
+        setReservationInfo({
+          name: userData.username,
+          email: userData.email,
+          phone: userData.phone
+        });
         const coupons = await fetchUserCoupons(userData._id);
 
         // 최소 예약 금액 충족하는 쿠폰만 필터링
@@ -74,29 +72,14 @@ const BookingForm = () => {
     fetchRoom();
   }, [roomId]);
 
-  // 체크박스 클릭 시 로그인한 사용자 정보 입력
-  const handleUseUserInfo = () => {
-    if (!useUserInfo) {
-      setReservationInfo({
-        name: user?.username || '',
-        email: user?.email || '',
-        phone: user?.phone || ''
-      });
-    } else {
-      setReservationInfo({
-        name: '',
-        email: '',
-        phone: ''
-      });
-    }
-    setUseUserInfo(!useUserInfo);
-  };
+  const SERVER_URL = 'http://localhost:5000';
 
-  // 입력 필드 변경 핸들러
-  const handleInputChange = e => {
-    const {name, value} = e.target;
-    setReservationInfo({...reservationInfo, [name]: value});
-  };
+  // room이 null이면 빈 배열을 반환하여 안전하게 처리
+  let imageUrl = room?.images?.[0] || '/default-image.jpg';
+
+  if (imageUrl?.startsWith('/uploads/')) {
+    imageUrl = `${SERVER_URL}${imageUrl}`;
+  }
 
   if (!room || !user) {
     return <p>객실 정보를 불러오는 중...</p>;
@@ -115,9 +98,25 @@ const BookingForm = () => {
     setDiscountAmount(discount);
   };
 
+  const handleReservationChange = e => {
+    const {name, value} = e.target;
+    setReservationInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const totalPrice = formData.rooms.reduce((sum, roomData) => {
+    const nights = Math.ceil(
+      (new Date(roomData.endDate) - new Date(roomData.startDate)) / (1000 * 60 * 60 * 24)
+    );
+    return sum + nights * room.pricePerNight * roomData.count;
+  }, 0);
+
+  /* 예약 생성 및 결제 요청 */
   const handlePayment = async () => {
-    if (!reservationInfo.name || !reservationInfo.email || !reservationInfo.phone) {
-      alert('예약자 정보를 모두 입력해주세요.');
+    if (formData.rooms.some(room => !room.startDate || !room.endDate)) {
+      alert('모든 객실의 체크인 및 체크아웃 날짜를 선택하세요.');
       return;
     }
 
@@ -129,20 +128,7 @@ const BookingForm = () => {
     const endDates = formData.rooms.map(room => room.endDate);
     const counts = formData.rooms.map(room => room.count);
 
-    const nights = formData.rooms.map(room =>
-      Math.ceil(
-        (new Date(room.endDate) - new Date(room.startDate)) / (1000 * 60 * 60 * 24)
-      )
-    );
-    const checkInTimes = formData.rooms.map(() => room.checkInTime || '15:00');
-    const checkOutTimes = formData.rooms.map(() => room.checkOutTime || '11:00');
-
-    const totalPrice = nights.reduce(
-      (sum, night, i) => sum + night * room.pricePerNight * counts[i],
-      0
-    );
-
-    const finalPrice = totalPrice - discountAmount;
+    const finalPrice = totalPrice - discountAmount - usedMileage;
 
     try {
       const bookingResponse = await createBooking({
@@ -156,11 +142,10 @@ const BookingForm = () => {
         totalPrice, // 총 결제 금액 (할인 전) 추가
         discountAmount, // 할인 금액 추가
         finalPrice, // 최종 결제 금액 (할인 후) 추가
+        usedMileage,
         userId: user._id,
         couponId: selectedCoupon ? selectedCoupon._id : null,
-        reservationInfo,
-        checkInTimes,
-        checkOutTimes
+        reservationInfo
       });
 
       console.log('예약 생성 응답:', bookingResponse);
@@ -190,6 +175,7 @@ const BookingForm = () => {
                 imp_uid: rsp.imp_uid,
                 merchant_uid,
                 couponId: selectedCoupon ? selectedCoupon._id : null,
+                usedMileage,
                 userId: user._id
               });
 
@@ -218,101 +204,203 @@ const BookingForm = () => {
   };
 
   return (
-    <Box sx={{maxWidth: 600, mx: 'auto', mt: 4}}>
-      <Typography variant="h4" sx={{mb: 3, fontWeight: 'bold', textAlign: 'center'}}>
-        숙소 예약
-      </Typography>
+    <>
+      <div className="booking-container">
+        <h2>예약하기</h2>
+        <div className="booking-content">
+          <div className="booking-details">
+            <div className="ticket-info">
+              <div className="ticket-header">
+                <img
+                  src={imageUrl}
+                  alt="객실 이미지"
+                  onError={e => (e.target.src = '/default-image.jpg')}
+                  className="ticket-thumbnail"
+                />
 
-      <Card sx={{mb: 3, p: 2}}>
-        <CardContent>
-          <Typography variant="h5" sx={{fontWeight: 'bold'}}>
-            {room.name}
-          </Typography>
-          <Typography variant="subtitle1" sx={{color: 'text.secondary'}}>
-            💰 1박 가격: {room.pricePerNight.toLocaleString()} 원
-          </Typography>
-        </CardContent>
-      </Card>
+                <div className="ticket-text">{room.name}</div>
+                {formData.rooms.map((roomData, index) => (
+                  <div key={index} className="room-group">
+                    <h4>🏨 객실 {index + 1}</h4>
+                    <label>📅 체크인 날짜</label>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={roomData.startDate}
+                      onChange={e => handleRoomChange(index, 'startDate', e.target.value)}
+                    />
 
-      {formData.rooms.map((roomData, index) => (
-        <Card key={index} sx={{mb: 2, p: 2, boxShadow: 3}}>
-          <CardContent>
-            <Typography variant="h6" sx={{fontWeight: 'bold'}}>
-              🏨 객실 {index + 1}
-            </Typography>
-            <Stack spacing={2} sx={{mt: 1}}>
-              <TextField
-                label="📅 체크인 날짜"
-                type="date"
-                fullWidth
-                value={roomData.startDate}
-                onChange={e => handleRoomChange(index, 'startDate', e.target.value)}
-                InputLabelProps={{shrink: true}}
+                    <label>📅 체크아웃 날짜</label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={roomData.endDate}
+                      onChange={e => handleRoomChange(index, 'endDate', e.target.value)}
+                    />
+
+                    {/* <label>🏨 예약할 객실 개수</label>
+                    <input
+                      type="number"
+                      name="count"
+                      value={roomData.count}
+                      min="1"
+                      max={room.availableCount}
+                      onChange={e => handleRoomChange(index, 'count', e.target.value)}
+                    /> */}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <hr className="divider" />
+            <div className="coupon-section">
+              <h4>쿠폰 사용</h4>
+              <CouponSelector
+                userCoupons={userCoupons}
+                itemPrice={room.pricePerNight}
+                count={formData.rooms[0].count}
+                onCouponSelect={handleCouponSelect}
               />
-              <TextField
-                label="📅 체크아웃 날짜"
-                type="date"
-                fullWidth
-                value={roomData.endDate}
-                onChange={e => handleRoomChange(index, 'endDate', e.target.value)}
-                InputLabelProps={{shrink: true}}
+              <br />
+              <p>
+                사용 가능한 쿠폰이 보이지 않나요?
+                <br />내 프로필 &gt; 쿠폰 메뉴에서 쿠폰 상태를 확인해 주세요. 선착순
+                쿠폰은 소진 완료되면 더 이상 노출되지 않아요!
+              </p>
+              <br />
+              <br />
+            </div>
+            <hr className="divider" />
+            <div className="point-section">
+              <MileageInput
+                userMileage={user.mileage}
+                totalPrice={totalPrice}
+                discountAmount={discountAmount}
+                onMileageChange={setUsedMileage}
               />
-            </Stack>
-          </CardContent>
-        </Card>
-      ))}
+              <br />
+              <br />
+            </div>
+            <hr className="divider" />
+            <div className="user-info">
+              <h4>예약자 정보</h4>
+              <TextField
+                label="이름"
+                variant="outlined"
+                name="name"
+                value={reservationInfo.name}
+                onChange={handleReservationChange}
+                disabled={!isEditing}
+                fullWidth
+                margin="normal"
+              />
 
-      <FormControlLabel
-        control={<Checkbox checked={useUserInfo} onChange={handleUseUserInfo} />}
-        label="로그인한 사용자 정보 사용"
-      />
+              <TextField
+                label="이메일"
+                variant="outlined"
+                name="email"
+                value={reservationInfo.email}
+                onChange={handleReservationChange}
+                disabled={!isEditing}
+                fullWidth
+                margin="normal"
+              />
 
-      <Stack spacing={2} sx={{mt: 2}}>
-        <TextField
-          label="예약자 이름"
-          fullWidth
-          value={reservationInfo.name}
-          onChange={handleInputChange}
-          name="name"
-        />
-        <TextField
-          label="이메일"
-          fullWidth
-          value={reservationInfo.email}
-          onChange={handleInputChange}
-          name="email"
-        />
-        <TextField
-          label="연락처"
-          fullWidth
-          value={reservationInfo.phone}
-          onChange={handleInputChange}
-          name="phone"
-        />
-      </Stack>
+              <TextField
+                label="전화번호"
+                variant="outlined"
+                name="phone"
+                value={reservationInfo.phone}
+                onChange={handleReservationChange}
+                disabled={!isEditing}
+                fullWidth
+                margin="normal"
+              />
 
-      <CouponSelector
-        userCoupons={userCoupons}
-        itemPrice={room.pricePerNight}
-        count={formData.rooms[0].count}
-        onCouponSelect={handleCouponSelect}
-      />
+              {!isEditing ? (
+                <Button
+                  variant="contained"
+                  onClick={() => setIsEditing(true)}
+                  style={{backgroundColor: 'rgb(213, 58, 35)'}}>
+                  수정
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={() => setIsEditing(false)}
+                  style={{backgroundColor: 'rgb(28, 103, 189)'}}>
+                  저장
+                </Button>
+              )}
+            </div>
+          </div>
 
-      <Typography sx={{mt: 2, fontWeight: 'bold'}}>
-        최종 결제 금액:{' '}
-        {(room.pricePerNight * formData.rooms[0].count - discountAmount).toLocaleString()}{' '}
-        원
-      </Typography>
+          {/* 오른쪽: 결제 요약 및 버튼 */}
+          <div className="payment-section">
+            <div className="payment-summary">
+              <h4>결제 정보</h4>
+              <p>
+                1박 기준 <span>{room.pricePerNight.toLocaleString()}원</span>
+              </p>
+              <p>
+                쿠폰 <span>{discountAmount.toLocaleString()}원</span>
+              </p>
+              <p>
+                마일리지 <span>{discountAmount.toLocaleString()}원</span>
+              </p>
+              <div>
+                <strong>
+                  총 결제 금액:{' '}
+                  {(
+                    room.pricePerNight * formData.rooms[0].count -
+                    discountAmount -
+                    usedMileage
+                  ).toLocaleString()}
+                  원
+                </strong>
+              </div>
+            </div>
 
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{mt: 3}}
-        color="primary"
-        onClick={handlePayment}>
-        💳 결제하기
-      </Button>
-    </Box>
+            <div className="terms-section">
+              <h4>약관 안내</h4>
+              <p>
+                개인정보 수집 및 이용 동의 (필수)
+                <br />
+                개인정보 제공 동의 (필수)
+              </p>
+              <p>위 약관을 확인하였으며, 본인은 약관 및 결제에 동의합니다.</p>
+            </div>
+
+            <div className="cancel-policy">
+              <h5>예약 취소 규정</h5>
+              <ul>
+                <li>부분환불 가능</li>
+                <li>유효기간 내 미사용 티켓 100% 환불 가능</li>
+                <li>유효기간 후 미사용 티켓 100% 환불 가능</li>
+                <li>사용한 티켓은 환불 불가능합니다.</li>
+              </ul>
+            </div>
+
+            <button onClick={handlePayment} className="payment-btn">
+              {(
+                room.pricePerNight * formData.rooms[0].count -
+                discountAmount
+              ).toLocaleString()}
+              원 결제하기
+            </button>
+          </div>
+        </div>
+      </div>
+      <Snackbar
+        open={openAlert}
+        autoHideDuration={2000}
+        onClose={() => setOpenAlert(false)}
+        anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
+        <Alert onClose={() => setOpenAlert(false)} severity="success" variant="filled">
+          숙박 예약이 완료되었습니다.
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 

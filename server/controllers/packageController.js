@@ -1,11 +1,36 @@
 const packageService = require('../services/packageService');
 const mongoose = require('mongoose');
-const Flight = require('../models/Flight'); // ✅ Flight 모델 추가
+const Flight = require('../models/Flight'); // Flight 모델 추가
 const Accommodation = require('../models/Accommodation');
 const TourTicket = require('../models/TourTicket');
+const Room = require('../models/Room');
 
 /**
- * ✅ 패키지 상품 생성 (관리자만 가능)
+ * 패키지 생성에 필요한 데이터 불러오기 (숙소, 투어/티켓, 항공)
+ */
+exports.getPackageCreateData = async (req, res) => {
+  try {
+    // 숙소, 투어/티켓, 항공 데이터 불러오기
+    const accommodations = await Accommodation.find({});
+    const tourTickets = await TourTicket.find({});
+    const flights = await Flight.find({});
+
+    // 데이터가 제대로 불러와졌다면 응답으로 반환
+    return res.status(200).json({
+      accommodations,
+      tourTickets,
+      flights
+    });
+  } catch (error) {
+    console.error('[ERROR] 패키지 생성 데이터 불러오기 실패:', error);
+    return res
+      .status(500)
+      .json({message: '패키지 생성 데이터 불러오기 실패', error: error.message});
+  }
+};
+
+/**
+ *  패키지 상품 생성 (관리자만 가능)
  */
 exports.createPackage = async (req, res) => {
   try {
@@ -13,6 +38,7 @@ exports.createPackage = async (req, res) => {
       return res.status(403).json({message: '관리자만 패키지를 생성할 수 있습니다.'});
     }
 
+    // 객실 관련 필드(roomIds, startDates, endDates)를 추가로 추출합니다.
     const {
       name,
       description,
@@ -22,18 +48,23 @@ exports.createPackage = async (req, res) => {
       accommodations,
       tours,
       flights,
+      roomIds, // 추가
+      startDates, // 추가
+      endDates, // 추가
       category,
       createdBy
     } = req.body;
 
+    // 필수 필드 검증 (룸 관련 필드는 필요에 따라 검증 여부 결정)
     if (
       !name ||
       !description ||
       !category ||
+      !createdBy ||
       !accommodations ||
       !tours ||
-      !flights ||
-      !createdBy
+      !flights
+      // 필요하다면 roomIds, startDates, endDates도 필수 체크할 수 있습니다.
     ) {
       return res.status(400).json({message: '필수 필드가 누락되었습니다.'});
     }
@@ -73,6 +104,7 @@ exports.createPackage = async (req, res) => {
       }
     }
 
+    // 컨트롤러에서 roomIds, startDates, endDates도 그대로 전달
     const packageData = {
       name,
       description,
@@ -82,13 +114,16 @@ exports.createPackage = async (req, res) => {
       accommodations: accommodationIds,
       tours: tourIds,
       flights: flightDetails,
+      roomIds, // 그대로 전달 (서비스에서 ObjectId 및 Date 변환 처리)
+      startDates, // 그대로 전달
+      endDates, // 그대로 전달
       category,
       createdBy: createdById
     };
 
     console.log('✅ [DEBUG] 패키지 데이터 생성 완료:', packageData);
 
-    // 패키지 생성 서비스 호출 (price 자동 계산)
+    // 패키지 생성 서비스 호출 (price 자동 계산 등)
     const createdPackage = await packageService.createPackage(packageData);
 
     console.log('✅ [SUCCESS] 패키지 생성 완료:', createdPackage);

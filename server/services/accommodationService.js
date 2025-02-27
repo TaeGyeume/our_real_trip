@@ -242,6 +242,8 @@ exports.getAvailableRoomsByAccommodation = async ({
       throw new Error('해당 숙소를 찾을 수 없습니다.');
     }
 
+    const updatedViews = await exports.incrementViews(accommodationId);
+
     // **검색 조건이 없을 경우 모든 객실 반환**
     if (!startDate || !endDate || !adults) {
       console.log('검색 조건이 없으므로 모든 객실 반환');
@@ -294,7 +296,10 @@ exports.getAvailableRoomsByAccommodation = async ({
       return true;
     });
 
-    return {accommodation, availableRooms};
+    return {
+      accommodation: {...accommodation.toObject(), views: updatedViews}, // 업데이트된 조회수 포함
+      availableRooms
+    };
   } catch (error) {
     console.error('특정 숙소의 객실 검색 중 오류 발생:', error);
     throw new Error('객실 검색 중 오류 발생: ' + error.message);
@@ -518,6 +523,35 @@ exports.getAccommodationById = async accommodationId => {
   return accommodation;
 };
 
+// 숙소 조회수 증가 서비스
+exports.incrementViews = async accommodationId => {
+  try {
+    const updatedAccommodation = await Accommodation.findByIdAndUpdate(
+      accommodationId,
+      {$inc: {views: 1}}, // 조회수 증가
+      {new: true}
+    );
+    return updatedAccommodation.views; // 증가된 조회수 반환
+  } catch (error) {
+    console.error('숙소 조회수 증가 오류:', error);
+    throw new Error('조회수 증가 중 오류 발생');
+  }
+};
+
+// 조회수 순으로 가져오기
+exports.getPopularAccommodations = async () => {
+  try {
+    const accommodations = await Accommodation.find()
+      .sort({views: -1}) // 조회수 내림차순 정렬
+      .limit(10) // 인기 숙소 10개만 가져옴
+      .lean();
+
+    return accommodations;
+  } catch (error) {
+    throw new Error('인기 숙소 조회 중 오류 발생: ' + error.message);
+  }
+};
+
 exports.deleteImage = async (accommodationId, imageUrl) => {
   try {
     const baseUrl = 'http://localhost:5000';
@@ -564,5 +598,27 @@ exports.deleteImage = async (accommodationId, imageUrl) => {
   } catch (error) {
     console.error('이미지 삭제 오류:', error);
     return {status: 500, message: '이미지 삭제 중 오류 발생'};
+  }
+};
+
+// 특정 좌표 기준으로 반경 내 숙소 리스트 조회
+exports.getNearbyAccommodations = async (lat, lng, maxDistance = 5000, limit = 10) => {
+  try {
+    if (!lat || !lng) {
+      throw new Error('위도(lat)와 경도(lng)를 입력하세요.');
+    }
+
+    const accommodations = await Accommodation.find({
+      coordinates: {
+        $near: {
+          $geometry: {type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)]},
+          $maxDistance: parseInt(maxDistance) // 기본 반경 5km
+        }
+      }
+    }).limit(parseInt(limit));
+
+    return accommodations;
+  } catch (error) {
+    throw new Error(`주변 숙소 조회 실패: ${error.message}`);
   }
 };
