@@ -44,7 +44,7 @@ const PopularAccommodations = () => {
           }}>
           {accommodations.length > 0 ? (
             accommodations.map(acc => (
-              <Box key={acc._id}>
+              <Box key={acc._id} sx={{width: {xs: '100%', sm: '48%', md: '32%'}}}>
                 <AccommodationCard accommodation={acc} />
               </Box>
             ))

@@ -115,26 +115,6 @@ const BookingForm = () => {
     const finalPrice = totalPrice - discountAmount - usedMileage;
 
     try {
-      console.log('예약 요청 데이터:', {
-        types: Array(formData.rooms.length).fill('accommodation'),
-        productIds: Array(formData.rooms.length).fill(room.accommodation),
-        roomIds: Array(formData.rooms.length).fill(room._id),
-        counts,
-        merchant_uid,
-        startDates,
-        endDates,
-        totalPrice, // 총 결제 금액 (할인 전) 추가
-        discountAmount, // 할인 금액 추가
-        finalPrice, // 최종 결제 금액 (할인 후) 추가
-        userId: user._id,
-        couponId: selectedCoupon ? selectedCoupon._id : null,
-        reservationInfo: {
-          name: user.username,
-          email: user.email,
-          phone: user.phone
-        }
-      });
-
       const bookingResponse = await createBooking({
         types: Array(formData.rooms.length).fill('accommodation'),
         productIds: Array(formData.rooms.length).fill(room.accommodation),
@@ -268,14 +248,8 @@ const BookingForm = () => {
             ).toLocaleString()}{' '}
             원
           </p>
-
-          {formData.rooms.length > 1 && (
-            <button onClick={() => removeRoom(index)}>🗑 객실 삭제</button>
-          )}
         </div>
       ))}
-
-      <button onClick={addRoom}>➕ 객실 추가</button>
 
       <button onClick={handlePayment} className="payment-btn">
         💳 결제하기
