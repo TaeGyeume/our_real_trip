@@ -4,7 +4,6 @@ import moment from 'moment-timezone';
 import './styles/FlightSearch.css';
 import {searchFlights} from '../../api/flight/flights';
 import LoadingScreen from './LoadingScreen';
-
 import {
   Paper,
   Typography,
@@ -25,20 +24,27 @@ import {ko} from 'date-fns/locale';
 import {Add, Remove} from '@mui/icons-material';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
-// 공항 한글 → 코드 변환
-const AIRPORT_CODES = {
-  서울: 'GMP',
-  인천: 'ICN',
-  부산: 'PUS',
-  제주: 'CJU',
-  대구: 'TAE',
-  광주: 'KWJ',
-  청주: 'CJJ',
-  여수: 'RSU',
-  무안: 'MWX'
+const AIRPORT_GROUPS = {
+  서울: ['GMP'],
+  인천: ['ICN'],
+  부산: ['PUS'],
+  제주: ['CJU'],
+  대구: ['TAE'],
+  광주: ['KWJ'],
+  청주: ['CJJ'],
+  여수: ['RSU'],
+  무안: ['MWX'],
+  도쿄: ['HND', 'NRT'], // 도쿄 공항 2개
+  뉴욕: ['JFK', 'EWR', 'LGA'], // 뉴욕 공항 3개
+  파리: ['CDG'],
+  베이징: ['PEK', 'PKX'], // 베이징 공항 2개
+  타이베이: ['TSA'],
+  런던: ['LGW', 'LHR', 'LCY'], // 런던 공항 3개
+  시드니: ['SYD'],
+  방콕: ['BKK']
 };
 
-const AIRPORT_LIST = Object.keys(AIRPORT_CODES);
+const AIRPORT_LIST = Object.keys(AIRPORT_GROUPS);
 
 const RoundTripSearch = () => {
   const [departure, setDeparture] = useState('');
@@ -64,14 +70,11 @@ const RoundTripSearch = () => {
       return;
     }
 
-    const deptCode = AIRPORT_CODES[departure] || departure;
-    const arrCode = AIRPORT_CODES[arrival] || arrival;
-    const formattedDepartureDate = moment(departureDate, 'YYYY-MM-DD', true).format(
-      'YYYY-MM-DD'
-    );
-    const formattedReturnDate = moment(returnDate, 'YYYY-MM-DD', true).format(
-      'YYYY-MM-DD'
-    );
+    // 출발 & 도착지를 여러 개의 공항 코드 배열로 변환
+    const deptCodes = AIRPORT_GROUPS[departure] || [departure];
+    const arrCodes = AIRPORT_GROUPS[arrival] || [arrival];
+    const formattedDepartureDate = moment(departureDate).format('YYYY-MM-DD');
+    const formattedReturnDate = moment(returnDate).format('YYYY-MM-DD');
 
     if (
       !moment(formattedDepartureDate, 'YYYY-MM-DD', true).isValid() ||
@@ -85,36 +88,66 @@ const RoundTripSearch = () => {
 
     try {
       console.log(`출발편 검색 날짜: ${formattedDepartureDate}`);
-      const departureFlights = await searchFlights(
-        deptCode,
-        arrCode,
-        formattedDepartureDate,
-        passengers
-      );
+      let departureFlights = [];
 
-      if (!departureFlights || departureFlights.length === 0) {
+      // 출발편 검색 (모든 공항 조합)
+      for (const deptCode of deptCodes) {
+        for (const arrCode of arrCodes) {
+          const searchData = await searchFlights(
+            deptCode,
+            arrCode,
+            formattedDepartureDate,
+            passengers
+          );
+          departureFlights = [...departureFlights, ...searchData];
+        }
+      }
+
+      if (!departureFlights.length) {
         setErrorMessage(
           `출발편 (${formattedDepartureDate})에 운항하는 항공편이 없습니다.`
         );
         setLoading(false);
-      } else {
-        setErrorMessage('');
-        console.log('출발편 검색 완료:', departureFlights);
-
-        // 500ms 딜레이 후 navigate 실행 (로딩 화면이 보이도록)
-        setTimeout(() => {
-          setLoading(false);
-          navigate('/flights/roundtrip-departure', {
-            state: {
-              departureFlights,
-              returnDate: formattedReturnDate,
-              passengers,
-              deptCode,
-              arrCode
-            }
-          });
-        }, 500);
+        return;
       }
+
+      console.log('출발편 검색 완료:', departureFlights);
+      setErrorMessage('');
+
+      // 복귀편 검색 (출발/도착 공항 반대로)
+      let returnFlights = [];
+      for (const arrCode of arrCodes) {
+        for (const deptCode of deptCodes) {
+          const searchData = await searchFlights(
+            arrCode,
+            deptCode,
+            formattedReturnDate,
+            passengers
+          );
+          returnFlights = [...returnFlights, ...searchData];
+        }
+      }
+
+      if (!returnFlights.length) {
+        setErrorMessage(`복귀편 (${formattedReturnDate})에 운항하는 항공편이 없습니다.`);
+        setLoading(false);
+        return;
+      }
+
+      console.log('복귀편 검색 완료:', returnFlights);
+
+      // 검색 완료 후 페이지 이동
+      setTimeout(() => {
+        setLoading(false);
+        navigate('/flights/roundtrip-departure', {
+          state: {
+            departureFlights,
+            returnFlights,
+            returnDate: formattedReturnDate,
+            passengers
+          }
+        });
+      }, 500);
     } catch (error) {
       console.error('검색 실패:', error);
       setErrorMessage('검색 중 오류가 발생했습니다.');
