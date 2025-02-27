@@ -3,7 +3,7 @@ import {useAuthStore} from '../../store/authStore';
 import {useNavigate} from 'react-router-dom';
 
 const FacebookLoginCallback = () => {
-  const setAuthState = useAuthStore(state => state.setAuthState); // Zustand의 상태 업데이트 함수 가져오기
+  const setAuthState = useAuthStore(state => state.setAuthState); // Zustand의 상태 업데이트 함수 가져오
   const checkAuth = useAuthStore(state => state.checkAuth);
   const navigate = useNavigate();
 
