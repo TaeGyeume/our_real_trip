@@ -297,13 +297,13 @@ if (!DB_URI || !SERVICE_KEY) {
   process.exit(1);
 }
 
-// ✅ MongoDB 연결
+// MongoDB 연결
 mongoose
   .connect(DB_URI)
   .then(() => console.log('MongoDB 연결 성공'))
   .catch(err => console.error('MongoDB 연결 실패:', err));
 
-// ✅ 공항 코드와 공항명 매핑
+// 공항 코드와 공항명 매핑
 const AIRPORT_NAMES = {
   GMP: '김포공항',
   ICN: '인천공항',
@@ -326,7 +326,7 @@ const AIRPORT_NAMES = {
   BKK: '방콕공항'
 };
 
-// ✅ 운항 요일 변환 함수 (국내선/국제선 공통)
+// 운항 요일 변환 함수 (국내선/국제선 공통)
 const getOperatingDays = flight => {
   return [
     flight.domesticSun === 'Y' || flight.internationalSun === 'Y' ? '일요일' : null,
@@ -339,7 +339,7 @@ const getOperatingDays = flight => {
   ].filter(Boolean);
 };
 
-// ✅ 데이터 저장 함수 (국내선 & 국제선 공용)
+// 데이터 저장 함수 (국내선 & 국제선 공용)
 const saveFlightToDB = async (flight, deptCode, arrCode, isInternational) => {
   const airline = flight.airlineKorean || 'Unknown Airline';
   const flightNumber =
@@ -392,11 +392,11 @@ const saveFlightToDB = async (flight, deptCode, arrCode, isInternational) => {
   );
 
   console.log(
-    `✅ 저장 완료: ${flightNumber} (${airline}), ${moment(departureDate).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')}, 좌석: ${seatsAvailable}, 가격: ${price.toLocaleString()}원, 등급: ${seatClass}`
+    `저장 완료: ${flightNumber} (${airline}), ${moment(departureDate).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')}, 좌석: ${seatsAvailable}, 가격: ${price.toLocaleString()}원, 등급: ${seatClass}`
   );
 };
 
-// ✅ 국내선 데이터 수집
+// 국내선 데이터 수집
 const fetchDomesticFlights = async () => {
   console.log('✈️ 국내선 데이터 수집 시작...');
   for (const deptCity of Object.keys(AIRPORT_NAMES)) {
@@ -431,7 +431,7 @@ const fetchDomesticFlights = async () => {
   }
 };
 
-// ✅ 국제선 데이터 수집
+// 국제선 데이터 수집
 const fetchInternationalFlights = async () => {
   console.log('🌍 국제선 데이터 수집 시작...');
   for (const deptCity of Object.keys(AIRPORT_NAMES)) {
