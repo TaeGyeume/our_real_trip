@@ -10,6 +10,7 @@ const schedule = require('node-schedule');
 const mongoose = require('mongoose');
 const userMileageService = require('./userMileageService');
 const User = require('../models/User');
+const usermembershipService = require('./usermembershipService');
 
 let cachedToken = null;
 let tokenExpiration = null;
@@ -415,8 +416,25 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
           })
         );
 
+        const user = await User.findById(userId);
+        if (!user) {
+          return {status: 404, message: '사용자를 찾을 수 없습니다.'};
+        }
+
+        // 등급별 마일리지 적립률 적용
+        let mileageRate = 0.01; // 기본 1% (길초보)
+        if (user.membershipLevel === '길잡이') {
+          mileageRate = 0.03; // 길잡이 3%
+        } else if (user.membershipLevel === '모험왕') {
+          mileageRate = 0.05; // 모험왕 5%
+        }
+
+        console.log(
+          `[서버] 유저 등급: ${user.membershipLevel}, 마일리지 적립률: ${mileageRate * 100}%`
+        );
+
         // 마일리지 1% 적립
-        const earnedMileage = Math.floor(booking.totalPrice * 0.01);
+        const earnedMileage = Math.floor(booking.totalPrice * mileageRate);
         await userMileageService.addMileageWithHistory(
           userId,
           earnedMileage,
@@ -438,6 +456,15 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
         booking.paymentStatus = 'COMPLETED';
         await booking.save();
       })
+    );
+
+    // 결제 완료 후 유저 결제 금액 업데이트 및 등급 조정
+    const updatedUser = await usermembershipService.updateUserSpending(
+      userId,
+      expectedFinalAmount
+    );
+    console.log(
+      `[서버] 유저 등급 업데이트 완료: ${updatedUser.membershipLevel}, 총 결제 금액: ${updatedUser.totalSpent}원`
     );
 
     console.log('[서버] 결제 검증 성공');
@@ -533,7 +560,8 @@ exports.cancelBooking = async bookingIds => {
           userCouponId,
           usedMileage,
           userId,
-          totalPrice
+          totalPrice,
+          finalPrice
         } = booking;
 
         const prodIds = Array.isArray(productIds) ? productIds : [productIds];
@@ -624,6 +652,15 @@ exports.cancelBooking = async bookingIds => {
           })
         );
 
+        // ✅ 유저 결제 금액 차감 및 등급 업데이트
+        const updatedUser = await usermembershipService.updateUserSpending(
+          userId,
+          -finalPrice
+        );
+        console.log(
+          `[서버] 유저 결제 취소 반영: -${finalPrice}원, 새 등급: ${updatedUser.membershipLevel}, 총 결제 금액: ${updatedUser.totalSpent}원`
+        );
+
         // 사용된 쿠폰 복구 처리
         if (userCouponId) {
           try {
@@ -640,21 +677,52 @@ exports.cancelBooking = async bookingIds => {
           }
         }
 
-        // 적립된 마일리지 차감 (중복 방지)
-        const earnedMileage = Math.floor(totalPrice * 0.01); // 적립된 마일리지 계산
-        if (earnedMileage > 0) {
-          try {
-            await userMileageService.useMileage(
-              userId,
-              earnedMileage,
-              `예약 취소로 마일리지 적립 취소 (${earnedMileage.toLocaleString()}P)`
-            );
-          } catch (mileageError) {
-            console.error(
-              `[서버] 적립된 마일리지 차감 중 오류 발생: ${mileageError.message}`
-            );
-          }
+        const user = await User.findById(userId);
+        if (!user) {
+          console.error(`[서버] 사용자를 찾을 수 없습니다. User ID: ${userId}`);
+          return;
         }
+
+        // ✅ 등급별 마일리지 적립률 설정
+        let mileageRate = 0.01; // 기본 1% (길초보)
+        if (user.membershipLevel === '길잡이') {
+          mileageRate = 0.03; // 길잡이 3%
+        } else if (user.membershipLevel === '모험왕') {
+          mileageRate = 0.05; // 모험왕 5%
+        }
+        console.log(
+          `[서버] 유저 등급: ${user.membershipLevel}, 마일리지 차감률: ${mileageRate * 100}%`
+        );
+
+        // 취소 시 차감할 마일리지 계산 (등급별 적립된 만큼 차감)
+        const deductedMileage = Math.floor(totalPrice * mileageRate);
+
+        try {
+          await userMileageService.useMileage(
+            userId,
+            deductedMileage,
+            `예약 취소로 적립 마일리지 회수 (${user.membershipLevel}, ${totalPrice.toLocaleString()}원 기준)`
+          );
+          console.log(`[서버] 마일리지 차감 완료: ${deductedMileage}P`);
+        } catch (error) {
+          console.error(`[서버] 마일리지 차감 오류: ${error.message}`);
+        }
+
+        // // 적립된 마일리지 차감 (중복 방지)
+        // const earnedMileage = Math.floor(totalPrice * 0.01); // 적립된 마일리지 계산
+        // if (earnedMileage > 0) {
+        //   try {
+        //     await userMileageService.useMileage(
+        //       userId,
+        //       earnedMileage,
+        //       `예약 취소로 마일리지 적립 취소 (${earnedMileage.toLocaleString()}P)`
+        //     );
+        //   } catch (mileageError) {
+        //     console.error(
+        //       `[서버] 적립된 마일리지 차감 중 오류 발생: ${mileageError.message}`
+        //     );
+        //   }
+        // }
 
         booking.paymentStatus = 'CANCELED';
 
