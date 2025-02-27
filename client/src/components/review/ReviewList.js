@@ -15,12 +15,13 @@ import {
   AiFillStar,
   AiOutlineStar
 } from 'react-icons/ai';
-import {FaStarHalfAlt} from 'react-icons/fa';
+import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
+import {FaStarHalfAlt, FaStar} from 'react-icons/fa';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
 import {useAuthStore} from '../../store/authStore';
 
-const ReviewList = ({productId}) => {
+const ReviewList = ({productId, setRatingInfo, ratingInfo, showOnlySummary = false}) => {
   const [reviews, setReviews] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
@@ -42,10 +43,12 @@ const ReviewList = ({productId}) => {
           authAPI.getUserProfile()
         ]);
 
+        let validReviews = [];
+
         if (reviewsData.status === 'fulfilled') {
           const {reviews = []} = reviewsData.value;
 
-          const validReviews = Array.isArray(reviews) ? reviews : [];
+          validReviews = Array.isArray(reviews) ? reviews : [];
           setReviews(validReviews);
         } else {
           console.error('리뷰 불러오기 실패:', reviewsData.reason);
@@ -56,13 +59,20 @@ const ReviewList = ({productId}) => {
         } else {
           setCurrentUser(null); // 비로그인 상태
         }
+
+        // 평점 계산
+        const totalRating = validReviews.reduce((sum, review) => sum + review.rating, 0);
+        const avgRating =
+          validReviews.length > 0 ? (totalRating / validReviews.length).toFixed(1) : 0;
+
+        setRatingInfo({avgRating, reviewCount: validReviews.length});
       } catch (err) {
         console.error('데이터 불러오기 오류:', err);
       }
     };
 
     fetchData();
-  }, [productId]);
+  }, [productId, setRatingInfo]);
 
   useEffect(() => {
     const handleDocumentClick = () => {
@@ -72,6 +82,19 @@ const ReviewList = ({productId}) => {
     document.addEventListener('mousedown', handleDocumentClick);
     return () => document.removeEventListener('mousedown', handleDocumentClick);
   }, []);
+
+  // `showOnlySummary === true`일 때는 평점 & 리뷰 개수만 표시
+  if (showOnlySummary) {
+    return (
+      <div className="rating-summary">
+        <strong>
+          <FaStar color="dodgerblue" size={16} />
+          &nbsp;{ratingInfo?.avgRating || 0}
+        </strong>{' '}
+        ({ratingInfo?.reviewCount || 0} 리뷰)
+      </div>
+    );
+  }
 
   const toggleMenu = (reviewId, e) => {
     if (e) e.stopPropagation();
@@ -254,7 +277,8 @@ const ReviewList = ({productId}) => {
             <div className="review-header">
               <div className="review-user-info">
                 <span className="review-username">
-                  👤 {review.userId?.username || '익명 사용자'}
+                  <AccountCircleRoundedIcon style={{color: 'gray'}} />{' '}
+                  {review.userId?.username || '익명 사용자'}
                 </span>
                 <span className="review-date">
                   &nbsp;
@@ -265,7 +289,7 @@ const ReviewList = ({productId}) => {
               <div className="review-actions">
                 <button onClick={() => handleLike(review._id)}>
                   {review.likedBy.includes(currentUser?._id) ? (
-                    <AiFillLike color="blue" />
+                    <AiFillLike color="dodgerblue" />
                   ) : (
                     <AiOutlineLike />
                   )}
@@ -383,9 +407,9 @@ const ReviewList = ({productId}) => {
                 return (
                   <span key={index}>
                     {review.rating >= currentStar ? (
-                      <AiFillStar color="#FFD700" size={20} />
+                      <AiFillStar color="dodgerblue" size={20} />
                     ) : review.rating >= currentStar - 0.5 ? (
-                      <FaStarHalfAlt color="#FFD700" size={20} />
+                      <FaStarHalfAlt color="dodgerblue" size={20} />
                     ) : (
                       <AiOutlineStar color="#E0E0E0" size={20} />
                     )}

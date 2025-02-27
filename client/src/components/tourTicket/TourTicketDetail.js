@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {getTourTicketById} from '../../api/tourTicket/tourTicketService';
 import {getReviews} from '../../api/review/reviewService';
 import {useParams, useNavigate} from 'react-router-dom';
@@ -6,6 +6,17 @@ import {useReviewContext} from '../../contexts/ReviewContext';
 import authAPI from '../../api/auth/auth';
 import './styles/TourTicketDetail.css';
 import ReviewList from '../../components/review/ReviewList';
+import {
+  FaChevronRight,
+  FaMapMarkerAlt,
+  FaCheckCircle,
+  FaCreditCard,
+  FaRegBookmark,
+  FaShareAlt,
+  FaBolt,
+  FaQuestionCircle
+} from 'react-icons/fa';
+import {Alert, Snackbar, Button, TextField} from '@mui/material';
 
 const TourTicketDetail = () => {
   const {id} = useParams();
@@ -13,8 +24,19 @@ const TourTicketDetail = () => {
   const navigate = useNavigate();
 
   const [ticket, setTicket] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0); // 현재 이미지 인덱스
-  const [user, setUser] = useState(null); // 사용자 정보 저장
+  const [user, setUser] = useState(null);
+
+  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
+  const [showDetails, setShowDetails] = useState(false);
+  const [openAlert, setOpenAlert] = useState(false);
+
+  const reviewSectionRef = useRef(null);
+
+  const scrollToReviews = () => {
+    if (reviewSectionRef.current) {
+      reviewSectionRef.current.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+  };
 
   useEffect(() => {
     // 로그인된 사용자 정보 가져오기
@@ -68,22 +90,20 @@ const TourTicketDetail = () => {
     return <p>상품 정보를 불러오는 중...</p>;
   }
 
-  const handleNext = () => {
-    setCurrentIndex(prevIndex => (prevIndex + 1) % ticket.images.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentIndex(prevIndex =>
-      prevIndex === 0 ? ticket.images.length - 1 : prevIndex - 1
-    );
-  };
-
-  const handleDotClick = index => {
-    setCurrentIndex(index);
-  };
-
   const handleReserve = () => {
     navigate(`/tourTicket/booking/${id}`);
+  };
+
+  const handleCopyLink = () => {
+    const currentUrl = window.location.href;
+
+    navigator.clipboard
+      .writeText(currentUrl)
+      .then(() => {
+        setOpenAlert(true);
+        setTimeout(() => setOpenAlert(false), 3000);
+      })
+      .catch(err => console.error('링크 복사 실패:', err));
   };
 
   // 현재 예약 건에 대한 리뷰 여부 체크
@@ -92,56 +112,138 @@ const TourTicketDetail = () => {
     : false;
 
   return (
-    <div className="tour-ticket-detail">
-      <h1>{ticket.title}</h1>
+    <div className="tour-ticket-container">
+      {/* 왼쪽 div 배치 */}
+      <div className="tour-ticket-detail">
+        <div className="ticket-header">
+          <div className="ticket-location">
+            <span>대한민국&nbsp;</span>
+            <FaChevronRight />
+            &nbsp;
+            <FaMapMarkerAlt />
+            <span>{ticket.location}</span>
+          </div>
 
-      <div className="image-slider">
-        <img
-          src={`http://localhost:5000${ticket.images[currentIndex]}`}
-          alt={ticket.title}
-          className="slider-image"
-        />
+          <h1 className="ticket-title">{ticket.title}</h1>
 
-        {ticket.images.length > 1 && (
-          <>
-            <button className="prev-btn" onClick={handlePrev}>
-              &lt;
-            </button>
-            <button className="next-btn" onClick={handleNext}>
-              &gt;
-            </button>
-          </>
-        )}
-
-        <div className="dots-container">
-          {ticket.images.map((_, index) => (
-            <span
-              key={index}
-              className={`dot ${index === currentIndex ? 'active' : ''}`}
-              onClick={() => handleDotClick(index)}
+          <div className="review-summary">
+            <FaShareAlt
+              style={{
+                top: '10px',
+                right: '10px',
+                border: 'none',
+                background: 'none',
+                fontSize: '18px',
+                color: 'dark gray'
+              }}
+              onClick={handleCopyLink}
+            />{' '}
+            &nbsp;&nbsp;
+            <Snackbar
+              open={openAlert}
+              anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
+              <Alert severity="success" variant="filled">
+                링크 복사 완료 🎉
+              </Alert>
+            </Snackbar>
+            <ReviewList
+              productId={id}
+              setRatingInfo={setRatingInfo}
+              ratingInfo={ratingInfo}
+              showOnlySummary={true}
             />
-          ))}
+            <FaChevronRight className="more-icon" onClick={scrollToReviews} />
+          </div>
+        </div>
+
+        <hr className="sun" />
+
+        <div className="credit">
+          <p>
+            <FaCheckCircle color="green" />
+            &nbsp; <b>즉시확정</b> 구매 즉시 예약 확정 (일부 상품 이용일 추가 예약 필요)
+          </p>
+          <p>
+            {' '}
+            <FaCreditCard /> &nbsp;<b>최대 5개월 무이자 할부 가능</b>
+          </p>
+        </div>
+
+        <hr className="sun" />
+
+        <br />
+        <div className="ticket-description">{ticket.description}</div>
+
+        <div className="details-section">
+          <div className="image-list">
+            <div className="image-wrapper">
+              <img src={`http://localhost:5000${ticket.images[0]}`} alt={ticket.title} />
+              {!showDetails && (
+                <div className="image-overlay">
+                  <button className="toggle-button" onClick={() => setShowDetails(true)}>
+                    상품 설명 더 보기 ▼
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {showDetails &&
+              ticket.images.slice(1).map((image, index) => (
+                <div className="image-wrapper" key={index}>
+                  <img
+                    src={`http://localhost:5000${image}`}
+                    alt={`${ticket.title} 이미지 ${index + 2}`}
+                  />
+                </div>
+              ))}
+          </div>
+        </div>
+
+        <hr className="sun" />
+
+        {/* <button onClick={() => navigate('/tourTicket/list')}>상품 목록</button> */}
+
+        <div>
+          <h2 ref={reviewSectionRef}>📝 리뷰</h2>
+          <ReviewList
+            productId={id}
+            setRatingInfo={setRatingInfo}
+            ratingInfo={ratingInfo}
+            showOnlySummary={false}
+          />
         </div>
       </div>
 
-      <p>설명: {ticket.description}</p>
-      <p>가격: {ticket.price.toLocaleString()}원</p>
+      {/* 오른쪽 div 배치 */}
+      <div className="empty-space">
+        <br />
+        <div className="right-space">
+          <div className="price-info">
+            <p
+              style={{
+                fontFamily: `"Apple SD Gothic", "Malgun Gothic", sans-serif`,
+                color: 'gray',
+                fontSize: '14px'
+              }}>
+              일반가
+            </p>
+            <p className="original-price">{ticket.price.toLocaleString()}원</p>
+          </div>
 
-      <button onClick={() => navigate('/tourTicket/list')}>상품 목록</button>
+          {hasReview ? (
+            <button className="completed-btn" disabled>
+              리뷰 작성 완료
+            </button>
+          ) : (
+            <button className="reserve-button" onClick={handleReserve}>
+              ⚡ 예약하기
+            </button>
+          )}
 
-      {hasReview ? (
-        <button className="completed-btn" disabled>
-          리뷰 작성 완료
-        </button>
-      ) : (
-        <button onClick={handleReserve} className="reserve-btn">
-          예약하기
-        </button>
-      )}
-
-      <div>
-        <h2>📝 리뷰</h2>
-        <ReviewList productId={id} />
+          <p className="instant-confirmation">
+            <FaBolt /> 구매 후 즉시 확정됩니다. <FaQuestionCircle />
+          </p>
+        </div>
       </div>
     </div>
   );

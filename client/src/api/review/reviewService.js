@@ -137,11 +137,11 @@ export const toggleLike = async (reviewId, userId) => {
 
     const response = await axios.patch(
       `${BASE_URL}/${reviewId}/like`,
-      {userId}, // ✅ 요청 본문에 userId 포함
+      {userId},
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${useAuthStore.getState().user?.token}` // ✅ JWT 토큰 포함
+          Authorization: `Bearer ${useAuthStore.getState().user?.token}`
         },
         withCredentials: true
       }
