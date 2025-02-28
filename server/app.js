@@ -110,6 +110,11 @@ app.post('/api/admin', authMiddleware, authorizeRoles('admin'), (req, res) => {
   res.json({message: '관리자 전용 페이지'});
 });
 
+app.use((req, res, next) => {
+  console.log(`[REQUEST] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // 에러 핸들러
 app.use((err, req, res, next) => {
   console.error(err.stack);
