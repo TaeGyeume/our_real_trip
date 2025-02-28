@@ -44,8 +44,8 @@ connectDB();
 
 const allowedOrigins = [
   `http://localhost:${process.env.CLIENT_PORT || 3000}`, // 개발환경
-  'http://54.81.196.208' // 운영환경 (EC2 IP 직접 접근)
-  // 'https://your-domain.com' // 운영환경 (도메인)
+  // 'http://54.81.196.208', // 운영환경 (EC2 IP 직접 접근)
+  'https://ourrealtrip.shop' // 운영환경 (도메인)
 ];
 
 const corsOptions = {
@@ -74,6 +74,7 @@ app.use(
 
 // 미들웨어 설정
 app.use(cors(corsOptions));
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({extended: true}));
