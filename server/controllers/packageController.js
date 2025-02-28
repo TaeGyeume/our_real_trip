@@ -85,16 +85,9 @@ exports.createPackage = async (req, res) => {
     // flights 배열 변환
     const flightDetails = Array.isArray(flights)
       ? flights.map(flight => {
-          console.log(`[DEBUG] 변환 전 flightId:`, flight.flightId);
-
           if (!flight.flightId || !flight.seatsToUse) {
             throw new Error(`항공 정보가 올바르지 않습니다: ${JSON.stringify(flight)}`);
           }
-
-          if (!mongoose.Types.ObjectId.isValid(flight.flightId)) {
-            throw new Error(`유효하지 않은 flightId: ${flight.flightId}`);
-          }
-
           return {
             flightId: new mongoose.Types.ObjectId(flight.flightId),
             seatsToUse: flight.seatsToUse

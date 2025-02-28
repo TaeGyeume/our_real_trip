@@ -6,10 +6,10 @@ const TourTicket = require('../models/TourTicket');
 const Room = require('../models/Room');
 
 /**
- * ✅ 패키지 상품 생성
+ *  패키지 상품 생성
  */
 async function createPackage(packageData) {
-  console.log('🔍 [DEBUG] 받은 packageData:', packageData);
+  console.log(' [DEBUG] 받은 packageData:', packageData);
 
   const {
     name,
@@ -184,10 +184,17 @@ async function getAllPackages({page = 1, limit = 10, search = ''}) {
  */
 async function getPackageById(packageId) {
   const pkg = await Package.findById(packageId)
-    .populate('accommodations') // 숙소 정보
+    .populate({
+      path: 'accommodations',
+      populate: {
+        path: 'rooms',
+        model: 'Room',
+        select: 'name pricePerNight description',
+        strictPopulate: false
+      }
+    })
     .populate('flights') // 항공 정보
-    .populate('tours') // 투어 정보
-    .populate('rooms'); // 객실(Rooms) 데이터
+    .populate('tours'); // 투어 정보
   if (!pkg) {
     throw new Error('해당 패키지를 찾을 수 없습니다.');
   }
