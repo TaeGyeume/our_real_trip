@@ -5,14 +5,24 @@
 }
 
 .review-card {
-  position: relative;
+  /* position: relative;
   border: 1px solid #ddd;
   padding: 15px;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-start; */
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 15px 0;
+  border-bottom: 1px solid #c9c5c5;
+}
+
+.review-card:last-child {
+  border-bottom: none;
 }
 
 .review-header {
@@ -31,8 +41,8 @@
 
 .review-username {
   font-weight: bold;
-  font-size: 18px;
-  margin-bottom: 5px;
+  /* font-size: 18px;
+  margin-bottom: 5px; */
 }
 
 .review-rating-date {
@@ -79,11 +89,17 @@
 }
 
 .review-text {
-  font-size: 16px;
+  /* font-size: 16px;
   font-weight: 400;
   margin-top: 0;
   text-align: left;
-  line-height: 1.5;
+  line-height: 1.5; */
+  font-size: 14px;
+  color: #777;
+}
+
+.review-rating {
+  margin-bottom: 5px;
 }
 
 .like-button {

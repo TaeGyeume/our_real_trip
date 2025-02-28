@@ -204,7 +204,26 @@ const TourTicketDetail = () => {
         {/* <button onClick={() => navigate('/tourTicket/list')}>상품 목록</button> */}
 
         <div>
-          <h2 ref={reviewSectionRef}>📝 리뷰</h2>
+          <h2
+            ref={reviewSectionRef}
+            style={{
+              fontSize: '24px',
+              textAlign: 'left',
+              marginBottom: '30px',
+              display: 'flex',
+              alignItems: 'center', // 세로 정렬
+              gap: '8px' // 간격 추가
+            }}>
+            여행자 리뷰
+            <span style={{fontSize: '24px', color: 'dodgerblue', fontWeight: 'bold'}}>
+              <ReviewList
+                productId={id}
+                setRatingInfo={setRatingInfo}
+                ratingInfo={ratingInfo}
+                showReviewCount={true}
+              />
+            </span>
+          </h2>
           <ReviewList
             productId={id}
             setRatingInfo={setRatingInfo}

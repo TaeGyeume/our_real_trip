@@ -653,7 +653,7 @@ exports.cancelBooking = async bookingIds => {
           })
         );
 
-        // ✅ 유저 결제 금액 차감 및 등급 업데이트
+        // 유저 결제 금액 차감 및 등급 업데이트
         const updatedUser = await usermembershipService.updateUserSpending(
           userId,
           -finalPrice
@@ -684,7 +684,7 @@ exports.cancelBooking = async bookingIds => {
           return;
         }
 
-        // ✅ 등급별 마일리지 적립률 설정
+        // 등급별 마일리지 적립률 설정
         let mileageRate = 0.01; // 기본 1% (길초보)
         if (user.membershipLevel === '길잡이') {
           mileageRate = 0.03; // 길잡이 3%

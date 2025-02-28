@@ -22,7 +22,13 @@ import authAPI from '../../api/auth/auth';
 import {useAuthStore} from '../../store/authStore';
 import {Button} from '@mui/material';
 
-const ReviewList = ({productId, setRatingInfo, ratingInfo, showOnlySummary = false}) => {
+const ReviewList = ({
+  productId,
+  setRatingInfo,
+  ratingInfo,
+  showOnlySummary = false,
+  showReviewCount = false
+}) => {
   const [reviews, setReviews] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
@@ -108,6 +114,11 @@ const ReviewList = ({productId, setRatingInfo, ratingInfo, showOnlySummary = fal
     );
   }
 
+  // showReviewCount === true일 때 리뷰 카운트만 표시
+  if (showReviewCount) {
+    return <div>{ratingInfo?.reviewCount || 0}</div>;
+  }
+
   // 평점 통계 계산
   const calculateRatingStats = reviews => {
     const total = reviews.length;
@@ -139,12 +150,20 @@ const ReviewList = ({productId, setRatingInfo, ratingInfo, showOnlySummary = fal
 
       const updatedReview = await toggleLike(reviewId, user._id);
 
+      // 일반 리뷰 업데이트
       setReviews(prevReviews =>
         prevReviews.map(review =>
           review._id === updatedReview._id
             ? {...updatedReview, userId: review.userId}
             : review
         )
+      );
+
+      // 베스트 리뷰 업데이트
+      setTopReview(prevTopReview =>
+        prevTopReview && prevTopReview._id === updatedReview._id
+          ? {...updatedReview, userId: prevTopReview.userId}
+          : prevTopReview
       );
     } catch (error) {
       console.error('좋아요 요청 실패:', error);

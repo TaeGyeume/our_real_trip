@@ -65,7 +65,7 @@ export const deleteReview = async reviewId => {
 
 export const addComment = async (reviewId, commentContent) => {
   try {
-    console.log(`[프론트] 리뷰 ${reviewId}에 댓글 추가 요청`);
+    // console.log(`[프론트] 리뷰 ${reviewId}에 댓글 추가 요청`);
 
     // 유저 정보 가져오기
     const userResponse = await authAPI.getUserProfile();
@@ -132,8 +132,8 @@ export const updateComment = async (reviewId, commentId, newContent) => {
 
 export const toggleLike = async (reviewId, userId) => {
   try {
-    console.log(`[프론트] 좋아요 요청 보냄`, reviewId);
-    console.log(`[프론트] 좋아요 요청 userId:`, userId);
+    // console.log(`[프론트] 좋아요 요청 보냄`, reviewId);
+    // console.log(`[프론트] 좋아요 요청 userId:`, userId);
 
     const response = await axios.patch(
       `${BASE_URL}/${reviewId}/like`,
