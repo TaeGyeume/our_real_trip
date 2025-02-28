@@ -43,7 +43,7 @@ router.use('/qna', qnaRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/rooms', roomRoutes);
 router.use('/user-coupons', userCouponRoutes);
-router.use('/user-mileage', userMileageRoutes);
+router.use('/mileage', userMileageRoutes);
 router.use('/tourTicket', userTourTicketRoutes);
 router.use('/tourTicket', TourTicketRoutes);
 router.use('/views', viewsRoutes);
