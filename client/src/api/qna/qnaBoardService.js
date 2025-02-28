@@ -1,6 +1,8 @@
+// import axios from 'axios';
 import api from '../axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/qna';
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api/qna';
 
 // QnA 게시글 생성 (Busboy 사용)
 export const createQnaBoard = async (data, isMultipart) => {
@@ -40,6 +42,17 @@ export const createQnaBoard = async (data, isMultipart) => {
         });
       }
     }
+
+    //  디버깅: requestData 출력
+    // console.log(' 최종 전송할 데이터:', requestData);
+
+    // if (requestData instanceof FormData) {
+    //   for (let [key, value] of requestData.entries()) {
+    //     console.log(` ${key}:`, value);
+    //   }
+    // } else {
+    //   console.log(' JSON 데이터:', requestData);
+    // }
 
     const headers = isMultipart
       ? {} //  FormData일 경우 Content-Type 자동 설정

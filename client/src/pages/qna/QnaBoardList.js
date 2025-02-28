@@ -21,10 +21,11 @@ const QnaBoardList = () => {
         const userResponse = await getUserProfile();
         setUser(userResponse.data);
         const response = await getQnaBoards(page, 10, category);
-        setQnaBoards(response.qnaBoards);
+        setQnaBoards(response.qnaBoards ?? []);
         setTotalPages(response.totalPages || 1);
       } catch (error) {
         console.error(' 데이터 로드 중 오류 발생:', error);
+        setQnaBoards([]);
       } finally {
         setLoading(false);
       }
@@ -90,7 +91,7 @@ const QnaBoardList = () => {
         </div>
       ) : (
         <div className="list-group">
-          {qnaBoards.length > 0 ? (
+          {Array.isArray(qnaBoards) && qnaBoards.length > 0 ? (
             qnaBoards.map(qna => (
               <div
                 key={qna._id}
