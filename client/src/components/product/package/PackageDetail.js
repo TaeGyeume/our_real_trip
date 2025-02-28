@@ -1,8 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {getPackageById} from '../../../api/package/packageService';
-import {fetchFlights} from '../../../api/flight/flights'; // 기존 API 호출 사용
-import {Container, Typography, Button, Grid, Card, CardContent, Box} from '@mui/material';
+import {
+  Container,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  Box,
+  List,
+  ListItem,
+  ListItemText
+} from '@mui/material';
 
 const PackageDetail = () => {
   const {id} = useParams();
@@ -11,8 +21,8 @@ const PackageDetail = () => {
   const [packageData, setPackageData] = useState(null);
   const [flightsData, setFlightsData] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [finalPrice, setFinalPrice] = useState(0); // 할인 적용 후 최종 가격
-  const [discountRate, setDiscountRate] = useState(0); // 할인율 상태 추가
+  const [finalPrice, setFinalPrice] = useState(0);
+  const [discountRate, setDiscountRate] = useState(0);
 
   useEffect(() => {
     fetchPackage();
@@ -23,71 +33,105 @@ const PackageDetail = () => {
       const data = await getPackageById(id);
       setPackageData(data);
 
-      // 항공편 데이터 가져오기
+      // 항공편 정보가 있으면 각 항공편에 대해 개별 API 호출
       if (data.flights && data.flights.length > 0) {
-        const flightIds = data.flights.map(flight => flight.flightId); // flightId만 추출
-        const flightPromises = flightIds.map(flightId => fetchFlightById(flightId)); // flightId로 항공편 정보 가져오기
+        const flightPromises = data.flights.map(flightEntry =>
+          fetchFlightById(flightEntry.flightId)
+        );
         const flights = await Promise.all(flightPromises);
-        setFlightsData(flights); // 항공편 데이터 상태 설정
+        setFlightsData(flights.filter(f => f));
       }
     } catch (error) {
       console.error('패키지 조회 실패:', error);
     }
   };
 
+  // 단일 항공편 정보를 가져오는 함수 (API 엔드포인트가 있다고 가정)
   const fetchFlightById = async flightId => {
     try {
-      // 모든 항공편을 가져와서 해당 ID를 찾아 반환
-      const flights = await fetchFlights();
-      return flights.find(flight => flight._id === flightId);
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'}/api/flight/${flightId}`
+      );
+      if (!response.ok) {
+        throw new Error('항공편 데이터를 가져오는데 실패했습니다.');
+      }
+      return await response.json();
     } catch (error) {
       console.error('항공편 데이터 불러오기 실패:', error);
       return null;
     }
   };
 
-  // 숙소, 투어, 항공편 가격 계산
+  // 예약일수 계산 (startDates[0], endDates[0] 기준)
+  const bookingDays =
+    packageData &&
+    packageData.startDates &&
+    packageData.endDates &&
+    packageData.startDates.length > 0 &&
+    packageData.endDates.length > 0
+      ? Math.ceil(
+          (new Date(packageData.endDates[0]) - new Date(packageData.startDates[0])) /
+            (1000 * 60 * 60 * 24)
+        )
+      : 1;
+
+  // 가격 계산: 각 항목(숙소의 객실, 항공, 투어티켓)의 합계를 구한 뒤 할인율 적용
   const calculateTotalPrice = () => {
-    if (!packageData) return 0;
+    if (!packageData) return;
 
-    let accommodationPrice = 0;
-    let flightPrice = 0;
-    let tourPrice = 0;
+    let roomPriceTotal = 0;
+    let flightPriceTotal = 0;
+    let tourPriceTotal = 0;
 
-    // 숙소 가격
+    // 숙소 내 모든 객실의 가격 계산 (객실 가격 × 예약일수)
     if (packageData.accommodations) {
-      accommodationPrice = packageData.accommodations.reduce(
-        (acc, accItem) => acc + (accItem.minPrice || 0),
-        0
-      );
+      packageData.accommodations.forEach(acc => {
+        if (acc.rooms && acc.rooms.length > 0) {
+          acc.rooms.forEach(room => {
+            if (room.pricePerNight) {
+              roomPriceTotal += room.pricePerNight * bookingDays;
+            }
+          });
+        }
+      });
     }
 
-    // 항공편 가격 (flightsData에서 가격 사용)
-    if (flightsData && flightsData.length > 0) {
-      flightPrice = flightsData.reduce((acc, flight) => acc + (flight.price || 0), 0);
+    // 항공 가격 계산 (항공 가격 × 선택한 좌석 수)
+    if (packageData.flights && packageData.flights.length > 0) {
+      packageData.flights.forEach(flightEntry => {
+        const flight = flightsData.find(f => f && f._id === flightEntry.flightId);
+        if (flight && flight.price) {
+          flightPriceTotal += flight.price * flightEntry.seatsToUse;
+        }
+      });
     }
 
-    // 투어 가격
-    if (packageData.tours) {
-      tourPrice = packageData.tours.reduce((acc, tour) => acc + (tour.price || 0), 0);
+    // 투어 티켓 가격 계산 (투어 가격 × 수량, 수량이 없으면 1로 가정)
+    if (packageData.tours && packageData.tours.length > 0) {
+      packageData.tours.forEach(tour => {
+        if (tour.price) {
+          tourPriceTotal += tour.price * (tour.quantity || 1);
+        }
+      });
     }
 
-    // 최종 가격 계산
-    const calculatedTotalPrice = accommodationPrice + flightPrice + tourPrice;
+    const calculatedTotalPrice = roomPriceTotal + flightPriceTotal + tourPriceTotal;
     setTotalPrice(calculatedTotalPrice);
 
-    // 할인율이 있을 경우 적용
+    // 할인율 적용 (할인율이 있을 경우, 총합에서 할인 금액을 차감)
     if (packageData.discountRate) {
-      const discount = (calculatedTotalPrice * packageData.discountRate) / 100;
-      setDiscountRate(packageData.discountRate); // 할인율 상태 업데이트
-      setFinalPrice(calculatedTotalPrice - discount); // 할인 적용된 가격
+      setDiscountRate(packageData.discountRate);
+      setFinalPrice(
+        calculatedTotalPrice -
+          Math.floor((calculatedTotalPrice * packageData.discountRate) / 100)
+      );
     } else {
-      setFinalPrice(calculatedTotalPrice); // 할인 없으면 그냥 totalPrice
+      setFinalPrice(calculatedTotalPrice);
     }
   };
 
   useEffect(() => {
-    calculateTotalPrice(); // 가격 계산
+    calculateTotalPrice();
   }, [packageData, flightsData]);
 
   if (!packageData) return <Typography>로딩 중...</Typography>;
@@ -101,7 +145,6 @@ const PackageDetail = () => {
         {packageData.description}
       </Typography>
 
-      {/* 원래 가격 (취소선 표시) */}
       <Box sx={{mt: 2, display: 'flex', alignItems: 'center'}}>
         <Typography
           variant="h6"
@@ -116,7 +159,6 @@ const PackageDetail = () => {
         )}
       </Box>
 
-      {/* 할인 적용 후 최종 가격 */}
       <Typography variant="h6" sx={{mt: 1}}>
         최종 가격 (할인 적용):{' '}
         <span style={{fontWeight: 'bold'}}>{finalPrice.toLocaleString()} 원</span>
@@ -160,91 +202,95 @@ const PackageDetail = () => {
       </Typography>
       <Card sx={{mt: 2}}>
         <CardContent>
+          {/* 숙소 및 객실 정보 */}
+          <Typography variant="body1" sx={{mb: 2}}>
+            <strong>숙소 및 객실 정보:</strong>
+            {packageData.accommodations && packageData.accommodations.length > 0
+              ? packageData.accommodations.map((acc, index) => {
+                  // 각 숙소의 최고 객실 가격 계산 (가격 정보가 있는 경우)
+                  const maxRoomPrice =
+                    acc.rooms && acc.rooms.length > 0
+                      ? Math.max(...acc.rooms.map(room => room.pricePerNight || 0))
+                      : 0;
+                  return (
+                    <Box key={index} sx={{mt: 1, ml: 2}}>
+                      <Typography variant="subtitle1">
+                        {acc.name} (최고 객실가:{' '}
+                        {maxRoomPrice
+                          ? maxRoomPrice.toLocaleString() + ' 원'
+                          : '가격 정보 없음'}
+                        )
+                      </Typography>
+                      {acc.rooms && acc.rooms.length > 0 ? (
+                        <List>
+                          {acc.rooms.map((room, idx) => (
+                            <ListItem key={idx} disableGutters>
+                              <ListItemText
+                                primary={`${room.name || '객실'} - ${room.pricePerNight ? room.pricePerNight.toLocaleString() + ' 원/박' : '가격 정보 없음'}`}
+                                secondary={`총 ${bookingDays}박: ${
+                                  room.pricePerNight
+                                    ? (
+                                        room.pricePerNight * bookingDays
+                                      ).toLocaleString() + ' 원'
+                                    : '가격 정보 없음'
+                                }`}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      ) : (
+                        <Typography variant="body2" sx={{ml: 2}}>
+                          객실 정보 없음
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                })
+              : '없음'}
+          </Typography>
+
+          {/* 투어/티켓 정보 */}
+          <Typography variant="body1" sx={{mb: 2}}>
+            <strong>투어/티켓 정보:</strong>
+            {packageData.tours && packageData.tours.length > 0
+              ? packageData.tours.map((tour, idx) => (
+                  <Box key={idx} sx={{mt: 1, ml: 2}}>
+                    <Typography variant="subtitle1">
+                      {tour.title} -{' '}
+                      {tour.price
+                        ? tour.price.toLocaleString() + ' 원'
+                        : '가격 정보 없음'}
+                    </Typography>
+                  </Box>
+                ))
+              : '없음'}
+          </Typography>
+
+          {/* 항공편 정보 */}
           <Typography variant="body1">
-            {/* 숙소 */}
-            숙소:{' '}
-            {packageData.accommodations
-              ? packageData.accommodations.map(acc => acc.name).join(', ')
-              : '없음'}
-            <br />
-            가격:{' '}
-            {packageData.accommodations
-              ? packageData.accommodations
-                  .map(acc =>
-                    acc.minPrice ? acc.minPrice.toLocaleString() : '가격 없음'
-                  )
-                  .join(', ')
-              : '가격 없음'}
-            <br />
-            설명:{' '}
-            {packageData.accommodations
-              ? packageData.accommodations.map(acc => acc.description).join(', ')
-              : '설명 없음'}
-            <br />
-            <br />
-            {/* 투어 */}
-            투어:{' '}
-            {packageData.tours
-              ? packageData.tours.map(tour => tour.title).join(', ')
-              : '없음'}
-            <br />
-            가격:{' '}
-            {packageData.tours
-              ? packageData.tours
-                  .map(tour => (tour.price ? tour.price.toLocaleString() : '가격 없음'))
-                  .join(', ')
-              : '가격 없음'}
-            <br />
-            설명:{' '}
-            {packageData.tours
-              ? packageData.tours.map(tour => tour.description).join(', ')
-              : '설명 없음'}
-            <br />
-            <br />
-            {/* 항공편 */}
-            항공편:{' '}
+            <strong>항공편 정보:</strong>
             {flightsData && flightsData.length > 0
-              ? flightsData.map(flight => flight.flightNumber).join(', ')
+              ? flightsData.map((flight, index) => (
+                  <Box key={index} sx={{mt: 1, ml: 2}}>
+                    <Typography variant="subtitle1">
+                      {flight.flightNumber || '정보 없음'} -{' '}
+                      {flight.airline || '항공사 정보 없음'} -{' '}
+                      {flight.price
+                        ? flight.price.toLocaleString() + ' 원'
+                        : '가격 정보 없음'}
+                    </Typography>
+                  </Box>
+                ))
               : '없음'}
-            <br />
-            가격:{' '}
-            {flightsData && flightsData.length > 0
-              ? flightsData
-                  .map(flight =>
-                    flight.price ? flight.price.toLocaleString() : '가격 없음'
-                  )
-                  .join(', ')
-              : '가격 없음'}
-            <br />
-            설명:{' '}
-            {flightsData && flightsData.length > 0
-              ? flightsData.map(flight => flight.airline).join(', ')
-              : '설명 없음'}
-            <br />
-            <br />
-            {/* 왕복 항공편 */}
-            {flightsData && flightsData.length > 0 && flightsData[0].returnFlight && (
-              <Typography variant="body1" sx={{mt: 2}}>
-                오는 항공편: {flightsData[0].returnFlight.flightNumber}
-                <br />
-                가격:{' '}
-                {flightsData[0].returnFlight.price
-                  ? flightsData[0].returnFlight.price.toLocaleString()
-                  : '가격 없음'}
-                <br />
-                설명: {flightsData[0].returnFlight.airline}
-              </Typography>
-            )}
           </Typography>
         </CardContent>
       </Card>
 
-      {/* 예약 버튼 */}
       <Button
         variant="contained"
         color="primary"
         sx={{mt: 3}}
-        onClick={() => navigate(`/package/booking/${id}`)}>
+        onClick={() => navigate(`/package/booking/${packageData._id}`)}>
         예약하기
       </Button>
     </Container>

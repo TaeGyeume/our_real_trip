@@ -63,47 +63,63 @@ const PackageBookingForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1) 패키지 조회
         const pkg = await getPackageById(id);
         setPackageData(pkg);
 
-        // 2) 항공편 상세 조회 (패키지에 항공편 정보가 있다면)
-        if (pkg.flights && pkg.flights.length > 0) {
-          const flightIds = pkg.flights.map(f => f.flightId);
-          const flightPromises = flightIds.map(fetchFlightById);
-          const loadedFlights = await Promise.all(flightPromises);
-          setFlightsData(loadedFlights);
-        }
+        // 숙소 최고가 계산
+        const maxAccommodationPrice =
+          pkg.accommodations && pkg.accommodations.length > 0
+            ? Math.max(...pkg.accommodations.map(acc => acc.minPrice || 0))
+            : 0;
 
-        // 3) 가격 상태 설정 (수량은 고정 1개)
-        const base = pkg.price || 0;
+        // 객실(Room) 가격 합산
+        const totalRoomPrice =
+          pkg.accommodations && pkg.accommodations.length > 0
+            ? pkg.accommodations.reduce((sum, acc) => {
+                const roomTotal = acc.rooms
+                  ? acc.rooms.reduce(
+                      (roomSum, room) => roomSum + (room.pricePerNight || 0),
+                      0
+                    )
+                  : 0;
+                return sum + roomTotal;
+              }, 0)
+            : 0;
+
+        // 투어/티켓 가격 합산
+        const totalTourPrice =
+          pkg.tours && pkg.tours.length > 0
+            ? pkg.tours.reduce((sum, tour) => sum + (tour.price || 0), 0)
+            : 0;
+
+        // 항공편 가격 합산
+        const flightIds = pkg.flights ? pkg.flights.map(f => f.flightId) : [];
+        const flightPromises = flightIds.map(fetchFlightById);
+        const loadedFlights = await Promise.all(flightPromises);
+        setFlightsData(loadedFlights);
+
+        const totalFlightPrice =
+          loadedFlights.length > 0
+            ? loadedFlights.reduce((sum, flight) => sum + (flight.price || 0), 0)
+            : 0;
+
+        // 기본 가격 설정 (객실 + 투어 + 항공)
+        const base = totalRoomPrice + totalTourPrice + totalFlightPrice;
         setBasePrice(base);
+
+        // 패키지 할인율 적용
         const pkgDiscountRate = pkg.discountRate || 0;
         setDiscountRate(pkgDiscountRate);
         const pkgDiscount = Math.floor((base * pkgDiscountRate) / 100);
         setPackageDiscount(pkgDiscount);
-        setFinalPrice(base - pkgDiscount);
 
-        // 4) 사용자 정보 및 쿠폰 조회
-        const userData = await authAPI.getUserProfile();
-        setUser(userData);
-        setReservationInfo({
-          name: userData.username,
-          email: userData.email,
-          phone: userData.phone
-        });
-        const coupons = await fetchUserCoupons(userData._id);
-        // 사용 가능한 쿠폰: 패키지 가격(basePrice) 이상 구매 가능해야 함
-        const validCoupons = coupons.filter(
-          c => !c.isUsed && c.coupon.minPurchaseAmount <= base
-        );
-        setUserCoupons(validCoupons);
+        // 최종 가격 계산
+        setFinalPrice(base - pkgDiscount);
       } catch (error) {
         console.error('패키지 예약 데이터 로드 중 오류:', error);
       }
     };
 
-    // 항공편 단건 조회 함수
     const fetchFlightById = async flightId => {
       try {
         const allFlights = await fetchFlights();
