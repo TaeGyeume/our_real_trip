@@ -1,6 +1,7 @@
 import axios from 'axios';
+import api from '../axios';
 
-const API_BASE_URL = 'http://localhost:5000/api/mileage';
+// const API_BASE_URL = 'http://localhost:5000/api/mileage';
 
 // 총 마일리지 조회 API
 export const fetchMileage = async userId => {
@@ -9,7 +10,7 @@ export const fetchMileage = async userId => {
   }
 
   try {
-    const response = await axios.get(`${API_BASE_URL}/${userId}`);
+    const response = await api.get(`/mileage/${userId}`);
     console.log('[API] 총 마일리지 응답:', response.data);
     return response.data;
   } catch (error) {
@@ -25,7 +26,7 @@ export const fetchMileageHistory = async userId => {
   }
 
   try {
-    const response = await axios.get(`${API_BASE_URL}/${userId}/history`); // 경로 수정
+    const response = await api.get(`/mileage/${userId}/history`); // 경로 수정
     console.log('[API] 마일리지 내역 응답:', response.data);
     return response.data;
   } catch (error) {
