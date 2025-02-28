@@ -17,6 +17,40 @@ import 'slick-carousel/slick/slick-theme.css';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
 
+// 숙소 최고가를 계산하는 함수 (각 숙소의 maxPrice 필드를 우선 사용하고, 없으면 minPrice)
+const computeAccommodationMaxPrice = accommodations => {
+  if (!accommodations || accommodations.length === 0) return null;
+  const prices = accommodations.map(acc => acc.maxPrice || acc.minPrice || 0);
+  return prices.length > 0 ? Math.max(...prices) : null;
+};
+
+// 객실 가격을 계산하는 함수 (각 숙소에서 첫 번째 객실의 pricePerNight를 사용)
+// 여러 객실이 있을 경우, 필요한 로직에 따라 합산하거나 평균, 최저값 등으로 변경 가능
+const computeRoomPrice = accommodations => {
+  if (!accommodations || accommodations.length === 0) return null;
+  // 여기서는 첫번째 숙소의 첫번째 객실의 가격을 사용
+  const firstAcc = accommodations[0];
+  if (firstAcc.rooms && firstAcc.rooms.length > 0) {
+    return firstAcc.rooms[0].pricePerNight || null;
+  }
+  return null;
+};
+
+// 항공 총합계 계산: 각 항공 객체의 가격 * 선택한 좌석 수 (populated된 flight 객체가 있다고 가정)
+const computeFlightTotal = flights => {
+  if (!flights || flights.length === 0) return 0;
+  return flights.reduce((sum, flight) => {
+    // 만약 flight.price가 없다면 0으로 처리
+    return sum + (flight.price || 0) * (flight.seatsToUse || 1);
+  }, 0);
+};
+
+// 투어 티켓 총합계 계산: 각 투어 객체의 가격 (단, 수량이 1개라고 가정)
+const computeTourTotal = tours => {
+  if (!tours || tours.length === 0) return 0;
+  return tours.reduce((sum, tour) => sum + (tour.price || 0), 0);
+};
+
 const PackageList = () => {
   const [packages, setPackages] = useState([]);
   const [search, setSearch] = useState('');
@@ -35,7 +69,6 @@ const PackageList = () => {
       setLoading(true);
       setError(null);
       const data = await getPackages(page, 6, search);
-
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
         setTotalPages(data.totalPages || 1);
@@ -86,6 +119,7 @@ const PackageList = () => {
         <>
           <Grid container spacing={3}>
             {packages.map(pkg => {
+              // 패키지 이미지: 패키지 이미지, 첫번째 숙소의 이미지, 투어 이미지 등을 결합
               const packageImages = pkg.images && pkg.images.length > 0 ? pkg.images : [];
               const accommodationImages =
                 pkg.accommodations && pkg.accommodations.length > 0
@@ -95,8 +129,25 @@ const PackageList = () => {
                 pkg.tours && pkg.tours.length > 0
                   ? pkg.tours.flatMap(tour => tour.images || [])
                   : [];
-
               const images = [...packageImages, ...accommodationImages, ...tourImages];
+
+              // 가격 계산
+              // 숙소 최고가는 서버에서 전달된 값이 없으면 계산 (객실 가격은 별도로 계산)
+              const accommodationMaxPrice =
+                pkg.accommodationMaxPrice ||
+                computeAccommodationMaxPrice(pkg.accommodations);
+              const roomPrice = pkg.roomPrice || computeRoomPrice(pkg.accommodations);
+
+              // 항공 및 투어 가격은 populate되어 있다면 계산
+              const flightTotal =
+                pkg.flights && pkg.flights.length > 0
+                  ? computeFlightTotal(pkg.flights)
+                  : 0;
+              const tourTotal =
+                pkg.tours && pkg.tours.length > 0 ? computeTourTotal(pkg.tours) : 0;
+
+              // 최종 패키지 가격 계산: 항공 + 투어 + 객실 가격 (숙소 최고가는 별도 표시)
+              const computedFinalPrice = flightTotal + tourTotal + (roomPrice || 0);
 
               return (
                 <Grid item xs={12} sm={6} md={4} key={pkg._id}>
@@ -148,12 +199,30 @@ const PackageList = () => {
                       )}
                     </div>
 
-                    <CardContent style={{flexGrow: 1}}>
+                    <CardContent sx={{flexGrow: 1}}>
                       <Typography variant="h6">{pkg.name}</Typography>
-                      <Typography variant="body2">{pkg.description}</Typography>
+                      <Typography variant="body2" sx={{mb: 1}}>
+                        {pkg.description}
+                      </Typography>
                       <Typography variant="subtitle1">
-                        가격: {pkg.price ? pkg.price.toLocaleString() : '가격 정보 없음'}
+                        숙소 최고가:{' '}
+                        {accommodationMaxPrice
+                          ? accommodationMaxPrice.toLocaleString()
+                          : '가격 정보 없음'}{' '}
                         원
+                      </Typography>
+                      <Typography variant="subtitle1">
+                        객실 가격:{' '}
+                        {roomPrice ? roomPrice.toLocaleString() : '가격 정보 없음'} 원
+                      </Typography>
+                      <Typography variant="subtitle1">
+                        항공 가격: {flightTotal ? flightTotal.toLocaleString() : '0'} 원
+                      </Typography>
+                      <Typography variant="subtitle1">
+                        투어 가격: {tourTotal ? tourTotal.toLocaleString() : '0'} 원
+                      </Typography>
+                      <Typography variant="h6" sx={{mt: 1}}>
+                        최종 패키지 가격: {computedFinalPrice.toLocaleString()} 원
                       </Typography>
                     </CardContent>
                   </Card>
