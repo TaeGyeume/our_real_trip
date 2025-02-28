@@ -82,13 +82,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(passport.initialize()); // Passport 초기화 추가
 
 // 라우트 설정
-app.use('/', routes);
 app.use('/api/packages', packageRoutes); //  패키지 API
 app.use('/api/favorites', favoriteRoutes); // '/api/favorites' 경로로 라우터 연결
 app.use('/api/locations', locationRoutes);
 app.use('/api/accommodations', accommodationRoutes);
 app.use('/api/rooms', roomRoutes);
-app.use('/api', routes);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', socialAuthRoutes); // 소셜 로그인 라우트 추가
 app.use('/api/flights', flightRoutes);
@@ -104,6 +102,8 @@ app.use('/tourTicket', userTourTicketRoutes);
 app.use('/booking', bookingRoutes);
 app.use('/api/qna', qnaRoutes);
 app.use('/reviews', reviewRoutes);
+app.use('/api', routes);
+app.use('/', routes);
 
 //테스트용
 app.post('/api/admin', authMiddleware, authorizeRoles('admin'), (req, res) => {
