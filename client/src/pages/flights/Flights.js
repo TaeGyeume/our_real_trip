@@ -5,7 +5,7 @@ import RoundTripSearch from '../../components/flights/RoundTripSearch';
 import FlightCardList from '../../components/flights/FlightCardList';
 import {fetchFlights} from '../../api/flight/flights';
 import moment from 'moment-timezone';
-import {ToggleButton, ToggleButtonGroup} from '@mui/material';
+import {ToggleButton, Typography, Box, Chip} from '@mui/material';
 import AdBanner from '../../components/ad/AdBanner';
 
 const Flights = () => {
@@ -48,46 +48,38 @@ const Flights = () => {
     navigate('/flights/results', {state: {flights: filtered}});
   };
 
-  const handleTripChange = (_, newValue) => {
-    if (newValue !== null) {
-      setIsRoundTrip(newValue);
-    }
-  };
-
   const bannerData = [
-    {
-      image: 'images/ad/air1.png'
-    },
-    {
-      image: 'images/ad/air2.png'
-    },
-    {
-      image: 'images/ad/air3.png'
-    },
-    {
-      image: 'images/ad/air4.png'
-    }
+    {image: 'images/ad/air1.png'},
+    {image: 'images/ad/air2.png'},
+    {image: 'images/ad/air3.png'},
+    {image: 'images/ad/air4.png'}
   ];
 
   return (
     <div className="container mt-4">
+      <Typography variant="h5" fontWeight="bold" gutterBottom sx={{textAlign: 'center'}}>
+        항공편 검색
+      </Typography>
+
       {/* 편도/왕복 선택 버튼 */}
-      <ToggleButtonGroup
-        value={isRoundTrip}
-        exclusive
-        onChange={handleTripChange}
-        sx={{display: 'flex', justifyContent: 'center', mb: 2}}>
+      <Box sx={{display: 'flex', justifyContent: 'left', gap: '10px', mb: 2}}>
         <ToggleButton
           value={false}
+          selected={!isRoundTrip}
+          onClick={() => setIsRoundTrip(false)}
           sx={{
-            px: 4,
-            backgroundColor: isRoundTrip ? '#e0e0e0' : '#5c6bc0', // 선택 여부에 따라 색상 변경
+            width: '80px', // 버튼 너비 설정
+            height: '40px', // 버튼 높이 설정
+            fontSize: '14px',
+            fontWeight: 'bold',
+            borderRadius: '10px', // 동그란 버튼
+            backgroundColor: isRoundTrip ? '#e0e0e0' : '#00a5c0', // 선택 여부에 따라 색상 변경
             color: isRoundTrip ? 'black' : 'white', // 선택 여부에 따라 텍스트 색상 변경
             '&.Mui-selected': {
-              backgroundColor: '#3949ab', // 선택된 버튼의 배경색 강조
+              backgroundColor: '#00a5c0', // 선택된 버튼의 배경색 강조
               color: 'white', // 선택된 버튼의 글씨 색
               '&:hover': {
-                backgroundColor: '#3949ab' // 마우스 오버 시 색상 유지
+                backgroundColor: '#00a5c0' // 마우스 오버 시 색상 유지
               }
             }
           }}>
@@ -96,27 +88,76 @@ const Flights = () => {
 
         <ToggleButton
           value={true}
+          selected={isRoundTrip}
+          onClick={() => setIsRoundTrip(true)}
           sx={{
-            px: 4,
-            backgroundColor: isRoundTrip ? '#3949ab' : '#e0e0e0',
+            width: '80px',
+            height: '40px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            borderRadius: '10px',
+            backgroundColor: isRoundTrip ? '#00a5c0' : '#e0e0e0',
             color: isRoundTrip ? 'white' : 'black',
             '&.Mui-selected': {
-              backgroundColor: '#3949ab',
+              backgroundColor: '#00a5c0',
               color: 'white',
               '&:hover': {
-                backgroundColor: '#3949ab'
+                backgroundColor: '#00a5c0'
               }
             }
           }}>
           왕복
         </ToggleButton>
-      </ToggleButtonGroup>
+      </Box>
 
       {/* 편도 검색 or 왕복 검색 */}
       {isRoundTrip ? <RoundTripSearch /> : <FlightSearch onSearch={handleSearch} />}
 
+      <Box
+        sx={{
+          width: '100%',
+          height: '2px',
+          backgroundColor: '#ccc',
+          mb: 1,
+          marginTop: '30px'
+        }}
+      />
+
+      {/* 공지사항 추가 */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          backgroundColor: '#f7f9fc',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          marginTop: '30px',
+          marginBottom: '50px'
+        }}>
+        <Chip
+          label="공지"
+          sx={{
+            backgroundColor: '#007bff',
+            color: 'white',
+            fontWeight: 'bold',
+            fontSize: '12px',
+            height: '20px',
+            width: '50px',
+            marginRight: '8px',
+            borderRadius: '8px',
+            textOverflow: 'ellipsis'
+          }}
+        />
+        <Typography variant="body2" sx={{flex: 1}}>
+          <strong>[공지]</strong> 제주항공사 시스템 점검에 따른 이용 제한 안내{' '}
+          <span style={{color: '#999', fontSize: '12px'}}> | 2025-02-28</span>
+        </Typography>
+      </Box>
+
       <AdBanner banners={bannerData} />
 
+      <FlightCardList flights={flights} />
+      <FlightCardList flights={flights} />
       <FlightCardList flights={flights} />
     </div>
   );
