@@ -54,17 +54,16 @@ function FlightCard({flight, isSelected, onSelect, onSeatChange}) {
       />
 
       <CardContent sx={{flex: 1}}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" component="div" gutterBottom>
           {flight.flightNumber} - {flight.airline}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          날짜: {flight.departureDate || '정보 없음'}
-          {' / '}가격: {flight.price?.toLocaleString() ?? 0}원{' / '}잔여석:{' '}
-          {flight.seatsAvailable ?? 0}석
+        <Typography variant="body2" component="div" color="text.secondary">
+          날짜: {flight.departureDate || '정보 없음'} / 가격:{' '}
+          {flight.price?.toLocaleString() ?? 0}원 / 잔여석: {flight.seatsAvailable ?? 0}석
         </Typography>
       </CardContent>
 
-      {/* 선택된 항공이라면 좌석 수 입력 노출 */}
+      {/* 선택된 항공이면 좌석 수 입력 노출 */}
       {isSelected ? (
         <TextField
           label="좌석 수"
@@ -200,7 +199,7 @@ const PackageCreate = () => {
       // 이미 선택된 항공이면 해제
       setSelectedFlights(prev => prev.filter(f => f.flightId !== flight._id));
     } else {
-      // 새로 선택
+      // 새로 선택 (flight._id는 문자열로 전달됨)
       setSelectedFlights(prev => [...prev, {flightId: flight._id, seatsToUse: 1}]);
     }
   };
@@ -271,7 +270,7 @@ const PackageCreate = () => {
       </Typography>
 
       {/* 패키지 이미지 업로드 */}
-      <Typography variant="h6" sx={{mb: 1}}>
+      <Typography variant="h6" component="div" sx={{mb: 1}}>
         패키지 이미지 업로드
       </Typography>
       <input
@@ -283,7 +282,7 @@ const PackageCreate = () => {
       />
 
       {/* 패키지 기본 정보 */}
-      <Typography variant="h6" sx={{mb: 1}}>
+      <Typography variant="h6" component="div" sx={{mb: 1}}>
         패키지명
       </Typography>
       <TextField
@@ -294,7 +293,7 @@ const PackageCreate = () => {
         sx={{mb: 2}}
       />
 
-      <Typography variant="h6" sx={{mb: 1}}>
+      <Typography variant="h6" component="div" sx={{mb: 1}}>
         설명
       </Typography>
       <TextField
@@ -307,7 +306,7 @@ const PackageCreate = () => {
         sx={{mb: 2}}
       />
 
-      <Typography variant="h6" sx={{mb: 1}}>
+      <Typography variant="h6" component="div" sx={{mb: 1}}>
         할인율
       </Typography>
       <TextField
@@ -325,11 +324,11 @@ const PackageCreate = () => {
       </Button>
 
       {/* (1) 선택된 숙소 세로 목록 */}
-      <Typography variant="h6" sx={{mt: 2}}>
+      <Typography variant="h6" component="div" sx={{mt: 2}}>
         선택된 숙소
       </Typography>
       {selectedAccommodations.length === 0 ? (
-        <Typography variant="body2" sx={{color: 'text.secondary'}}>
+        <Typography variant="body2" component="div" sx={{color: 'text.secondary'}}>
           선택된 숙소가 없습니다.
         </Typography>
       ) : (
@@ -350,7 +349,7 @@ const PackageCreate = () => {
                   variant="square"
                   sx={{width: 40, height: 40, mr: 1}}
                 />
-                <Typography variant="body1">
+                <Typography variant="body1" component="div">
                   {found.name} ({price})
                 </Typography>
               </Box>
@@ -360,11 +359,11 @@ const PackageCreate = () => {
       )}
 
       {/* (2) 선택된 방 세로 목록 */}
-      <Typography variant="h6" sx={{mt: 2}}>
+      <Typography variant="h6" component="div" sx={{mt: 2}}>
         선택된 방
       </Typography>
       {Object.keys(selectedRooms).length === 0 ? (
-        <Typography variant="body2" sx={{color: 'text.secondary'}}>
+        <Typography variant="body2" component="div" sx={{color: 'text.secondary'}}>
           선택된 방이 없습니다.
         </Typography>
       ) : (
@@ -374,7 +373,7 @@ const PackageCreate = () => {
             const foundRoom = foundAcc?.rooms?.find(r => r._id === roomId);
             if (!foundAcc || !foundRoom) {
               return (
-                <Typography key={`${accId}-${roomId}`}>
+                <Typography key={`${accId}-${roomId}`} component="div">
                   {accId}:{roomId}
                 </Typography>
               );
@@ -387,7 +386,7 @@ const PackageCreate = () => {
               <Box
                 key={`${accId}-${roomId}`}
                 sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                <Typography variant="body1" sx={{mr: 1}}>
+                <Typography variant="body1" component="div" sx={{mr: 1}}>
                   {foundAcc.name} - {foundRoom.name} ({roomPrice})
                 </Typography>
               </Box>
@@ -402,11 +401,11 @@ const PackageCreate = () => {
       </Button>
 
       {/* (3) 선택된 투어/티켓 세로 목록 */}
-      <Typography variant="h6" sx={{mt: 2}}>
+      <Typography variant="h6" component="div" sx={{mt: 2}}>
         선택된 투어/티켓
       </Typography>
       {selectedTourTickets.length === 0 ? (
-        <Typography variant="body2" sx={{color: 'text.secondary'}}>
+        <Typography variant="body2" component="div" sx={{color: 'text.secondary'}}>
           선택된 투어/티켓이 없습니다.
         </Typography>
       ) : (
@@ -427,7 +426,7 @@ const PackageCreate = () => {
                   variant="square"
                   sx={{width: 40, height: 40, mr: 1}}
                 />
-                <Typography variant="body1">
+                <Typography variant="body1" component="div">
                   {foundTour.title} ({price})
                 </Typography>
               </Box>
@@ -442,11 +441,11 @@ const PackageCreate = () => {
       </Button>
 
       {/* (4) 선택된 항공 세로 목록 */}
-      <Typography variant="h6" sx={{mt: 2}}>
+      <Typography variant="h6" component="div" sx={{mt: 2}}>
         선택된 항공
       </Typography>
       {selectedFlights.length === 0 ? (
-        <Typography variant="body2" sx={{color: 'text.secondary'}}>
+        <Typography variant="body2" component="div" sx={{color: 'text.secondary'}}>
           선택된 항공이 없습니다.
         </Typography>
       ) : (
@@ -454,7 +453,11 @@ const PackageCreate = () => {
           {selectedFlights.map((f, idx) => {
             const foundFlight = flights.find(fl => fl._id === f.flightId);
             if (!foundFlight) {
-              return <Typography key={idx}>{f.flightId} - (데이터 없음)</Typography>;
+              return (
+                <Typography key={idx} component="div">
+                  {f.flightId} - (데이터 없음)
+                </Typography>
+              );
             }
             const flightDate = foundFlight.departureDate || '날짜 정보 없음';
             const flightPrice = foundFlight.price
@@ -462,7 +465,7 @@ const PackageCreate = () => {
               : '0원';
             return (
               <Box key={idx} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                <Typography variant="body1">
+                <Typography variant="body1" component="div">
                   {foundFlight.flightNumber} - {foundFlight.airline} ({flightPrice}) /{' '}
                   {flightDate}
                 </Typography>
@@ -486,7 +489,9 @@ const PackageCreate = () => {
       <Dialog
         open={openAccommodationModal}
         onClose={handleCloseAccommodationModal}
-        fullWidth>
+        fullWidth
+        disableEnforceFocus
+        disableRestoreFocus>
         <DialogTitle>숙소 목록</DialogTitle>
         <DialogContent>
           {accommodations.length > 0 ? (
@@ -506,6 +511,8 @@ const PackageCreate = () => {
 
                     {/* 숙소 정보 (이름 / 가격) */}
                     <ListItemText
+                      primaryTypographyProps={{component: 'span'}}
+                      secondaryTypographyProps={{component: 'span'}}
                       primary={`${acc.name} ${
                         acc.minPrice
                           ? `- ${acc.minPrice.toLocaleString()}원`
@@ -518,7 +525,7 @@ const PackageCreate = () => {
               ))}
             </List>
           ) : (
-            <Typography>숙소 데이터가 없습니다.</Typography>
+            <Typography component="div">숙소 데이터가 없습니다.</Typography>
           )}
         </DialogContent>
         <DialogActions>
@@ -527,7 +534,12 @@ const PackageCreate = () => {
       </Dialog>
 
       {/* 방 선택 모달 */}
-      <Dialog open={openRoomModal} onClose={handleCloseRoomModal} fullWidth>
+      <Dialog
+        open={openRoomModal}
+        onClose={handleCloseRoomModal}
+        fullWidth
+        disableEnforceFocus
+        disableRestoreFocus>
         <DialogTitle>
           {currentAccommodation ? `${currentAccommodation.name} - 방 선택` : '방 선택'}
         </DialogTitle>
@@ -539,6 +551,8 @@ const PackageCreate = () => {
                   key={room._id}
                   onClick={() => handleSelectRoom(currentAccommodation._id, room._id)}>
                   <ListItemText
+                    primaryTypographyProps={{component: 'span'}}
+                    secondaryTypographyProps={{component: 'span'}}
                     primary={room.name}
                     secondary={
                       room.pricePerNight
@@ -550,7 +564,7 @@ const PackageCreate = () => {
               ))}
             </List>
           ) : (
-            <Typography sx={{color: 'text.secondary'}}>
+            <Typography sx={{color: 'text.secondary'}} component="div">
               선택 가능한 방이 없습니다.
             </Typography>
           )}
@@ -561,7 +575,12 @@ const PackageCreate = () => {
       </Dialog>
 
       {/* 투어/티켓 선택 모달 */}
-      <Dialog open={openTourModal} onClose={handleCloseTourModal} fullWidth>
+      <Dialog
+        open={openTourModal}
+        onClose={handleCloseTourModal}
+        fullWidth
+        disableEnforceFocus
+        disableRestoreFocus>
         <DialogTitle>투어/티켓 선택</DialogTitle>
         <DialogContent>
           {tourTickets.length > 0 ? (
@@ -594,7 +613,7 @@ const PackageCreate = () => {
               ))}
             </List>
           ) : (
-            <Typography>투어 티켓 데이터가 없습니다.</Typography>
+            <Typography component="div">투어 티켓 데이터가 없습니다.</Typography>
           )}
         </DialogContent>
         <DialogActions>
@@ -603,7 +622,12 @@ const PackageCreate = () => {
       </Dialog>
 
       {/* 항공 선택 모달 */}
-      <Dialog open={openFlightModal} onClose={handleCloseFlightModal} fullWidth>
+      <Dialog
+        open={openFlightModal}
+        onClose={handleCloseFlightModal}
+        fullWidth
+        disableEnforceFocus
+        disableRestoreFocus>
         <DialogTitle>항공 선택</DialogTitle>
         <DialogContent>
           {/* 항공 검색 */}
@@ -642,7 +666,7 @@ const PackageCreate = () => {
                   onClick={() => setFlightPage(prev => prev - 1)}>
                   Prev
                 </Button>
-                <Typography sx={{mx: 2}}>
+                <Typography sx={{mx: 2}} component="span">
                   {flightPage} / {totalPages}
                 </Typography>
                 <Button
@@ -653,7 +677,7 @@ const PackageCreate = () => {
               </Box>
             </>
           ) : (
-            <Typography>항공 데이터가 없습니다.</Typography>
+            <Typography component="div">항공 데이터가 없습니다.</Typography>
           )}
         </DialogContent>
         <DialogActions>

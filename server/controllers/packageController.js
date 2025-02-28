@@ -4,6 +4,7 @@ const Flight = require('../models/Flight'); // Flight 모델 추가
 const Accommodation = require('../models/Accommodation');
 const TourTicket = require('../models/TourTicket');
 const Room = require('../models/Room');
+const Package = require('../models/Package'); // 패키지 모델 불러오기
 
 /**
  * 패키지 생성에 필요한 데이터 불러오기 (숙소, 투어/티켓, 항공)
@@ -85,8 +86,9 @@ exports.createPackage = async (req, res) => {
     // flights 배열 변환
     const flightDetails = Array.isArray(flights)
       ? flights.map(flight => {
-          if (!flight.flightId || !flight.seatsToUse) {
-            throw new Error(`항공 정보가 올바르지 않습니다: ${JSON.stringify(flight)}`);
+          if (!mongoose.Types.ObjectId.isValid(flight.flightId)) {
+            console.error(`[ERROR] 유효하지 않은 Flight ID: ${flight.flightId}`);
+            throw new Error(`유효하지 않은 Flight ID: ${flight.flightId}`);
           }
           return {
             flightId: new mongoose.Types.ObjectId(flight.flightId),
@@ -182,16 +184,69 @@ exports.getAllPackages = async (req, res) => {
 exports.getPackageById = async (req, res) => {
   try {
     const {id} = req.params;
-    const packageData = await packageService.getPackageById(id);
+
+    const packageData = await Package.findById(id)
+      .populate({
+        path: 'accommodations',
+        populate: {path: 'rooms', select: 'pricePerNight'}
+      })
+      .populate({
+        path: 'flights.flightId',
+        select: 'flightNumber price'
+      })
+
+      .populate('tours', 'price');
 
     if (!packageData) {
       return res.status(404).json({message: '패키지를 찾을 수 없습니다.'});
     }
 
-    return res.status(200).json(packageData);
+    packageData.flights = packageData.flights.map(flight => ({
+      ...flight,
+      flightId: flight.flightId || {} // flightId가 없으면 빈 객체
+    }));
+
+    // ✅ 숙소 가격: 객실 가격 총합 (최고가 X)
+    const totalRoomPrice = packageData.accommodations.reduce((sum, acc) => {
+      return (
+        sum + acc.rooms.reduce((roomSum, room) => roomSum + (room.pricePerNight || 0), 0)
+      );
+    }, 0);
+
+    // ✅ 항공 가격: 좌석 수 x 항공 가격
+    const totalFlightPrice = packageData.flights.reduce((sum, flight) => {
+      return sum + (flight.flightId.price * flight.seatsToUse || 0);
+    }, 0);
+
+    // ✅ 투어/티켓 가격: 선택한 개수 x 가격
+    const totalTourPrice = packageData.tours.reduce((sum, tour) => {
+      return sum + tour.price * (tour.quantity || 1);
+    }, 0);
+
+    // 기본 가격 (객실 + 투어 + 항공)
+    const basePrice = totalRoomPrice + totalFlightPrice + totalTourPrice;
+
+    // 패키지 할인 적용
+    const discountRate = packageData.discountRate || 0;
+    const packageDiscount = Math.floor((basePrice * discountRate) / 100);
+
+    // 최종 가격 계산
+    const finalPrice = Math.max(basePrice - packageDiscount, 0);
+
+    // ✅ 클라이언트에 반환
+    res.json({
+      ...packageData.toObject(),
+      totalRoomPrice, // 객실 가격 총합
+      totalFlightPrice, // 항공 가격 (좌석 수 적용)
+      totalTourPrice, // 투어 가격 (개수 적용)
+      basePrice, // 할인 전 가격
+      discountRate, // 할인율
+      packageDiscount, // 할인 금액
+      finalPrice // 최종 결제 금액
+    });
   } catch (error) {
-    console.error('[ERROR] 패키지 조회 실패:', error);
-    return res.status(500).json({message: '패키지 조회 실패', error: error.message});
+    console.error('패키지 상세 조회 오류:', error);
+    res.status(500).json({message: '서버 오류'});
   }
 };
 
