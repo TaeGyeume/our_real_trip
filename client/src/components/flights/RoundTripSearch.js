@@ -9,14 +9,17 @@ import {
   Typography,
   FormControl,
   InputLabel,
-  Select,
-  MenuItem,
   Button,
   OutlinedInput,
   TextField,
   IconButton,
   Alert,
-  Stack
+  Stack,
+  Popover,
+  List,
+  ListItemButton,
+  ListItemText,
+  Box
 } from '@mui/material';
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
@@ -24,7 +27,7 @@ import {ko} from 'date-fns/locale';
 import {Add, Remove} from '@mui/icons-material';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
-const AIRPORT_GROUPS = {
+const DOMESTIC_AIRPORTS = {
   서울: ['GMP'],
   인천: ['ICN'],
   부산: ['PUS'],
@@ -33,18 +36,21 @@ const AIRPORT_GROUPS = {
   광주: ['KWJ'],
   청주: ['CJJ'],
   여수: ['RSU'],
-  무안: ['MWX'],
-  도쿄: ['HND', 'NRT'], // 도쿄 공항 2개
-  뉴욕: ['JFK', 'EWR', 'LGA'], // 뉴욕 공항 3개
+  무안: ['MWX']
+};
+
+const INTERNATIONAL_AIRPORTS = {
+  도쿄: ['HND', 'NRT'],
+  뉴욕: ['JFK', 'EWR', 'LGA'],
   파리: ['CDG'],
-  베이징: ['PEK', 'PKX'], // 베이징 공항 2개
+  베이징: ['PEK', 'PKX'],
   타이베이: ['TSA'],
-  런던: ['LGW', 'LHR', 'LCY'], // 런던 공항 3개
+  런던: ['LGW', 'LHR', 'LCY'],
   시드니: ['SYD'],
   방콕: ['BKK']
 };
 
-const AIRPORT_LIST = Object.keys(AIRPORT_GROUPS);
+// const AIRPORT_LIST = Object.keys(AIRPORT_GROUPS);
 
 const RoundTripSearch = () => {
   const [departure, setDeparture] = useState('');
@@ -55,6 +61,27 @@ const RoundTripSearch = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedField, setSelectedField] = useState('');
+
+  const handlePopoverOpen = (event, field) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedField(field);
+  };
+
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
+    setSelectedField('');
+  };
+
+  const handleAirportSelect = airport => {
+    if (selectedField === 'departure') {
+      setDeparture(airport);
+    } else if (selectedField === 'arrival') {
+      setArrival(airport);
+    }
+    handlePopoverClose();
+  };
 
   const handleSearch = async () => {
     console.log('왕복 검색 요청:', {
@@ -71,8 +98,10 @@ const RoundTripSearch = () => {
     }
 
     // 출발 & 도착지를 여러 개의 공항 코드 배열로 변환
-    const deptCodes = AIRPORT_GROUPS[departure] || [departure];
-    const arrCodes = AIRPORT_GROUPS[arrival] || [arrival];
+    const deptCodes = DOMESTIC_AIRPORTS[departure] ||
+      INTERNATIONAL_AIRPORTS[departure] || [departure];
+    const arrCodes = DOMESTIC_AIRPORTS[arrival] ||
+      INTERNATIONAL_AIRPORTS[arrival] || [arrival];
     const formattedDepartureDate = moment(departureDate).format('YYYY-MM-DD');
     const formattedReturnDate = moment(returnDate).format('YYYY-MM-DD');
 
@@ -157,26 +186,20 @@ const RoundTripSearch = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-      <Paper elevation={3} sx={{p: 3, mt: 4}}>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          ✈️ 왕복 항공편 검색
-        </Typography>
-
+      <Paper elevation={0} sx={{p: 1, mt: 1}}>
         {/* 입력 필드 배치 (수평 정렬) */}
         <Stack direction="row" spacing={2} alignItems="center">
           {/* 출발 공항 */}
           <FormControl sx={{flex: 1, minWidth: '150px'}} variant="outlined">
-            <InputLabel>출발지가 어디인가요?</InputLabel>
-            <Select
+            <InputLabel shrink={Boolean(departure)}>출발지가 어디인가요?</InputLabel>
+            <OutlinedInput
               value={departure}
               onChange={e => setDeparture(e.target.value)}
-              label="출발지가 어디인가요?">
-              {AIRPORT_LIST.map(airport => (
-                <MenuItem key={airport} value={airport}>
-                  {airport}
-                </MenuItem>
-              ))}
-            </Select>
+              onClick={e => handlePopoverOpen(e, 'departure')}
+              label="출발지가 어디인가요?"
+              notched={Boolean(departure)}
+              sx={{backgroundColor: 'white'}}
+            />
           </FormControl>
 
           {/* 공항 변경 버튼 */}
@@ -191,17 +214,16 @@ const RoundTripSearch = () => {
 
           {/* 도착 공항 */}
           <FormControl sx={{flex: 1, minWidth: '150px'}} variant="outlined">
-            <InputLabel>도착지가 어디인가요?</InputLabel>
-            <Select
+            <InputLabel shrink={Boolean(arrival)}>도착지가 어디인가요?</InputLabel>
+            <OutlinedInput
               value={arrival}
               onChange={e => setArrival(e.target.value)}
-              label="도착지가 어디인가요?">
-              {AIRPORT_LIST.map(airport => (
-                <MenuItem key={airport} value={airport}>
-                  {airport}
-                </MenuItem>
-              ))}
-            </Select>
+              onClick={e => handlePopoverOpen(e, 'arrival')}
+              label="도착지가 어디인가요?"
+              readOnly
+              notched={Boolean(arrival)}
+              sx={{backgroundColor: 'white'}}
+            />
           </FormControl>
 
           {/* 출발 날짜 */}
@@ -218,7 +240,7 @@ const RoundTripSearch = () => {
             label="오는 날"
             value={returnDate}
             onChange={newValue => setReturnDate(newValue)}
-            sx={{width: '180px'}}
+            sx={{width: '179px'}}
             renderInput={params => <TextField {...params} fullWidth />}
           />
 
@@ -278,12 +300,54 @@ const RoundTripSearch = () => {
             sx={{
               minWidth: '100px',
               height: '56px',
-              backgroundColor: '#303f9f',
+              backgroundColor: '#004d7a',
               color: 'primary.contrastText'
             }}>
             검색
           </Button>
         </Stack>
+
+        {/* 공항 선택 Popover */}
+        <Popover
+          open={Boolean(anchorEl)}
+          anchorEl={anchorEl}
+          onClose={handlePopoverClose}
+          anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+          transformOrigin={{vertical: 'top', horizontal: 'center'}}
+          sx={{
+            '& .MuiPaper-root': {
+              width: 400,
+              display: 'flex',
+              flexDirection: 'row',
+              padding: 1
+            }
+          }}>
+          <Box sx={{flex: 1, borderRight: '1px solid #ddd', p: 1}}>
+            <Typography variant="subtitle1" fontWeight="bold" sx={{mb: 1}}>
+              국내
+            </Typography>
+            <List dense>
+              {Object.keys(DOMESTIC_AIRPORTS).map(city => (
+                <ListItemButton key={city} onClick={() => handleAirportSelect(city)}>
+                  <ListItemText primary={city} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+
+          <Box sx={{flex: 1, p: 1}}>
+            <Typography variant="subtitle1" fontWeight="bold" sx={{mb: 1}}>
+              해외
+            </Typography>
+            <List dense>
+              {Object.keys(INTERNATIONAL_AIRPORTS).map(city => (
+                <ListItemButton key={city} onClick={() => handleAirportSelect(city)}>
+                  <ListItemText primary={city} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+        </Popover>
 
         {/* 에러 메시지 */}
         {errorMessage && (

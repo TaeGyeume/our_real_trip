@@ -6,8 +6,6 @@ import {searchFlights} from '../../api/flight/flights';
 import LoadingScreen from './LoadingScreen';
 import {
   TextField,
-  Select,
-  MenuItem,
   Button,
   Paper,
   Alert,
@@ -16,7 +14,11 @@ import {
   InputLabel,
   Box,
   OutlinedInput,
-  IconButton
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
+  Popover
 } from '@mui/material';
 import {Add, Remove} from '@mui/icons-material';
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
@@ -24,7 +26,7 @@ import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {ko} from 'date-fns/locale';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
-const AIRPORT_GROUPS = {
+const DOMESTIC_AIRPORTS = {
   서울: ['GMP'],
   인천: ['ICN'],
   부산: ['PUS'],
@@ -33,19 +35,19 @@ const AIRPORT_GROUPS = {
   광주: ['KWJ'],
   청주: ['CJJ'],
   여수: ['RSU'],
-  무안: ['MWX'],
-  도쿄: ['HND', 'NRT'], // 도쿄: 두 개의 공항 포함
-  뉴욕: ['JFK', 'EWR', 'LGA'], // 뉴욕: 세 개의 공항 포함
+  무안: ['MWX']
+};
+
+const INTERNATIONAL_AIRPORTS = {
+  도쿄: ['HND', 'NRT'],
+  뉴욕: ['JFK', 'EWR', 'LGA'],
   파리: ['CDG'],
-  베이징: ['PEK', 'PKX'], // 베이징: 두 개의 공항 포함
+  베이징: ['PEK', 'PKX'],
   타이베이: ['TSA'],
-  런던: ['LGW', 'LHR', 'LCY'], // 런던: 세 개의 공항 포함
+  런던: ['LGW', 'LHR', 'LCY'],
   시드니: ['SYD'],
   방콕: ['BKK']
 };
-
-// 공항 리스트 생성 (검색창에서 선택 가능하도록)
-const AIRPORT_LIST = Object.keys(AIRPORT_GROUPS);
 
 const FlightSearch = () => {
   const [departure, setDeparture] = useState('');
@@ -55,6 +57,29 @@ const FlightSearch = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedField, setSelectedField] = useState(''); // "departure" 또는 "arrival"
+
+  const handlePopoverOpen = (event, field) => {
+    if (anchorEl !== event.currentTarget) {
+      setAnchorEl(event.currentTarget);
+      setSelectedField(field);
+    }
+  };
+
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
+    setSelectedField('');
+  };
+
+  const handleAirportSelect = airport => {
+    if (selectedField === 'departure') {
+      setDeparture(airport);
+    } else if (selectedField === 'arrival') {
+      setArrival(airport);
+    }
+    handlePopoverClose();
+  };
 
   const handleSearch = async () => {
     console.log('검색 요청:', {departure, arrival, date, passengers});
@@ -71,9 +96,10 @@ const FlightSearch = () => {
       return;
     }
 
-    // 여러 공항이 포함된 도시의 경우, 배열로 변환
-    const deptCodes = AIRPORT_GROUPS[departure] || [departure];
-    const arrCodes = AIRPORT_GROUPS[arrival] || [arrival];
+    const deptCodes = DOMESTIC_AIRPORTS[departure] ||
+      INTERNATIONAL_AIRPORTS[departure] || [departure];
+    const arrCodes = DOMESTIC_AIRPORTS[arrival] ||
+      INTERNATIONAL_AIRPORTS[arrival] || [arrival];
     const formattedDate = moment(date).format('YYYY-MM-DD');
 
     // 날짜 형식 검증
@@ -88,8 +114,6 @@ const FlightSearch = () => {
       console.log(`변환된 검색 날짜: ${formattedDate}`);
 
       let searchResults = [];
-
-      // 출발지 공항 코드마다 도착지 공항 코드마다 검색
       for (const deptCode of deptCodes) {
         for (const arrCode of arrCodes) {
           const searchData = await searchFlights(
@@ -98,11 +122,11 @@ const FlightSearch = () => {
             formattedDate,
             passengers
           );
-          searchResults = [...searchResults, ...searchData]; // 여러 결과 합치기
+          searchResults = [...searchResults, ...searchData];
         }
       }
 
-      if (!searchResults || searchResults.length === 0) {
+      if (!searchResults.length) {
         setErrorMessage(`선택한 날짜 (${formattedDate})에 운항하는 항공편이 없습니다.`);
         setLoading(false);
       } else {
@@ -121,27 +145,23 @@ const FlightSearch = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-      {/* <Container maxWidth="md"> */}
-      <Paper elevation={3} sx={{p: 3, mt: 4}}>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          ✈️ 항공편 검색
-        </Typography>
-
-        {/* 수평 정렬 적용 */}
+      <Paper elevation={0} sx={{p: 1, mt: 1}}>
         <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
           {/* 출발 공항 */}
           <FormControl sx={{flex: 1, minWidth: '150px'}} variant="outlined">
-            <InputLabel>출발지가 어디인가요?</InputLabel>
-            <Select
+            <InputLabel shrink={Boolean(departure)} htmlFor="departure">
+              출발지가 어디인가요?
+            </InputLabel>
+            <OutlinedInput
+              id="departure"
               value={departure}
               onChange={e => setDeparture(e.target.value)}
-              label="출발지가 어디인가요?">
-              {AIRPORT_LIST.map(airport => (
-                <MenuItem key={airport} value={airport}>
-                  {airport}
-                </MenuItem>
-              ))}
-            </Select>
+              onClick={e => handlePopoverOpen(e, 'departure')}
+              readOnly
+              label="출발지가 어디인가요?"
+              notched={Boolean(departure)}
+              sx={{backgroundColor: 'white'}}
+            />
           </FormControl>
 
           {/* 공항 변경 버튼 */}
@@ -156,17 +176,19 @@ const FlightSearch = () => {
 
           {/* 도착 공항 */}
           <FormControl sx={{flex: 1, minWidth: '150px'}} variant="outlined">
-            <InputLabel>도착지가 어디인가요?</InputLabel>
-            <Select
+            <InputLabel shrink={Boolean(arrival)} htmlFor="arrival">
+              도착지가 어디인가요?
+            </InputLabel>
+            <OutlinedInput
+              id="arrival"
               value={arrival}
               onChange={e => setArrival(e.target.value)}
-              label="도착지가 어디인가요?">
-              {AIRPORT_LIST.map(airport => (
-                <MenuItem key={airport} value={airport}>
-                  {airport}
-                </MenuItem>
-              ))}
-            </Select>
+              onClick={e => handlePopoverOpen(e, 'arrival')}
+              readOnly
+              label="도착지가 어디인가요?"
+              notched={Boolean(arrival)}
+              sx={{backgroundColor: 'white'}}
+            />
           </FormControl>
 
           {/* 날짜 선택 */}
@@ -175,6 +197,7 @@ const FlightSearch = () => {
             value={date}
             onChange={newValue => setDate(newValue)}
             renderInput={params => <TextField {...params} fullWidth />}
+            sx={{flex: 1.705, minWidth: '150px'}}
           />
 
           {/* 인원 선택 */}
@@ -232,13 +255,57 @@ const FlightSearch = () => {
             sx={{
               minWidth: '100px',
               height: '56px',
-              backgroundColor: '#303f9f',
+              backgroundColor: '#004d7a',
               color: 'primary.contrastText'
             }} // 버튼 크기 맞춤
           >
             검색
           </Button>
         </Box>
+
+        {/* 공항 선택 Popover */}
+        <Popover
+          open={Boolean(anchorEl)}
+          anchorEl={anchorEl}
+          onClose={handlePopoverClose}
+          disableAutoFocus
+          disableRestoreFocus
+          anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+          transformOrigin={{vertical: 'top', horizontal: 'center'}}
+          sx={{
+            '& .MuiPaper-root': {
+              width: 400,
+              display: 'flex',
+              flexDirection: 'row',
+              padding: 1
+            }
+          }}>
+          <Box sx={{flex: 1, borderRight: '1px solid #ddd', p: 1}}>
+            <Typography variant="subtitle1" fontWeight="bold" sx={{mb: 1}}>
+              국내
+            </Typography>
+            <List dense>
+              {Object.keys(DOMESTIC_AIRPORTS).map(city => (
+                <ListItemButton key={city} onClick={() => handleAirportSelect(city)}>
+                  <ListItemText primary={city} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+
+          <Box sx={{flex: 1, p: 1}}>
+            <Typography variant="subtitle1" fontWeight="bold" sx={{mb: 1}}>
+              해외
+            </Typography>
+            <List dense>
+              {Object.keys(INTERNATIONAL_AIRPORTS).map(city => (
+                <ListItemButton key={city} onClick={() => handleAirportSelect(city)}>
+                  <ListItemText primary={city} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+        </Popover>
 
         {/* 에러 메시지 */}
         {errorMessage && (
