@@ -45,11 +45,11 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        console.log('🔄 [클라이언트] 리프레시 토큰 요청 시작');
+        console.log(' [클라이언트] 리프레시 토큰 요청 시작');
         const res = await api.post('/auth/refresh-token');
 
         if (res.status === 200 && res.data.accessToken) {
-          console.log('✅ [클라이언트] 리프레시 토큰 갱신 성공:', res.data.accessToken);
+          console.log(' [클라이언트] 리프레시 토큰 갱신 성공:', res.data.accessToken);
           const newAccessToken = res.data.accessToken;
 
           // 새 액세스 토큰 저장
@@ -61,7 +61,7 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        console.error('❌ [클라이언트] 리프레시 토큰 갱신 실패:', refreshError);
+        console.error(' [클라이언트] 리프레시 토큰 갱신 실패:', refreshError);
         processQueue(refreshError, null);
         isRefreshing = false;
         window.location.href = '/login'; // 로그인 페이지로 리디렉트

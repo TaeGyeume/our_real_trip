@@ -1,12 +1,6 @@
-import axios from 'axios';
+import api from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api/packages'; // 로컬 API 경로
-
-// Axios 인스턴스 생성 (쿠키 only 설정)
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true //  쿠키 기반 인증 설정
-});
 
 // 패키지 생성에 필요한 데이터 가져오기 (숙소, 투어/티켓, 항공)
 export const getCreatePackageData = async () => {
