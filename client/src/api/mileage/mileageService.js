@@ -1,7 +1,4 @@
-import axios from 'axios';
 import api from '../axios';
-
-// const API_BASE_URL = 'http://localhost:5000/api/mileage';
 
 // 총 마일리지 조회 API
 export const fetchMileage = async userId => {

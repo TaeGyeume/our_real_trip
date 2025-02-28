@@ -1,12 +1,9 @@
-import axios from 'axios';
 import api from '../axios';
-
-// const API_URL = 'http://localhost:5000/api/flights'; // API 기본 URL
 
 // 모든 항공편 가져오기
 export const fetchFlights = async () => {
   try {
-    const response = await api.get(`/flights`); // URL 명확히 설정
+    const response = await api.get('/flights'); // URL 명확히 설정
     return response.data;
   } catch (error) {
     console.error('모든 항공편 데이터를 불러오는 데 실패했습니다:', error);
@@ -21,7 +18,7 @@ export const searchFlights = async (departure, arrival, date, passengers) => {
       `검색 요청: ${departure} → ${arrival}, 날짜: ${date}, 인원: ${passengers}`
     );
 
-    const response = await api.get(`/flights/search`, {
+    const response = await api.get('/flights/search', {
       params: {departure, arrival, date, passengers} // 쿼리 파라미터 적용
     });
 
@@ -45,7 +42,7 @@ export const searchFlights = async (departure, arrival, date, passengers) => {
 // ✈️ 모든 항공편 조회 (GET)
 export const getFlights = async () => {
   try {
-    const response = await api.get(`/flights/list`);
+    const response = await api.get('/flights/list');
     return response.data;
   } catch (error) {
     console.error('항공편 목록 조회 오류:', error);
@@ -67,7 +64,7 @@ export const getFlightById = async id => {
 // ✈️ 항공편 추가 (POST)
 export const createFlight = async flightData => {
   try {
-    const response = await api.post(`/flights/create`, flightData);
+    const response = await api.post('/flights/create', flightData);
     return response.data;
   } catch (error) {
     console.error('항공편 추가 오류:', error);
