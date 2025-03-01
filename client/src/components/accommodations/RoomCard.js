@@ -16,7 +16,10 @@ const RoomCard = ({room, onRoomDeleted}) => {
   const navigate = useNavigate();
   const {user, isAuthenticated} = useAuthStore();
   const [searchParams] = useSearchParams();
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
   const [availableRooms, setAvailableRooms] = useState(null);
 
   // 이미지가 없는 경우 기본 이미지 설정
