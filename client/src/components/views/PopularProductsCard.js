@@ -2,7 +2,10 @@ import React, {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {Card, CardMedia, CardContent, Typography, Box} from '@mui/material';
 
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000'
+    : 'https://ourrealtrip.shop/api';
 
 const PopularProductsCard = ({product}) => {
   const [imageError, setImageError] = useState(false);

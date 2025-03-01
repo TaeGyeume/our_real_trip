@@ -31,7 +31,11 @@ const AccommodationCard = ({
     window.open(url, '_blank');
   };
 
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   let imageUrl = accommodation.images?.[0] || '/default-image.jpg';
 
   if (imageUrl.startsWith('/uploads/')) {

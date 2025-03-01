@@ -9,7 +9,10 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 const RoomModify = () => {
   const {roomId} = useParams();
   const navigate = useNavigate();
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
 
   const [formData, setFormData] = useState({
     name: '',
