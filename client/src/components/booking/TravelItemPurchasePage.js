@@ -262,8 +262,8 @@ const TravelItemPurchaseForm = () => {
               <TextField
                 label="주소"
                 variant="outlined"
-                name="adress"
-                value={reservationInfo.adress}
+                name="address"
+                value={reservationInfo.address}
                 onChange={handleReservationChange}
                 disabled={!isEditing}
                 fullWidth
