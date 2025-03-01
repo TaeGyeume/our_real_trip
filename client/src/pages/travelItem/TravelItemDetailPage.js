@@ -9,7 +9,10 @@ const TravelItemDetailPage = () => {
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [imageError, setImageError] = useState(false); // 이미지 오류 상태 추가
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop';
 
   console.log('itemId:', itemId);
 
