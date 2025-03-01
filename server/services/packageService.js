@@ -336,7 +336,7 @@ async function updatePackage(packageId, updateData) {
     .populate('accommodations')
     .populate('flights')
     .populate('tours')
-    .populate('rooms');
+    .populate('roomIds');
 
   if (!updatedPackage) {
     throw new Error('패키지 수정 실패: 패키지를 찾을 수 없습니다.');
