@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import {useNavigate} from 'react-router-dom';
+import authAPI from '../../../api/auth/auth'; // authAPI 가져오기
 
 // API
 import {createPackage, getCreatePackageData} from '../../../api/package/packageService';
@@ -232,6 +233,14 @@ const PackageCreate = () => {
   // G) 패키지 생성
   // ------------------------------
   const handleSubmit = async () => {
+    //  현재 로그인한 사용자 정보 가져오기
+    const userProfile = await authAPI.getUserProfile(); // 로그인된 사용자 정보 가져오기
+    if (!userProfile || !userProfile._id) {
+      console.error(' [ERROR] 로그인된 사용자 정보를 가져올 수 없습니다.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     // 이미지 업로드를 하려면 FormData + 백엔드 multer 등이 필요
@@ -247,7 +256,7 @@ const PackageCreate = () => {
       startDate: '2025-01-01',
       endDate: '2025-12-31',
       category: 'Tour Package',
-      createdBy: '1234567890abcdef' // 예시
+      createdBy: userProfile._id
     };
 
     try {
