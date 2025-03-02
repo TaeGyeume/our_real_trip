@@ -4,6 +4,7 @@ const Flight = require('../models/Flight'); // Flight 모델 추가
 const Accommodation = require('../models/Accommodation');
 const TourTicket = require('../models/TourTicket');
 const Room = require('../models/Room');
+const fs = require('fs');
 const Package = require('../models/Package'); // 패키지 모델 불러오기
 
 /**
@@ -352,6 +353,27 @@ exports.deletePackage = async (req, res) => {
     }
 
     const {id} = req.params;
+
+    // 먼저 해당 패키지를 조회하여 이미지 파일 경로들을 가져옵니다.
+    const packageToDelete = await Package.findById(id);
+    if (!packageToDelete) {
+      return res.status(404).json({message: '패키지를 찾을 수 없습니다.'});
+    }
+
+    // 패키지에 등록된 이미지 파일 삭제
+    if (packageToDelete.images && packageToDelete.images.length > 0) {
+      packageToDelete.images.forEach(imagePath => {
+        fs.unlink(imagePath, err => {
+          if (err) {
+            console.error('이미지 삭제 실패:', imagePath, err);
+          } else {
+            console.log('이미지 삭제 성공:', imagePath);
+          }
+        });
+      });
+    }
+
+    // 서비스 또는 직접 DB에서 패키지 삭제
     const deletedPackage = await packageService.deletePackage(id);
 
     if (!deletedPackage) {
