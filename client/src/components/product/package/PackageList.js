@@ -21,6 +21,15 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
 
+// 헬퍼 함수: 이미지 경로 정규화 (역슬래시를 슬래시로 변환하고, 앞에 '/' 추가)
+const normalizeImagePath = path => {
+  let newPath = path.replace(/\\/g, '/');
+  if (!newPath.startsWith('/')) {
+    newPath = '/' + newPath;
+  }
+  return newPath;
+};
+
 const PackageList = () => {
   const [packages, setPackages] = useState([]);
   const [search, setSearch] = useState('');
@@ -32,6 +41,7 @@ const PackageList = () => {
 
   useEffect(() => {
     fetchPackages();
+    // eslint-disable-next-line
   }, [page]);
 
   const fetchPackages = async () => {
@@ -59,30 +69,28 @@ const PackageList = () => {
     fetchPackages();
   };
 
-  // ✅ 패키지에서 포함된 서비스(항공, 숙박, 투어) 확인 (최대 3개 표시, 갯수 제한 없음)
+  // 포함된 서비스(항공, 숙박, 투어) 정보를 추출하는 함수
   const getIncludedCategories = pkg => {
     const categories = [];
-
-    if (pkg.flights && pkg.flights.length > 0)
+    if (pkg.flights && pkg.flights.length > 0) {
       categories.push({label: '항공', icon: <FlightTakeoffIcon />});
-
-    if (pkg.accommodations && pkg.accommodations.length > 0)
+    }
+    if (pkg.accommodations && pkg.accommodations.length > 0) {
       categories.push({label: '숙박/숙소', icon: <HotelIcon />});
-
-    if (pkg.tours && pkg.tours.length > 0)
+    }
+    if (pkg.tours && pkg.tours.length > 0) {
       categories.push({label: '투어/티켓', icon: <ConfirmationNumberIcon />});
-
-    return categories.slice(0, 3); // ✅ 최대 3개까지 표시
+    }
+    return categories.slice(0, 3); // 최대 3개까지만 표시
   };
 
   return (
-    <Box sx={{backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4}}>
-      <Container
-        sx={{maxWidth: '1000px', backgroundColor: '#fff', p: 3, borderRadius: 2}}>
+    <Box sx={{minHeight: '100vh'}}>
+      <Container sx={{maxWidth: '1000px'}}>
         <Typography
           variant="h5"
           gutterBottom
-          sx={{fontWeight: 'bold', textAlign: 'center'}}>
+          sx={{fontWeight: 'bold', textAlign: 'center', mt: 4}}>
           ✈️ 여행 패키지 검색
         </Typography>
 
@@ -120,8 +128,8 @@ const PackageList = () => {
             <Grid container spacing={2} justifyContent="center">
               {packages.map(pkg => {
                 const mainImage =
-                  pkg.images?.length > 0
-                    ? `${SERVER_URL}${pkg.images[0]}`
+                  pkg.images && pkg.images.length > 0
+                    ? `${SERVER_URL}${normalizeImagePath(pkg.images[0])}`
                     : '/default-image.jpg';
 
                 return (
@@ -149,7 +157,7 @@ const PackageList = () => {
                           {pkg.name}
                         </Typography>
 
-                        {/* 포함된 서비스 표시 (항공, 숙박, 투어 중 최대 3개) */}
+                        {/* 포함된 서비스 표시 */}
                         <Stack direction="row" spacing={1} sx={{mt: 1, mb: 1}}>
                           {getIncludedCategories(pkg).map((category, index) => (
                             <Chip

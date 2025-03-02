@@ -309,28 +309,91 @@ exports.updatePackage = async (req, res) => {
       return res.status(400).json({message: '업데이트할 데이터가 없습니다.'});
     }
 
-    // 새 이미지 파일이 업로드된 경우 처리
+    // 1) JSON 필드 파싱
+    let {accommodations, tours, flights, rooms, existingImages} = req.body;
+
+    // accommodations가 문자열이라면 배열로 변환
+    if (typeof accommodations === 'string') {
+      try {
+        accommodations = JSON.parse(accommodations);
+      } catch (err) {
+        // JSON.parse 실패 시, 단일 ID라면 배열로 감싼다
+        accommodations = [accommodations];
+      }
+      req.body.accommodations = accommodations;
+    }
+
+    // tours도 같은 방식
+    if (typeof tours === 'string') {
+      try {
+        tours = JSON.parse(tours);
+      } catch (err) {
+        tours = [tours];
+      }
+      req.body.tours = tours;
+    }
+
+    // flights (JSON 배열)
+    if (typeof flights === 'string') {
+      try {
+        flights = JSON.parse(flights);
+      } catch (err) {
+        flights = [];
+      }
+      req.body.flights = flights;
+    }
+
+    // rooms (객체)
+    if (typeof rooms === 'string') {
+      try {
+        rooms = JSON.parse(rooms);
+      } catch (err) {
+        rooms = {};
+      }
+      req.body.rooms = rooms;
+    }
+
+    // existingImages (여러 번 append 가능성이 있음)
+    // - 만약 클라이언트에서 배열로 보내면 JSON.parse
+    // - 단일 문자열이면 배열로 감싼다
+    if (typeof existingImages === 'string') {
+      try {
+        existingImages = JSON.parse(existingImages);
+      } catch (err) {
+        existingImages = [existingImages];
+      }
+      req.body.existingImages = existingImages;
+    }
+
+    // 2) 새 이미지 파일이 업로드된 경우
     if (req.files && req.files.length > 0) {
       const newImagePaths = req.files.map(file => file.path);
 
-      // 기존 패키지 조회 후 기존 이미지 파일 삭제
+      // 기존 패키지 조회 후, 기존 이미지 중 제거할 것 있으면 삭제
       const currentPackage = await Package.findById(id);
       if (currentPackage && currentPackage.images && currentPackage.images.length > 0) {
-        currentPackage.images.forEach(imagePath => {
-          fs.unlink(imagePath, err => {
-            if (err) {
-              console.error('이미지 삭제 실패:', imagePath, err);
-            } else {
-              console.log('이미지 삭제 성공:', imagePath);
-            }
-          });
+        // 기존 이미지 중, existingImages에 없는 것은 파일 삭제
+        currentPackage.images.forEach(oldPath => {
+          if (!req.body.existingImages.includes(oldPath)) {
+            fs.unlink(oldPath, err => {
+              if (err) {
+                console.error('이미지 삭제 실패:', oldPath, err);
+              } else {
+                console.log('이미지 삭제 성공:', oldPath);
+              }
+            });
+          }
         });
       }
 
-      // 새 이미지 경로를 업데이트 데이터에 추가
-      req.body.images = newImagePaths;
+      // 최종 이미지: 기존에 남겨둘 existingImages + 새로 업로드된 newImagePaths
+      req.body.images = [...req.body.existingImages, ...newImagePaths];
+    } else {
+      // 새 파일 없으면, 기존 이미지 유지
+      req.body.images = req.body.existingImages || [];
     }
 
+    // 3) 서비스로 전달
     const updatedPackage = await packageService.updatePackage(id, req.body);
 
     if (!updatedPackage) {
@@ -343,6 +406,7 @@ exports.updatePackage = async (req, res) => {
     return res.status(500).json({message: '패키지 수정 실패', error: error.message});
   }
 };
+
 /*
  * 패키지 상품 삭제 (관리자만 가능)
  */

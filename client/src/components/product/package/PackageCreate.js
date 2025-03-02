@@ -19,9 +19,11 @@ import {
   Box,
   Card,
   CardContent,
-  CardMedia
+  CardMedia,
+  IconButton
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 import {useNavigate} from 'react-router-dom';
 import authAPI from '../../../api/auth/auth'; // authAPI 가져오기
 
@@ -105,7 +107,10 @@ const PackageCreate = () => {
   const [packageDescription, setPackageDescription] = useState('');
   const [discountRate, setDiscountRate] = useState(0);
   const [packageQuantity, setPackageQuantity] = useState(1);
-  const [packageImages, setPackageImages] = useState([]); // 이미지 업로드용
+
+  // ✅ 이미지 업로드용 (미리보기 & 제거 가능)
+  const [packageImages, setPackageImages] = useState([]);
+
   const [loading, setLoading] = useState(false);
 
   // 모달 열림/닫힘 상태
@@ -143,7 +148,13 @@ const PackageCreate = () => {
   // B) 이미지 업로드 핸들러
   // ------------------------------
   const handleImageChange = e => {
-    setPackageImages([...e.target.files]);
+    // 새로 선택한 파일들을 state에 추가
+    setPackageImages([...packageImages, ...Array.from(e.target.files)]);
+  };
+
+  // ✅ 이미지 미리보기 제거
+  const handleRemoveImage = index => {
+    setPackageImages(prev => prev.filter((_, i) => i !== index));
   };
 
   // ------------------------------
@@ -180,6 +191,18 @@ const PackageCreate = () => {
     // 2) 숙소 배열에도 추가 (중복 방지)
     setSelectedAccommodations(prev => (prev.includes(accId) ? prev : [...prev, accId]));
     setOpenRoomModal(false);
+  };
+
+  // ✅ 숙소(및 해당 방) 선택 해제
+  const handleRemoveAccommodation = accId => {
+    // 1) 숙소 배열에서 제거
+    setSelectedAccommodations(prev => prev.filter(id => id !== accId));
+    // 2) 방도 함께 제거
+    setSelectedRooms(prev => {
+      const newRooms = {...prev};
+      delete newRooms[accId];
+      return newRooms;
+    });
   };
 
   // ------------------------------
@@ -230,37 +253,43 @@ const PackageCreate = () => {
     selectedFlights.find(f => f.flightId === flightId);
 
   // ------------------------------
-  // G) 패키지 생성
+  // G) 패키지 생성 (FormData 사용)
   // ------------------------------
   const handleSubmit = async () => {
-    //  현재 로그인한 사용자 정보 가져오기
-    const userProfile = await authAPI.getUserProfile(); // 로그인된 사용자 정보 가져오기
-    if (!userProfile || !userProfile._id) {
-      console.error(' [ERROR] 로그인된 사용자 정보를 가져올 수 없습니다.');
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
 
-    // 이미지 업로드를 하려면 FormData + 백엔드 multer 등이 필요
-    const newPackage = {
-      name: packageName,
-      description: packageDescription,
-      discountRate,
-      accommodations: selectedAccommodations,
-      rooms: selectedRooms,
-      tours: selectedTourTickets,
-      flights: selectedFlights,
-      quantity: packageQuantity,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      category: 'Tour Package',
-      createdBy: userProfile._id
-    };
-
     try {
-      await createPackage(newPackage);
+      // 현재 로그인한 사용자 정보 가져오기
+      const userProfile = await authAPI.getUserProfile();
+      if (!userProfile || !userProfile._id) {
+        console.error(' [ERROR] 로그인된 사용자 정보를 가져올 수 없습니다.');
+        setLoading(false);
+        return;
+      }
+
+      // 1) FormData 생성
+      const formData = new FormData();
+      formData.append('name', packageName);
+      formData.append('description', packageDescription);
+      formData.append('discountRate', discountRate);
+      formData.append('startDate', '2025-01-01');
+      formData.append('endDate', '2025-12-31');
+      formData.append('category', 'Tour Package');
+      formData.append('createdBy', userProfile._id);
+
+      // 배열/객체 필드는 JSON 문자열로 담는다.
+      formData.append('accommodations', JSON.stringify(selectedAccommodations));
+      formData.append('rooms', JSON.stringify(selectedRooms));
+      formData.append('tours', JSON.stringify(selectedTourTickets));
+      formData.append('flights', JSON.stringify(selectedFlights));
+
+      // 2) 이미지 파일들 추가
+      packageImages.forEach(file => {
+        formData.append('images', file);
+      });
+
+      // 3) API 호출
+      await createPackage(formData);
       navigate('/packages');
     } catch (error) {
       console.error('패키지 생성 실패:', error);
@@ -282,13 +311,41 @@ const PackageCreate = () => {
       <Typography variant="h6" component="div" sx={{mb: 1}}>
         패키지 이미지 업로드
       </Typography>
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        onChange={handleImageChange}
-        style={{marginBottom: '16px'}}
-      />
+      <Box sx={{mb: 2}}>
+        <Button variant="outlined" component="label">
+          이미지 선택
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            hidden
+            onChange={handleImageChange}
+          />
+        </Button>
+      </Box>
+
+      {/* 미리보기 목록 */}
+      <Box sx={{display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3}}>
+        {packageImages.map((file, idx) => {
+          const previewUrl = URL.createObjectURL(file);
+          return (
+            <Box key={idx} sx={{position: 'relative'}}>
+              <img
+                src={previewUrl}
+                alt="preview"
+                style={{width: 100, height: 100, objectFit: 'cover', borderRadius: 4}}
+              />
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleRemoveImage(idx)}
+                sx={{position: 'absolute', top: 0, right: 0}}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          );
+        })}
+      </Box>
 
       {/* 패키지 기본 정보 */}
       <Typography variant="h6" component="div" sx={{mb: 1}}>
@@ -358,9 +415,16 @@ const PackageCreate = () => {
                   variant="square"
                   sx={{width: 40, height: 40, mr: 1}}
                 />
-                <Typography variant="body1" component="div">
+                <Typography variant="body1" component="div" sx={{mr: 2}}>
                   {found.name} ({price})
                 </Typography>
+                {/* ✅ 숙소 취소 버튼 */}
+                <Button
+                  variant="text"
+                  color="error"
+                  onClick={() => handleRemoveAccommodation(accId)}>
+                  취소
+                </Button>
               </Box>
             );
           })}
