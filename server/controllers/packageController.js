@@ -309,21 +309,20 @@ exports.updatePackage = async (req, res) => {
       return res.status(400).json({message: '업데이트할 데이터가 없습니다.'});
     }
 
-    // 1) JSON 필드 파싱
+    // 1) JSON 필드 파싱: accommodations, tours, flights, rooms, existingImages
     let {accommodations, tours, flights, rooms, existingImages} = req.body;
 
-    // accommodations가 문자열이라면 배열로 변환
+    // accommodations: 문자열이면 파싱, 실패 시 단일 값으로 배열 처리
     if (typeof accommodations === 'string') {
       try {
         accommodations = JSON.parse(accommodations);
       } catch (err) {
-        // JSON.parse 실패 시, 단일 ID라면 배열로 감싼다
         accommodations = [accommodations];
       }
       req.body.accommodations = accommodations;
     }
 
-    // tours도 같은 방식
+    // tours
     if (typeof tours === 'string') {
       try {
         tours = JSON.parse(tours);
@@ -333,7 +332,7 @@ exports.updatePackage = async (req, res) => {
       req.body.tours = tours;
     }
 
-    // flights (JSON 배열)
+    // flights
     if (typeof flights === 'string') {
       try {
         flights = JSON.parse(flights);
@@ -353,26 +352,29 @@ exports.updatePackage = async (req, res) => {
       req.body.rooms = rooms;
     }
 
-    // existingImages (여러 번 append 가능성이 있음)
-    // - 만약 클라이언트에서 배열로 보내면 JSON.parse
-    // - 단일 문자열이면 배열로 감싼다
-    if (typeof existingImages === 'string') {
+    // existingImages: 값이 없으면 빈 배열, 문자열이면 파싱, 아니면 배열로 처리
+    if (!existingImages) {
+      req.body.existingImages = [];
+    } else if (typeof existingImages === 'string') {
       try {
-        existingImages = JSON.parse(existingImages);
+        req.body.existingImages = JSON.parse(existingImages);
       } catch (err) {
-        existingImages = [existingImages];
+        req.body.existingImages = [existingImages];
       }
-      req.body.existingImages = existingImages;
+    }
+    // 보장: req.body.existingImages가 배열인지 확인
+    if (!Array.isArray(req.body.existingImages)) {
+      req.body.existingImages = [req.body.existingImages];
     }
 
-    // 2) 새 이미지 파일이 업로드된 경우
+    // 2) 새 이미지 파일이 업로드된 경우 처리
     if (req.files && req.files.length > 0) {
       const newImagePaths = req.files.map(file => file.path);
 
       // 기존 패키지 조회 후, 기존 이미지 중 제거할 것 있으면 삭제
       const currentPackage = await Package.findById(id);
       if (currentPackage && currentPackage.images && currentPackage.images.length > 0) {
-        // 기존 이미지 중, existingImages에 없는 것은 파일 삭제
+        // 기존 이미지 중, req.body.existingImages에 없는 것 삭제
         currentPackage.images.forEach(oldPath => {
           if (!req.body.existingImages.includes(oldPath)) {
             fs.unlink(oldPath, err => {
@@ -385,15 +387,14 @@ exports.updatePackage = async (req, res) => {
           }
         });
       }
-
-      // 최종 이미지: 기존에 남겨둘 existingImages + 새로 업로드된 newImagePaths
+      // 최종 이미지: 기존 유지할 이미지 + 새로 업로드된 이미지
       req.body.images = [...req.body.existingImages, ...newImagePaths];
     } else {
       // 새 파일 없으면, 기존 이미지 유지
       req.body.images = req.body.existingImages || [];
     }
 
-    // 3) 서비스로 전달
+    // 3) 서비스 함수 호출
     const updatedPackage = await packageService.updatePackage(id, req.body);
 
     if (!updatedPackage) {
