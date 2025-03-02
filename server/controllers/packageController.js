@@ -44,31 +44,59 @@ exports.getPackageCreateData = async (req, res) => {
 /**
  *  패키지 상품 생성 (관리자만 가능)
  */
+
 exports.createPackage = async (req, res) => {
   try {
     if (!req.user || !req.user.roles || !req.user.roles.includes('admin')) {
       return res.status(403).json({message: '관리자만 패키지를 생성할 수 있습니다.'});
     }
 
-    const {
+    // 1) 먼저 req.body에서 accommodations, tours, flights를 꺼낸다
+    let {
       name,
       description,
       discountRate,
       startDate,
       endDate,
-      accommodations = [],
-      tours = [],
-      flights = [],
+      accommodations,
+      tours,
+      flights,
       roomIds,
       startDates,
       endDates,
       category,
       createdBy
     } = req.body;
-    //  최소 2개 상품 조합 검증 (accommodations + tours, flights + accommodations, flights + tours 조합 가능)
-    const hasAccommodations = accommodations.length > 0;
-    const hasTours = tours.length > 0;
-    const hasFlights = flights.length > 0;
+
+    // 2) 만약 문자열이라면 JSON.parse를 시도
+    //    ["67b16479314e743a00dc9eb0","67b607a843a4e471923a5554"] 형태를 배열로 변환
+    if (typeof accommodations === 'string') {
+      try {
+        accommodations = JSON.parse(accommodations);
+      } catch (err) {
+        // 혹은 단일 값이면 배열로 감싼다
+        accommodations = [accommodations];
+      }
+    }
+    if (typeof tours === 'string') {
+      try {
+        tours = JSON.parse(tours);
+      } catch (err) {
+        tours = [tours];
+      }
+    }
+    if (typeof flights === 'string') {
+      try {
+        flights = JSON.parse(flights);
+      } catch (err) {
+        flights = [];
+      }
+    }
+
+    // 3) 최소 2개 상품 포함 검증
+    const hasAccommodations = Array.isArray(accommodations) && accommodations.length > 0;
+    const hasTours = Array.isArray(tours) && tours.length > 0;
+    const hasFlights = Array.isArray(flights) && flights.length > 0;
 
     if (!(hasAccommodations + hasTours + hasFlights >= 2)) {
       return res
@@ -90,10 +118,9 @@ exports.createPackage = async (req, res) => {
 
     console.log(' [DEBUG] 요청 데이터:', req.body);
 
-    // ✅ flights 배열 변환 (ObjectId 변환)
+    // 4) flights 배열 변환 (ObjectId 변환)
     const flightDetails = Array.isArray(flights)
       ? flights.map(flight => {
-          // 🔥 문자열인 경우에만 ObjectId 변환! 이미 ObjectId라면 변환하지 않음.
           if (
             typeof flight.flightId === 'string' &&
             mongoose.Types.ObjectId.isValid(flight.flightId)
@@ -103,7 +130,7 @@ exports.createPackage = async (req, res) => {
               seatsToUse: flight.seatsToUse
             };
           } else if (flight.flightId instanceof mongoose.Types.ObjectId) {
-            return flight; // 이미 ObjectId라면 변환하지 않음
+            return flight;
           } else {
             console.error(`🚨 [ERROR] 유효하지 않은 Flight ID: ${flight.flightId}`);
             throw new Error(`🚨 유효하지 않은 Flight ID: ${flight.flightId}`);
@@ -113,18 +140,25 @@ exports.createPackage = async (req, res) => {
 
     console.log(' [DEBUG] flights after conversion:', flightDetails);
 
-    // ✅ accommodations & tours 변환
+    // 5) accommodations & tours 변환
     const accommodationIds = accommodations.map(acc => new mongoose.Types.ObjectId(acc));
     const tourIds = tours.map(tour => new mongoose.Types.ObjectId(tour));
-    const createdById = mongoose.Types.ObjectId.isValid(req.body.createdBy)
-      ? new mongoose.Types.ObjectId(req.body.createdBy)
-      : req.user?._id; // ✅ `req.user._id`를 fallback으로 사용
+    const createdById = mongoose.Types.ObjectId.isValid(createdBy)
+      ? new mongoose.Types.ObjectId(createdBy)
+      : req.user?._id;
 
     if (!createdById) {
-      console.error(`🚨 [ERROR] 유효하지 않은 createdBy ID: ${req.body.createdBy}`);
+      console.error(`🚨 [ERROR] 유효하지 않은 createdBy ID: ${createdBy}`);
       return res.status(400).json({message: '유효하지 않은 createdBy ID입니다.'});
     }
 
+    // 6) req.files에서 이미지 파일 경로 배열 생성
+    let imagePaths = [];
+    if (req.files && req.files.length > 0) {
+      imagePaths = req.files.map(file => file.path);
+    }
+
+    // 7) 최종 packageData 구성
     const packageData = {
       name,
       description,
@@ -133,17 +167,18 @@ exports.createPackage = async (req, res) => {
       endDate,
       accommodations: accommodationIds,
       tours: tourIds,
-      flights: flightDetails, // ✅ ObjectId 변환된 flights 사용
+      flights: flightDetails,
       roomIds,
       startDates,
       endDates,
       category,
-      createdBy: createdById
+      createdBy: createdById,
+      images: imagePaths
     };
 
     console.log(' [DEBUG] 패키지 데이터 생성 완료:', packageData);
 
-    // ✅ Service에 변환된 데이터를 전달
+    // 8) 서비스 호출
     const createdPackage = await packageService.createPackage(packageData);
 
     console.log(' [SUCCESS] 패키지 생성 완료:', createdPackage);
@@ -262,19 +297,37 @@ exports.getPackageById = async (req, res) => {
  */
 exports.updatePackage = async (req, res) => {
   try {
-    // 관리자 권한 확인
     if (!req.user || !req.user.roles || !req.user.roles.includes('admin')) {
       return res.status(403).json({message: '관리자만 패키지를 수정할 수 있습니다.'});
     }
 
     const {id} = req.params;
-
-    // 🔍 [DEBUG] 요청 바디 확인
     console.log('🔍 [DEBUG] 요청 데이터:', req.body);
 
-    // req.body가 제대로 들어오는지 확인
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({message: '업데이트할 데이터가 없습니다.'});
+    }
+
+    // 새 이미지 파일이 업로드된 경우 처리
+    if (req.files && req.files.length > 0) {
+      const newImagePaths = req.files.map(file => file.path);
+
+      // 기존 패키지 조회 후 기존 이미지 파일 삭제
+      const currentPackage = await Package.findById(id);
+      if (currentPackage && currentPackage.images && currentPackage.images.length > 0) {
+        currentPackage.images.forEach(imagePath => {
+          fs.unlink(imagePath, err => {
+            if (err) {
+              console.error('이미지 삭제 실패:', imagePath, err);
+            } else {
+              console.log('이미지 삭제 성공:', imagePath);
+            }
+          });
+        });
+      }
+
+      // 새 이미지 경로를 업데이트 데이터에 추가
+      req.body.images = newImagePaths;
     }
 
     const updatedPackage = await packageService.updatePackage(id, req.body);
@@ -294,7 +347,6 @@ exports.updatePackage = async (req, res) => {
  */
 exports.deletePackage = async (req, res) => {
   try {
-    // 관리자 권한 확인
     if (!req.user || !req.user.roles || !req.user.roles.includes('admin')) {
       return res.status(403).json({message: '관리자만 패키지를 삭제할 수 있습니다.'});
     }

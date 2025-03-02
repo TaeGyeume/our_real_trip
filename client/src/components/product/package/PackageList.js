@@ -1,55 +1,25 @@
 import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import {getPackages} from '../../../api/package/packageService';
 import {
   Container,
   Typography,
   Card,
   CardContent,
+  CardMedia,
   Grid,
   TextField,
   Button,
-  Pagination
+  Pagination,
+  Box,
+  Chip,
+  Stack
 } from '@mui/material';
-import {useNavigate} from 'react-router-dom';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
+import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
+import HotelIcon from '@mui/icons-material/Hotel';
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
-
-// 숙소 최고가를 계산하는 함수 (각 숙소의 maxPrice 필드를 우선 사용하고, 없으면 minPrice)
-const computeAccommodationMaxPrice = accommodations => {
-  if (!accommodations || accommodations.length === 0) return null;
-  const prices = accommodations.map(acc => acc.maxPrice || acc.minPrice || 0);
-  return prices.length > 0 ? Math.max(...prices) : null;
-};
-
-// 객실 가격을 계산하는 함수 (각 숙소에서 첫 번째 객실의 pricePerNight를 사용)
-// 여러 객실이 있을 경우, 필요한 로직에 따라 합산하거나 평균, 최저값 등으로 변경 가능
-const computeRoomPrice = accommodations => {
-  if (!accommodations || accommodations.length === 0) return null;
-  // 여기서는 첫번째 숙소의 첫번째 객실의 가격을 사용
-  const firstAcc = accommodations[0];
-  if (firstAcc.rooms && firstAcc.rooms.length > 0) {
-    return firstAcc.rooms[0].pricePerNight || null;
-  }
-  return null;
-};
-
-// 항공 총합계 계산: 각 항공 객체의 가격 * 선택한 좌석 수 (populated된 flight 객체가 있다고 가정)
-const computeFlightTotal = flights => {
-  if (!flights || flights.length === 0) return 0;
-  return flights.reduce((sum, flight) => {
-    // 만약 flight.price가 없다면 0으로 처리
-    return sum + (flight.price || 0) * (flight.seatsToUse || 1);
-  }, 0);
-};
-
-// 투어 티켓 총합계 계산: 각 투어 객체의 가격 (단, 수량이 1개라고 가정)
-const computeTourTotal = tours => {
-  if (!tours || tours.length === 0) return 0;
-  return tours.reduce((sum, tour) => sum + (tour.price || 0), 0);
-};
 
 const PackageList = () => {
   const [packages, setPackages] = useState([]);
@@ -89,158 +59,160 @@ const PackageList = () => {
     fetchPackages();
   };
 
+  // ✅ 패키지에서 포함된 서비스(항공, 숙박, 투어) 확인 (최대 3개 표시, 갯수 제한 없음)
+  const getIncludedCategories = pkg => {
+    const categories = [];
+
+    if (pkg.flights && pkg.flights.length > 0)
+      categories.push({label: '항공', icon: <FlightTakeoffIcon />});
+
+    if (pkg.accommodations && pkg.accommodations.length > 0)
+      categories.push({label: '숙박/숙소', icon: <HotelIcon />});
+
+    if (pkg.tours && pkg.tours.length > 0)
+      categories.push({label: '투어/티켓', icon: <ConfirmationNumberIcon />});
+
+    return categories.slice(0, 3); // ✅ 최대 3개까지 표시
+  };
+
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        패키지 목록
-      </Typography>
-
-      <TextField
-        label="검색"
-        variant="outlined"
-        fullWidth
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        sx={{mb: 2}}
-      />
-      <Button variant="contained" color="primary" onClick={handleSearch} sx={{mb: 2}}>
-        검색
-      </Button>
-
-      {loading ? (
-        <Typography variant="h6">로딩 중...</Typography>
-      ) : error ? (
-        <Typography variant="h6" color="error">
-          {error}
+    <Box sx={{backgroundColor: '#f7f7f7', minHeight: '100vh', py: 4}}>
+      <Container
+        sx={{maxWidth: '1000px', backgroundColor: '#fff', p: 3, borderRadius: 2}}>
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{fontWeight: 'bold', textAlign: 'center'}}>
+          ✈️ 여행 패키지 검색
         </Typography>
-      ) : packages.length === 0 ? (
-        <Typography variant="h6">등록된 패키지가 없습니다.</Typography>
-      ) : (
-        <>
-          <Grid container spacing={3}>
-            {packages.map(pkg => {
-              // 패키지 이미지: 패키지 이미지, 첫번째 숙소의 이미지, 투어 이미지 등을 결합
-              const packageImages = pkg.images && pkg.images.length > 0 ? pkg.images : [];
-              const accommodationImages =
-                pkg.accommodations && pkg.accommodations.length > 0
-                  ? pkg.accommodations[0].images || []
-                  : [];
-              const tourImages =
-                pkg.tours && pkg.tours.length > 0
-                  ? pkg.tours.flatMap(tour => tour.images || [])
-                  : [];
-              const images = [...packageImages, ...accommodationImages, ...tourImages];
 
-              // 가격 계산
-              // 숙소 최고가는 서버에서 전달된 값이 없으면 계산 (객실 가격은 별도로 계산)
-              const accommodationMaxPrice =
-                pkg.accommodationMaxPrice ||
-                computeAccommodationMaxPrice(pkg.accommodations);
-              const roomPrice = pkg.roomPrice || computeRoomPrice(pkg.accommodations);
+        {/* 검색 바 */}
+        <Box display="flex" gap={1} sx={{mb: 3, justifyContent: 'center'}}>
+          <TextField
+            label="여행지를 검색하세요..."
+            variant="outlined"
+            fullWidth
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            sx={{maxWidth: 400}}
+          />
+          <Button variant="contained" color="primary" onClick={handleSearch}>
+            검색
+          </Button>
+        </Box>
 
-              // 항공 및 투어 가격은 populate되어 있다면 계산
-              const flightTotal =
-                pkg.flights && pkg.flights.length > 0
-                  ? computeFlightTotal(pkg.flights)
-                  : 0;
-              const tourTotal =
-                pkg.tours && pkg.tours.length > 0 ? computeTourTotal(pkg.tours) : 0;
+        {/* 로딩/에러 처리 */}
+        {loading ? (
+          <Typography variant="h6" align="center">
+            로딩 중...
+          </Typography>
+        ) : error ? (
+          <Typography variant="h6" align="center" color="error">
+            {error}
+          </Typography>
+        ) : packages.length === 0 ? (
+          <Typography variant="h6" align="center">
+            등록된 패키지가 없습니다.
+          </Typography>
+        ) : (
+          <>
+            {/* 패키지 리스트 */}
+            <Grid container spacing={2} justifyContent="center">
+              {packages.map(pkg => {
+                const mainImage =
+                  pkg.images?.length > 0
+                    ? `${SERVER_URL}${pkg.images[0]}`
+                    : '/default-image.jpg';
 
-              // 최종 패키지 가격 계산: 항공 + 투어 + 객실 가격 (숙소 최고가는 별도 표시)
-              const computedFinalPrice = flightTotal + tourTotal + (roomPrice || 0);
+                return (
+                  <Grid item xs={12} key={pkg._id}>
+                    <Card
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        p: 2,
+                        transition: '0.3s',
+                        '&:hover': {boxShadow: 5}
+                      }}
+                      onClick={() => navigate(`/package/${pkg._id}`)}>
+                      {/* 왼쪽 이미지 */}
+                      <CardMedia
+                        component="img"
+                        sx={{width: 180, height: 120, borderRadius: 2}}
+                        image={mainImage}
+                        alt={`패키지 ${pkg.name}`}
+                      />
 
-              return (
-                <Grid item xs={12} sm={6} md={4} key={pkg._id}>
-                  <Card
-                    onClick={() => navigate(`/package/${pkg._id}`)}
-                    sx={{
-                      cursor: 'pointer',
-                      height: '400px',
-                      display: 'flex',
-                      flexDirection: 'column'
-                    }}>
-                    <div style={{width: '100%', height: '250px', overflow: 'hidden'}}>
-                      {images.length > 1 ? (
-                        <Slider
-                          dots={true}
-                          infinite={true}
-                          speed={500}
-                          slidesToShow={1}
-                          slidesToScroll={1}>
-                          {images.map((img, index) => (
-                            <img
+                      {/* 오른쪽 텍스트 정보 */}
+                      <CardContent sx={{flex: 1, pl: 2}}>
+                        <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+                          {pkg.name}
+                        </Typography>
+
+                        {/* 포함된 서비스 표시 (항공, 숙박, 투어 중 최대 3개) */}
+                        <Stack direction="row" spacing={1} sx={{mt: 1, mb: 1}}>
+                          {getIncludedCategories(pkg).map((category, index) => (
+                            <Chip
                               key={index}
-                              src={`${SERVER_URL}${img}`}
-                              alt={`패키지 ${pkg.name}`}
-                              style={{
-                                width: '100%',
-                                height: '250px',
-                                objectFit: 'cover',
-                                objectPosition: 'center'
-                              }}
+                              icon={category.icon}
+                              label={category.label}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
                             />
                           ))}
-                        </Slider>
-                      ) : (
-                        <img
-                          src={
-                            images.length > 0
-                              ? `${SERVER_URL}${images[0]}`
-                              : '/default-image.jpg'
-                          }
-                          alt={`패키지 ${pkg.name}`}
-                          style={{
-                            width: '100%',
-                            height: '250px',
-                            objectFit: 'cover',
-                            objectPosition: 'center'
-                          }}
-                        />
-                      )}
-                    </div>
+                        </Stack>
 
-                    <CardContent sx={{flexGrow: 1}}>
-                      <Typography variant="h6">{pkg.name}</Typography>
-                      <Typography variant="body2" sx={{mb: 1}}>
-                        {pkg.description}
-                      </Typography>
-                      <Typography variant="subtitle1">
-                        숙소 최고가:{' '}
-                        {accommodationMaxPrice
-                          ? accommodationMaxPrice.toLocaleString()
-                          : '가격 정보 없음'}{' '}
-                        원
-                      </Typography>
-                      <Typography variant="subtitle1">
-                        객실 가격:{' '}
-                        {roomPrice ? roomPrice.toLocaleString() : '가격 정보 없음'} 원
-                      </Typography>
-                      <Typography variant="subtitle1">
-                        항공 가격: {flightTotal ? flightTotal.toLocaleString() : '0'} 원
-                      </Typography>
-                      <Typography variant="subtitle1">
-                        투어 가격: {tourTotal ? tourTotal.toLocaleString() : '0'} 원
-                      </Typography>
-                      <Typography variant="h6" sx={{mt: 1}}>
-                        최종 패키지 가격: {computedFinalPrice.toLocaleString()} 원
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
+                        {/* 상세 정보 */}
+                        <Typography variant="body2" color="text.secondary">
+                          {pkg.description.length > 80
+                            ? `${pkg.description.substring(0, 80)}...`
+                            : pkg.description}
+                        </Typography>
 
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(event, value) => setPage(value)}
-            color="primary"
-            sx={{mt: 3, display: 'flex', justifyContent: 'center'}}
-          />
-        </>
-      )}
-    </Container>
+                        {/* 가격 정보 */}
+                        <Box display="flex" alignItems="center" gap={1} sx={{mt: 1}}>
+                          {pkg.discountRate > 0 ? (
+                            <>
+                              <Typography
+                                variant="body2"
+                                sx={{textDecoration: 'line-through', color: 'gray'}}>
+                                {pkg.price.toLocaleString()}원
+                              </Typography>
+                              <Typography
+                                variant="h6"
+                                sx={{fontWeight: 'bold', color: 'red'}}>
+                                {pkg.finalPrice.toLocaleString()}원
+                              </Typography>
+                              <Typography variant="caption" sx={{color: 'blue'}}>
+                                ({pkg.discountRate}% 할인)
+                              </Typography>
+                            </>
+                          ) : (
+                            <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+                              {pkg.finalPrice.toLocaleString()}원
+                            </Typography>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+
+            {/* 페이지네이션 */}
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(event, value) => setPage(value)}
+              color="primary"
+              sx={{mt: 4, display: 'flex', justifyContent: 'center'}}
+            />
+          </>
+        )}
+      </Container>
+    </Box>
   );
 };
 
