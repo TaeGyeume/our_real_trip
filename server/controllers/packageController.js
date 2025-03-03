@@ -224,6 +224,7 @@ exports.getAllPackages = async (req, res) => {
 /**
  *  특정 패키지 상품 조회
  */
+// 패키지 상세 조회 (예시)
 exports.getPackageById = async (req, res) => {
   try {
     const {id} = req.params;
@@ -231,61 +232,66 @@ exports.getPackageById = async (req, res) => {
     const packageData = await Package.findById(id)
       .populate({
         path: 'accommodations',
-        populate: {path: 'rooms', select: 'pricePerNight'}
+        // 방(room)에서 roomType, pricePerNight를 보고 싶다면 select 문 추가
+        populate: {
+          path: 'rooms',
+          select: 'roomType pricePerNight name'
+        }
       })
       .populate({
         path: 'flights.flightId',
-        select: 'flightNumber price'
+        // 항공편에서 보고 싶은 필드 추가
+        select: 'flightNumber airline price departureDate'
       })
-
-      .populate('tours', 'price');
+      // 투어티켓에서 title, price, images를 보고 싶다면
+      .populate('tours', 'title price images');
 
     if (!packageData) {
       return res.status(404).json({message: '패키지를 찾을 수 없습니다.'});
     }
 
+    // flightId가 없을 경우 대비
     packageData.flights = packageData.flights.map(flight => ({
       ...flight,
-      flightId: flight.flightId || {} // flightId가 없으면 빈 객체
+      flightId: flight.flightId || {}
     }));
 
-    // ✅ 숙소 가격: 객실 가격 총합 (최고가 X)
+    // 객실 가격 총합
     const totalRoomPrice = packageData.accommodations.reduce((sum, acc) => {
       return (
         sum + acc.rooms.reduce((roomSum, room) => roomSum + (room.pricePerNight || 0), 0)
       );
     }, 0);
 
-    // ✅ 항공 가격: 좌석 수 x 항공 가격
+    // 항공 가격
     const totalFlightPrice = packageData.flights.reduce((sum, flight) => {
-      return sum + (flight.flightId.price * flight.seatsToUse || 0);
+      return sum + (flight.flightId.price || 0) * (flight.seatsToUse || 1);
     }, 0);
 
-    // ✅ 투어/티켓 가격: 선택한 개수 x 가격
+    // 투어티켓 가격 (quantity가 없으면 1로 처리)
     const totalTourPrice = packageData.tours.reduce((sum, tour) => {
-      return sum + tour.price * (tour.quantity || 1);
+      const qty = tour.quantity || 1;
+      return sum + (tour.price || 0) * qty;
     }, 0);
 
-    // 기본 가격 (객실 + 투어 + 항공)
+    // 기본 가격
     const basePrice = totalRoomPrice + totalFlightPrice + totalTourPrice;
 
-    // 패키지 할인 적용
+    // 패키지 할인
     const discountRate = packageData.discountRate || 0;
     const packageDiscount = Math.floor((basePrice * discountRate) / 100);
-
-    // 최종 가격 계산
     const finalPrice = Math.max(basePrice - packageDiscount, 0);
 
-    // ✅ 클라이언트에 반환
+    // 응답
     res.json({
       ...packageData.toObject(),
-      totalRoomPrice, // 객실 가격 총합
-      totalFlightPrice, // 항공 가격 (좌석 수 적용)
-      totalTourPrice, // 투어 가격 (개수 적용)
-      basePrice, // 할인 전 가격
-      discountRate, // 할인율
-      packageDiscount, // 할인 금액
-      finalPrice // 최종 결제 금액
+      totalRoomPrice,
+      totalFlightPrice,
+      totalTourPrice,
+      basePrice,
+      discountRate,
+      packageDiscount,
+      finalPrice
     });
   } catch (error) {
     console.error('패키지 상세 조회 오류:', error);
