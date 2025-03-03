@@ -166,7 +166,7 @@ exports.loginUser = async ({userid, password}, res) => {
     {
       // 필요에 따라 15m, 1h 등으로 변경
       // expiresIn: '7d'
-      expiresIn: '1m'
+      expiresIn: '15m'
     }
   );
 
