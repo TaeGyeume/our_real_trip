@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useParams} from 'react-router-dom';
+import {useParams, useNavigate} from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -15,8 +15,6 @@ import {
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import {styled} from '@mui/material/styles';
-
-// 실제 API 연동 시 사용
 import {getPackageById} from '../../../api/package/packageService';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
@@ -31,6 +29,7 @@ const BannerImage = styled('img')({
 
 const PackageDetail = () => {
   const {id} = useParams();
+  const navigate = useNavigate();
   const [pkg, setPkg] = useState(null);
   const [showAllImages, setShowAllImages] = useState(false); // "상품 소개 더보기" 상태
 
@@ -121,9 +120,7 @@ const PackageDetail = () => {
         <Box sx={{mb: 3}}>
           {!showAllImages ? (
             <Button
-              shape="rectangle"
               type="button"
-              className="css-ixz1n4"
               onClick={() => setShowAllImages(true)}
               sx={{
                 border: '1px solid #ccc',
@@ -135,9 +132,7 @@ const PackageDetail = () => {
             </Button>
           ) : (
             <Button
-              shape="rectangle"
               type="button"
-              className="css-ixz1n4"
               onClick={() => setShowAllImages(false)}
               sx={{
                 border: '1px solid #f00',
@@ -334,6 +329,16 @@ const PackageDetail = () => {
             {faq}
           </Typography>
         ))}
+      </Box>
+
+      {/* 예약하기 버튼 */}
+      <Box sx={{mt: 4, display: 'flex', justifyContent: 'center'}}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate(`/package/booking/${id}`)}>
+          예약하기
+        </Button>
       </Box>
     </Container>
   );
