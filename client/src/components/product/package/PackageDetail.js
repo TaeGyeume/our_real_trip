@@ -44,7 +44,6 @@ const PackageDetail = () => {
   ]);
 
   useEffect(() => {
-    // 실제로 서버에서 패키지 정보를 불러옵니다.
     (async () => {
       try {
         const data = await getPackageById(id);
@@ -62,7 +61,7 @@ const PackageDetail = () => {
   // 첫 번째 이미지를 상단 배너로 사용
   const bannerImage =
     pkg.images && pkg.images.length > 0
-      ? `${SERVER_URL}${pkg.images[0]}`
+      ? `${SERVER_URL}/${pkg.images[0]}`
       : '/default-image.jpg';
 
   // 추가 이미지 (두 번째 이후)
@@ -73,7 +72,17 @@ const PackageDetail = () => {
 
   return (
     <Container maxWidth="md" sx={{py: 4}}>
-      {/* 상단 배너 */}
+      {/* 상단: 패키지 제목 / 설명 */}
+      <Typography variant="h4" sx={{fontWeight: 'bold', mb: 1}}>
+        {pkg.name}
+      </Typography>
+      {pkg.description && (
+        <Typography variant="subtitle1" color="text.secondary" sx={{mb: 2}}>
+          {pkg.description}
+        </Typography>
+      )}
+
+      {/* 배너 이미지 */}
       <Box sx={{mb: 3}}>
         <BannerImage src={bannerImage} alt="패키지 배너" />
       </Box>
@@ -103,17 +112,6 @@ const PackageDetail = () => {
       </Box>
 
       <Divider sx={{my: 3}} />
-
-      {/* 상품 소개 */}
-      <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
-        상품 소개
-      </Typography>
-      <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
-        {pkg.name}
-      </Typography>
-      <Typography variant="body1" sx={{mb: 3}}>
-        {pkg.description}
-      </Typography>
 
       {/* "상품 소개 더보기" 버튼 -> 추가 이미지 */}
       {additionalImages.length > 0 && (
@@ -149,7 +147,7 @@ const PackageDetail = () => {
               {additionalImages.map((img, index) => (
                 <img
                   key={index}
-                  src={`${SERVER_URL}${img}`}
+                  src={`${SERVER_URL}/${img}`}
                   alt={`추가 이미지 ${index}`}
                   style={{
                     width: '100%',
@@ -248,6 +246,7 @@ const PackageDetail = () => {
           })}
         </Box>
       )}
+
       {/* 숙소 정보 */}
       {pkg.accommodations && pkg.accommodations.length > 0 && (
         <Box sx={{mb: 2}}>
@@ -263,7 +262,8 @@ const PackageDetail = () => {
                 {acc.rooms && acc.rooms.length > 0 ? (
                   acc.rooms.map(room => (
                     <Typography key={room._id} variant="body2" sx={{ml: 2}}>
-                      - {room.pricePerNight?.toLocaleString()}원/박
+                      - {room.name || '방 이름 없음'}:{' '}
+                      {room.pricePerNight?.toLocaleString()}원/박
                     </Typography>
                   ))
                 ) : (
@@ -277,9 +277,24 @@ const PackageDetail = () => {
         </Box>
       )}
 
+      {/* 투어 정보 (있다면) */}
+      {pkg.tours && pkg.tours.length > 0 && (
+        <Box sx={{mb: 2}}>
+          <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+            투어/티켓 정보
+          </Typography>
+          {pkg.tours.map((tour, idx) => (
+            <Typography key={idx} variant="body2" sx={{ml: 2, mt: 1}}>
+              {tour.title || '투어 제목 없음'} /{' '}
+              {tour.price ? `${tour.price.toLocaleString()}원` : '가격 정보 없음'}
+            </Typography>
+          ))}
+        </Box>
+      )}
+
       <Divider sx={{my: 3}} />
 
-      {/* 필수 확인 사항 (Day별 일정 등) */}
+      {/* 필수 확인 사항 */}
       <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
         필수 확인 사항
       </Typography>
@@ -336,7 +351,7 @@ const PackageDetail = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => navigate(`/package/booking/${id}`)}>
+          onClick={() => navigate(`/booking/${id}`)}>
           예약하기
         </Button>
       </Box>
