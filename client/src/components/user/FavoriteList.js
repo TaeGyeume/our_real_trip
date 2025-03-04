@@ -11,7 +11,7 @@ const FavoriteList = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
-  const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   //  로그인 여부 확인 함수
   const checkLoginStatus = async () => {
