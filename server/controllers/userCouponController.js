@@ -1,6 +1,6 @@
 const userCouponService = require('../services/userCouponService');
 
-// ✅ 사용자가 쿠폰을 받는 API
+// 사용자가 쿠폰을 받는 API
 exports.claimCoupon = async (req, res) => {
   try {
     const {userId, couponId} = req.body;
@@ -21,7 +21,7 @@ exports.claimCoupon = async (req, res) => {
   }
 };
 
-// ✅ 사용자가 받은 쿠폰 조회 API (GET /api/user-coupons/:userId)
+// 사용자가 받은 쿠폰 조회 API (GET /api/user-coupons/:userId)
 exports.getUserCoupons = async (req, res) => {
   try {
     const {userId} = req.params;

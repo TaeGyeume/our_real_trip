@@ -192,7 +192,7 @@ export const fetchNearbyAccommodations = async (
     });
     return response.data;
   } catch (error) {
-    console.error('🚨 주변 숙소 조회 오류:', error);
+    console.error('주변 숙소 조회 오류:', error);
     throw new Error('주변 숙소 데이터를 불러오는 중 오류 발생');
   }
 };
