@@ -1,10 +1,12 @@
 // const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 const Accommodation = require('../models/Accommodation');
 const Booking = require('../models/Booking');
 const Room = require('../models/Room');
 const Location = require('../models/Location');
+const Review = require('../models/Review');
 
 // 숙소 생성 함수
 exports.createAccommodation = async accommodationData => {
@@ -620,5 +622,29 @@ exports.getNearbyAccommodations = async (lat, lng, maxDistance = 5000, limit = 1
     return accommodations;
   } catch (error) {
     throw new Error(`주변 숙소 조회 실패: ${error.message}`);
+  }
+};
+
+// 숙소의 평균 평점을 업데이트하는 함수
+exports.updateAccommodationRating = async productId => {
+  try {
+    const objectId = new mongoose.Types.ObjectId(productId); // productId를 ObjectId로 변환
+
+    // 숙소와 연결된 모든 리뷰들의 평균 평점 계산
+    const result = await Review.aggregate([
+      {$match: {productId: objectId}}, // ObjectId 변환 후 비교
+      {$group: {_id: null, avgRating: {$avg: '$rating'}}} // 평균 평점 계산
+    ]);
+
+    const avgRating = result.length > 0 ? result[0].avgRating : 0; // 리뷰가 없으면 0
+
+    // 숙소 문서 업데이트
+    await Accommodation.findByIdAndUpdate(productId, {rating: avgRating});
+
+    console.log(`숙소(${productId}) 평점 업데이트 완료: ${avgRating}`);
+    return avgRating;
+  } catch (error) {
+    console.error('숙소 평점 업데이트 중 오류 발생:', error);
+    throw new Error('숙소 평점 업데이트 중 오류 발생: ' + error.message);
   }
 };

@@ -20,6 +20,7 @@ const TravelItemPurchaseForm = () => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [formData, setFormData] = useState({count: 1});
   const [usedMileage, setUsedMileage] = useState(0);
+  const [imageError, setImageError] = useState(false);
   const [reservationInfo, setReservationInfo] = useState({
     name: '',
     email: '',
@@ -37,7 +38,7 @@ const TravelItemPurchaseForm = () => {
   // room이 null이면 빈 배열을 반환하여 안전하게 처리
   let imageUrl = item?.images?.[0] || '/default-image.jpg';
 
-  if (imageUrl?.startsWith('/uploads/')) {
+  if (!imageError && imageUrl?.startsWith('/uploads/')) {
     imageUrl = `${SERVER_URL}${imageUrl}`;
   }
 
@@ -195,7 +196,12 @@ const TravelItemPurchaseForm = () => {
                 <img
                   src={imageUrl}
                   alt="상품 이미지"
-                  onError={e => (e.target.src = '/default-image.jpg')}
+                  onError={e => {
+                    if (!imageError) {
+                      setImageError(true);
+                      e.target.src = '/default-image.jpg';
+                    }
+                  }}
                   className="ticket-thumbnail"
                 />
 

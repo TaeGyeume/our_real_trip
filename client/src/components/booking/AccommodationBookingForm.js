@@ -19,6 +19,7 @@ const BookingForm = () => {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [usedMileage, setUsedMileage] = useState(0);
+  const [imageError, setImageError] = useState(false);
   const [reservationInfo, setReservationInfo] = useState({
     name: '',
     email: '',
@@ -80,7 +81,7 @@ const BookingForm = () => {
   // room이 null이면 빈 배열을 반환하여 안전하게 처리
   let imageUrl = room?.images?.[0] || '/default-image.jpg';
 
-  if (imageUrl?.startsWith('/uploads/')) {
+  if (!imageError && imageUrl?.startsWith('/uploads/')) {
     imageUrl = `${SERVER_URL}${imageUrl}`;
   }
 
@@ -217,7 +218,12 @@ const BookingForm = () => {
                 <img
                   src={imageUrl}
                   alt="객실 이미지"
-                  onError={e => (e.target.src = '/default-image.jpg')}
+                  onError={e => {
+                    if (!imageError) {
+                      setImageError(true);
+                      e.target.src = '/default-image.jpg';
+                    }
+                  }}
                   className="ticket-thumbnail"
                 />
 
