@@ -90,17 +90,22 @@ const PackageBookingForm = () => {
 
         setFlightsData(validFlights);
 
-        // (4) 숙소(Room) 총합
+        // ✅ 숙박 기간 계산 (체크인 ~ 체크아웃)
+        const startDate = new Date(pkg.startDates?.[0]);
+        const endDate = new Date(pkg.endDates?.[0]);
+        const numberOfNights = Math.max((endDate - startDate) / (1000 * 60 * 60 * 24), 1);
+
+        // ✅ 숙소 가격 계산 (숙박일 수 반영)
         const totalRoomPrice =
-          pkg.accommodations?.length > 0
-            ? pkg.accommodations.reduce((sum, acc) => {
-                if (!acc.rooms) return sum;
-                const rsum = acc.rooms.reduce((roomSum, room) => {
-                  return roomSum + (room.pricePerNight || 0);
-                }, 0);
-                return sum + rsum;
+          pkg.accommodations?.reduce((sum, acc) => {
+            if (!acc.rooms) return sum;
+            return (
+              sum +
+              acc.rooms.reduce((roomSum, room) => {
+                return roomSum + (room.pricePerNight || 0) * numberOfNights;
               }, 0)
-            : 0;
+            );
+          }, 0) || 0;
 
         // (5) 투어/티켓 총합
         const totalTourPrice =
