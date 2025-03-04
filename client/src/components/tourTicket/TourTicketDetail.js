@@ -202,8 +202,6 @@ const TourTicketDetail = () => {
 
         <hr className="sun" />
 
-        {/* <button onClick={() => navigate('/tourTicket/list')}>상품 목록</button> */}
-
         <div>
           <h2
             ref={reviewSectionRef}

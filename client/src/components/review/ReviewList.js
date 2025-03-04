@@ -53,10 +53,6 @@ const ReviewList = ({
   const [topReview, setTopReview] = useState(null); // 좋아요 많은 리뷰
   const [visibleReviews, setVisibleReviews] = useState(0); // 초기 표시 개수
 
-  const [totalReviews, setTotalReviews] = useState(0);
-  const [averageRating, setAverageRating] = useState(0);
-  const [ratingDistribution, setRatingDistribution] = useState([0, 0, 0, 0, 0]);
-
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -147,10 +143,6 @@ const ReviewList = ({
       const idx = 5 - Math.round(review.rating);
       distribution[idx]++;
     });
-
-    setTotalReviews(total);
-    setAverageRating(avgRating);
-    setRatingDistribution(distribution);
   };
 
   const toggleMenu = (reviewId, e) => {
@@ -235,7 +227,7 @@ const ReviewList = ({
 
     formData.append('content', editedContent);
 
-    // ✅ 새로 추가된 이미지
+    // 새로 추가된 이미지
     editedImages.forEach(img => {
       if (img instanceof File) {
         formData.append('images', img);
@@ -244,12 +236,12 @@ const ReviewList = ({
       }
     });
 
-    // ✅ 삭제할 이미지 목록을 FormData에 추가 (JSON 변환 제거)
+    // 삭제할 이미지 목록을 FormData에 추가 (JSON 변환 제거)
     removedImages.forEach(img => {
       formData.append('removedImages', img);
     });
 
-    // ✅ 🔥 FormData 디버깅 로그 추가
+    // FormData 디버깅 로그 추가
     console.log('📌 [클라이언트] 서버로 보낼 데이터:');
     for (let [key, value] of formData.entries()) {
       console.log(`${key}:`, value);
@@ -260,7 +252,7 @@ const ReviewList = ({
       alert('리뷰가 성공적으로 수정되었습니다.');
       setEditingReviewId(null);
 
-      // ✅ 삭제된 이미지 제외하고 업데이트
+      // 삭제된 이미지 제외하고 업데이트
       const filteredImages = editedImages.filter(img => !removedImages.includes(img));
       setReviews(prevReviews =>
         prevReviews.map(review =>
@@ -276,7 +268,7 @@ const ReviewList = ({
           : prevTopReview
       );
 
-      setRemovedImages([]); // ✅ 삭제 목록 초기화
+      setRemovedImages([]); // 삭제 목록 초기화
     } catch (error) {
       alert(`리뷰 수정 실패: ${error.message}`);
     }
@@ -390,11 +382,6 @@ const ReviewList = ({
     });
   };
 
-  const handleImageClick = imageUrl => {
-    setSelectedImages(imageUrl); // 선택된 이미지 저장
-    setIsModalOpen(true); // 모달 열기
-  };
-
   const handleOpenModal = (index, images) => {
     setCurrentImageIndex(index); // 선택된 이미지 인덱스 저장
     setSelectedImages(images); // 이미지 리스트 저장
@@ -420,7 +407,6 @@ const ReviewList = ({
   };
 
   const isAdmin = currentUser?.roles?.includes('admin');
-  const remainingReviews = reviews;
 
   return (
     <div className="review-list">
@@ -597,8 +583,11 @@ const ReviewList = ({
                           src={`http://localhost:5000${image}`}
                           alt={`리뷰 이미지 ${index + 1}`}
                           className="review-thumbnail"
-                          onClick={() => handleOpenModal(index)}
-                          style={{cursor: 'pointer'}}
+                          onClick={() => {
+                            if (topReview.images?.length > 0) {
+                              handleOpenModal(index, topReview.images, topReview.content);
+                            }
+                          }}
                         />
                       ))}
 
