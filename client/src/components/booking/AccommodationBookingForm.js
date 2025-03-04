@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useParams, useSearchParams} from 'react-router-dom';
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {getRoomById} from '../../api/room/roomService';
 import {createBooking, verifyPayment} from '../../api/booking/bookingService';
 import {authAPI} from '../../api/auth/index';
@@ -8,9 +8,10 @@ import {cancelBooking} from '../../api/booking/bookingService';
 import CouponSelector from './CouponSelector';
 import MileageInput from '../mileage/MileageInput';
 import './styles/TourTicketBookingForm.css';
-import {Alert, Snackbar, Button, TextField} from '@mui/material';
+import {Alert, Snackbar, Button, TextField, Typography, Stack} from '@mui/material';
 
 const BookingForm = () => {
+  const navigate = useNavigate();
   const {roomId} = useParams();
   const [searchParams] = useSearchParams();
   const [room, setRoom] = useState(null);
@@ -184,7 +185,11 @@ const BookingForm = () => {
               });
 
               if (verifyResponse.message === '결제 검증 성공') {
-                alert('예약 및 결제가 완료되었습니다.');
+                setOpenAlert(true);
+
+                setTimeout(() => {
+                  navigate('/');
+                }, 2000);
               } else {
                 alert(`결제 검증 실패: ${verifyResponse.message}`);
               }
@@ -214,7 +219,8 @@ const BookingForm = () => {
         <div className="booking-content">
           <div className="booking-details">
             <div className="ticket-info">
-              <div className="ticket-header">
+              <Stack direction="row" alignItems="center" spacing={2}>
+                {/* 객실 이미지 */}
                 <img
                   src={imageUrl}
                   alt="객실 이미지"
@@ -224,45 +230,50 @@ const BookingForm = () => {
                       e.target.src = '/default-image.jpg';
                     }
                   }}
-                  className="ticket-thumbnail"
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 8,
+                    objectFit: 'cover'
+                  }}
                 />
 
-                <div className="room-container">
-                  <h2 className="room-title">{room.name}</h2>{' '}
-                  {/* 객실 이름을 가장 위에 배치 */}
-                  {formData.rooms.map((roomData, index) => (
-                    <div key={index} className="room-group">
-                      <div className="room-content">
-                        <div className="date-input-group">
-                          <div className="date-input">
-                            <label>📅 체크인</label>
-                            <input
-                              type="date"
-                              name="startDate"
-                              value={roomData.startDate}
-                              onChange={e =>
-                                handleRoomChange(index, 'startDate', e.target.value)
-                              }
-                            />
-                          </div>
+                {/* 객실 정보 */}
+                <Stack spacing={0.5}>
+                  <Typography variant="h6" fontWeight="bold">
+                    {room.name}
+                  </Typography>
+                </Stack>
+              </Stack>
 
-                          <div className="date-input">
-                            <label>📅 체크아웃</label>
-                            <input
-                              type="date"
-                              name="endDate"
-                              value={roomData.endDate}
-                              onChange={e =>
-                                handleRoomChange(index, 'endDate', e.target.value)
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* 체크인 / 체크아웃 정보 */}
+              <Stack direction="row" justifyContent="space-between" sx={{mt: 2}}>
+                <Typography variant="body1" fontWeight="bold">
+                  체크인
+                </Typography>
+                <Typography variant="body1">
+                  {new Date(defaultStartDate).toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    weekday: 'short'
+                  })}
+                </Typography>
+              </Stack>
+
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body1" fontWeight="bold">
+                  체크아웃
+                </Typography>
+                <Typography variant="body1">
+                  {new Date(defaultEndDate).toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    weekday: 'short'
+                  })}
+                </Typography>
+              </Stack>
             </div>
 
             <hr className="divider" />
