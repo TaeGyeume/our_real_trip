@@ -7,7 +7,7 @@ const BASE_URL =
 
 export const createBooking = async bookingData => {
   try {
-    const response = await axios.post(`${BASE_URL}/create`, {
+    const response = await axios.post('booking/create', {
       types: bookingData.types,
       productIds: bookingData.productIds,
       roomIds: bookingData.roomIds,
