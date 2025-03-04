@@ -55,6 +55,15 @@ const PaymentInfo = ({booking, translatePaymentStatus, translateType}) => {
             </Typography>
           </Box>
 
+          <Box sx={{mt: 1}}>
+            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+              사용 마일리지
+            </Typography>
+            <Typography variant="body1" sx={{color: 'error.main'}}>
+              -₩{booking.usedMileage?.toLocaleString() || 0}
+            </Typography>
+          </Box>
+
           <Box sx={{mt: 2, pt: 1, borderTop: '2px solid #000'}}>
             <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
               최종 결제 금액
