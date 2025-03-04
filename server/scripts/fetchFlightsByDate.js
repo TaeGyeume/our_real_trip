@@ -6,7 +6,7 @@ const moment = require('moment-timezone');
 const {SERVICE_KEY} = process.env;
 
 if (!SERVICE_KEY) {
-  console.error('❌ 환경 변수(SERVICE_KEY)가 설정되지 않았습니다.');
+  console.error('환경 변수(SERVICE_KEY)가 설정되지 않았습니다.');
   process.exit(1);
 }
 

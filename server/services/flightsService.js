@@ -52,7 +52,7 @@ exports.getFlights = async () => {
   }
 };
 
-// ✈️ 편도 항공편 검색 서비스 (UTC 변환 적용)
+// 편도 항공편 검색 서비스 (UTC 변환 적용)
 exports.searchFlights = async (departure, arrival, date, passengers) => {
   try {
     if (!departure || !arrival || !date || !passengers) {
