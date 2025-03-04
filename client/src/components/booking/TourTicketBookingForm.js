@@ -329,8 +329,12 @@ const TourTicketBookingForm = () => {
             </div>
 
             <button onClick={handlePayment} className="payment-btn">
-              {(ticket.price * formData.count - discountAmount).toLocaleString()}원
-              결제하기
+              {(
+                ticket.price * formData.count -
+                discountAmount -
+                usedMileage
+              ).toLocaleString()}
+              원 결제하기
             </button>
           </div>
         </div>
