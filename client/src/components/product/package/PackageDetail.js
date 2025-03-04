@@ -17,7 +17,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import {styled} from '@mui/material/styles';
 import {getPackageById} from '../../../api/package/packageService';
 
-const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // 상단 배너 이미지 스타일
 const BannerImage = styled('img')({
