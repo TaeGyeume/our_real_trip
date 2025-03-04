@@ -1,36 +1,38 @@
 import React from 'react';
 
+// 환경 변수를 활용한 API URL 설정 (개발/배포 자동 감지)
+const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const SocialLoginButtons = () => {
   // 페이스북 로그인 핸들러
-  // const handleFacebookLogin = () => {
-  //   window.location.href = 'http://localhost:5000/api/auth/facebook';
-  // };
+  const handleFacebookLogin = () => {
+    window.location.href = `${SERVER_URL}/auth/facebook`;
+  };
 
   // 네이버 로그인 핸들러
   const handleNaverLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/naver';
+    window.location.href = `${SERVER_URL}/auth/naver`;
   };
 
   // 카카오 로그인 핸들러
   const handleKakaoLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/kakao';
+    window.location.href = `${SERVER_URL}/auth/kakao`;
   };
 
   // Google 로그인 핸들러
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = `${SERVER_URL}/auth/google`;
   };
 
   return (
     <div>
       {/* 페이스북 로그인 버튼 */}
-      {/* <button
+      <button
         onClick={handleFacebookLogin}
         className="btn btn-primary"
-        style={{marginBottom: '10px'}}
-      >
+        style={{marginBottom: '10px'}}>
         Facebook으로 로그인
-      </button> */}
+      </button>
       <br />
 
       {/* 네이버 로그인 버튼 */}
