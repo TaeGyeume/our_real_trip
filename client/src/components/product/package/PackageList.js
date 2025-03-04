@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Grid,
   TextField,
   Button,
   Pagination,
@@ -21,13 +20,62 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 
 const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// 헬퍼 함수: 이미지 경로 정규화 (역슬래시를 슬래시로 변환하고, 앞에 '/' 추가)
+/**
+ * 이미지 경로를 정규화
+ * 역슬래시(\) → 슬래시(/), 맨 앞에 '/' 붙이기
+ */
 const normalizeImagePath = path => {
   let newPath = path.replace(/\\/g, '/');
   if (!newPath.startsWith('/')) {
     newPath = '/' + newPath;
   }
   return newPath;
+};
+
+/**
+ * 투어·숙소(객실)·항공 가격 합산 후 할인율 적용
+ * (상세 페이지와 동일한 로직)
+ */
+const computePackagePrice = pkg => {
+  let totalTourPrice = 0;
+  let totalRoomPrice = 0;
+  let totalFlightPrice = 0;
+
+  // 1) 투어 가격 합산
+  if (Array.isArray(pkg.tours)) {
+    totalTourPrice = pkg.tours.reduce((sum, tour) => sum + (tour.price || 0), 0);
+  }
+
+  // 2) 숙소(객실) 가격 합산
+  if (Array.isArray(pkg.accommodations)) {
+    totalRoomPrice = pkg.accommodations.reduce((acc, accommodation) => {
+      if (!accommodation.rooms) return acc;
+      const sumRooms = accommodation.rooms.reduce(
+        (roomAcc, r) => roomAcc + (r.pricePerNight || 0),
+        0
+      );
+      return acc + sumRooms;
+    }, 0);
+  }
+
+  // 3) 항공 가격 합산
+  if (Array.isArray(pkg.flights)) {
+    totalFlightPrice = pkg.flights.reduce((acc, flightObj) => {
+      const flightDoc = flightObj.flightId; // populate된 항공 문서
+      if (!flightDoc) return acc;
+      // seatsToUse * flightDoc.price 로 바꿀 수도 있음
+      return acc + (flightDoc.price || 0);
+    }, 0);
+  }
+
+  // 4) 합산
+  const basePrice = totalTourPrice + totalRoomPrice + totalFlightPrice;
+
+  // 5) 할인율 적용
+  const discountRate = pkg.discountRate || 0;
+  const finalPrice = Math.round(basePrice - (basePrice * discountRate) / 100);
+
+  return {basePrice, finalPrice};
 };
 
 const PackageList = () => {
@@ -49,6 +97,7 @@ const PackageList = () => {
       setLoading(true);
       setError(null);
       const data = await getPackages(page, 6, search);
+
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
         setTotalPages(data.totalPages || 1);
@@ -56,8 +105,8 @@ const PackageList = () => {
         console.error('서버 응답이 올바르지 않음:', data);
         setError('서버 응답이 올바르지 않습니다.');
       }
-    } catch (error) {
-      console.error('패키지 목록 불러오기 실패:', error);
+    } catch (err) {
+      console.error('패키지 목록 불러오기 실패:', err);
       setError('패키지를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -69,7 +118,7 @@ const PackageList = () => {
     fetchPackages();
   };
 
-  // 포함된 서비스(항공, 숙박, 투어) 정보를 추출하는 함수
+  // 패키지에 포함된 항공/숙박/투어 여부 확인
   const getIncludedCategories = pkg => {
     const categories = [];
     if (pkg.flights && pkg.flights.length > 0) {
@@ -81,7 +130,7 @@ const PackageList = () => {
     if (pkg.tours && pkg.tours.length > 0) {
       categories.push({label: '투어/티켓', icon: <ConfirmationNumberIcon />});
     }
-    return categories.slice(0, 3); // 최대 3개까지만 표시
+    return categories.slice(0, 3);
   };
 
   return (
@@ -124,90 +173,93 @@ const PackageList = () => {
           </Typography>
         ) : (
           <>
-            {/* 패키지 리스트 */}
-            <Grid container spacing={2} justifyContent="center">
+            {/* 패키지 목록을 세로로 배치 (Grid 대신 Box) */}
+            <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
               {packages.map(pkg => {
+                // 메인 이미지
                 const mainImage =
                   pkg.images && pkg.images.length > 0
                     ? `${SERVER_URL}${normalizeImagePath(pkg.images[0])}`
                     : '/default-image.jpg';
 
+                // 실제 합산 로직
+                const {basePrice, finalPrice} = computePackagePrice(pkg);
+
                 return (
-                  <Grid item xs={12} key={pkg._id}>
-                    <Card
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        p: 2,
-                        transition: '0.3s',
-                        '&:hover': {boxShadow: 5}
-                      }}
-                      onClick={() => navigate(`/package/${pkg._id}`)}>
-                      {/* 왼쪽 이미지 */}
-                      <CardMedia
-                        component="img"
-                        sx={{width: 180, height: 120, borderRadius: 2}}
-                        image={mainImage}
-                        alt={`패키지 ${pkg.name}`}
-                      />
+                  <Card
+                    key={pkg._id}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      p: 2,
+                      transition: '0.3s',
+                      '&:hover': {boxShadow: 5}
+                    }}
+                    onClick={() => navigate(`/package/${pkg._id}`)}>
+                    {/* 왼쪽 이미지 */}
+                    <CardMedia
+                      component="img"
+                      sx={{width: 180, height: 120, borderRadius: 2}}
+                      image={mainImage}
+                      alt={`패키지 ${pkg.name}`}
+                    />
 
-                      {/* 오른쪽 텍스트 정보 */}
-                      <CardContent sx={{flex: 1, pl: 2}}>
-                        <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
-                          {pkg.name}
-                        </Typography>
+                    {/* 오른쪽 텍스트 정보 */}
+                    <CardContent sx={{flex: 1, pl: 2}}>
+                      <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+                        {pkg.name}
+                      </Typography>
 
-                        {/* 포함된 서비스 표시 */}
-                        <Stack direction="row" spacing={1} sx={{mt: 1, mb: 1}}>
-                          {getIncludedCategories(pkg).map((category, index) => (
-                            <Chip
-                              key={index}
-                              icon={category.icon}
-                              label={category.label}
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                            />
-                          ))}
-                        </Stack>
+                      {/* 포함된 서비스 표시 */}
+                      <Stack direction="row" spacing={1} sx={{mt: 1, mb: 1}}>
+                        {getIncludedCategories(pkg).map((category, index) => (
+                          <Chip
+                            key={index}
+                            icon={category.icon}
+                            label={category.label}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        ))}
+                      </Stack>
 
-                        {/* 상세 정보 */}
-                        <Typography variant="body2" color="text.secondary">
-                          {pkg.description.length > 80
-                            ? `${pkg.description.substring(0, 80)}...`
-                            : pkg.description}
-                        </Typography>
+                      {/* 간단한 설명 */}
+                      <Typography variant="body2" color="text.secondary">
+                        {pkg.description.length > 80
+                          ? `${pkg.description.substring(0, 80)}...`
+                          : pkg.description}
+                      </Typography>
 
-                        {/* 가격 정보 */}
-                        <Box display="flex" alignItems="center" gap={1} sx={{mt: 1}}>
-                          {pkg.discountRate > 0 ? (
-                            <>
-                              <Typography
-                                variant="body2"
-                                sx={{textDecoration: 'line-through', color: 'gray'}}>
-                                {pkg.price.toLocaleString()}원
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                sx={{fontWeight: 'bold', color: 'red'}}>
-                                {pkg.finalPrice.toLocaleString()}원
-                              </Typography>
-                              <Typography variant="caption" sx={{color: 'blue'}}>
-                                ({pkg.discountRate}% 할인)
-                              </Typography>
-                            </>
-                          ) : (
-                            <Typography variant="h6" sx={{fontWeight: 'bold'}}>
-                              {pkg.finalPrice.toLocaleString()}원
+                      {/* 가격 정보 */}
+                      <Box display="flex" alignItems="center" gap={1} sx={{mt: 1}}>
+                        {pkg.discountRate > 0 ? (
+                          <>
+                            <Typography
+                              variant="body2"
+                              sx={{textDecoration: 'line-through', color: 'gray'}}>
+                              {basePrice.toLocaleString()}원
                             </Typography>
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
+                            <Typography
+                              variant="h6"
+                              sx={{fontWeight: 'bold', color: 'red'}}>
+                              {finalPrice.toLocaleString()}원
+                            </Typography>
+                            <Typography variant="caption" sx={{color: 'blue'}}>
+                              ({pkg.discountRate}% 할인)
+                            </Typography>
+                          </>
+                        ) : (
+                          <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+                            {finalPrice.toLocaleString()}원
+                          </Typography>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
                 );
               })}
-            </Grid>
+            </Box>
 
             {/* 페이지네이션 */}
             <Pagination
