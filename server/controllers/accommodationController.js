@@ -260,7 +260,7 @@ exports.getNearbyAccommodations = async (req, res) => {
 
     res.status(200).json(accommodations);
   } catch (error) {
-    console.error('🚨 주변 숙소 조회 오류:', error);
+    console.error('주변 숙소 조회 오류:', error);
     res.status(500).json({error: error.message});
   }
 };
