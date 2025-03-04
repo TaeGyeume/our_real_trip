@@ -20,9 +20,7 @@ const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // 이미지 경로 정규화
 const normalizeImagePath = path => {
-  // 역슬래시 -> 슬래시
   let newPath = path.replace(/\\/g, '/');
-  // 앞에 '/' 없으면 추가
   if (!newPath.startsWith('/')) {
     newPath = '/' + newPath;
   }
@@ -31,30 +29,21 @@ const normalizeImagePath = path => {
 
 const PackageList = () => {
   const navigate = useNavigate();
-
-  // 패키지 목록 상태
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // 페이지네이션 상태
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // 패키지 목록 불러오기
   useEffect(() => {
     fetchPackages();
-    // eslint-disable-next-line
   }, [page]);
 
   const fetchPackages = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // 한 페이지당 6개씩
       const data = await getPackages(page, 6);
-
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
         setTotalPages(data.totalPages || 1);
@@ -70,24 +59,20 @@ const PackageList = () => {
     }
   };
 
-  // 상세보기
   const handleDetail = id => {
     navigate(`/package/${id}`);
   };
 
-  // 수정
   const handleEdit = id => {
     navigate(`/packages/${id}/edit`);
   };
 
-  // 삭제
   const handleDelete = async id => {
     if (!window.confirm('정말 이 패키지를 삭제하시겠습니까?')) return;
-
     try {
       await deletePackage(id);
       alert('패키지가 삭제되었습니다.');
-      fetchPackages(); // 삭제 후 목록 재호출
+      fetchPackages();
     } catch (err) {
       console.error('패키지 삭제 실패:', err);
       alert('패키지 삭제 중 오류가 발생했습니다.');
@@ -97,10 +82,24 @@ const PackageList = () => {
   return (
     <Box sx={{py: 2}}>
       <Container maxWidth="lg">
-        {/* 제목 왼쪽 정렬 */}
-        <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
-          패키지 목록
-        </Typography>
+        {/* 상단 패키지 생성 버튼 */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2
+          }}>
+          <Typography variant="h5" sx={{fontWeight: 'bold'}}>
+            패키지 목록
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/product/package/create')}>
+            📦 패키지 생성
+          </Button>
+        </Box>
 
         {loading ? (
           <Typography variant="h6">로딩 중...</Typography>
@@ -112,10 +111,8 @@ const PackageList = () => {
           <Typography variant="h6">등록된 패키지가 없습니다.</Typography>
         ) : (
           <>
-            {/* 카드들을 왼쪽 정렬로 나열 */}
             <Grid container spacing={2} justifyContent="flex-start">
               {packages.map(pkg => {
-                // 메인 이미지
                 const mainImage =
                   pkg.images && pkg.images.length > 0
                     ? SERVER_URL + normalizeImagePath(pkg.images[0])
@@ -133,7 +130,6 @@ const PackageList = () => {
                         cursor: 'pointer',
                         '&:hover': {boxShadow: 6}
                       }}>
-                      {/* 이미지 (클릭 시 상세보기 이동) */}
                       <CardMedia
                         component="img"
                         height="200"
@@ -141,8 +137,6 @@ const PackageList = () => {
                         alt={pkg.name}
                         onClick={() => handleDetail(pkg._id)}
                       />
-
-                      {/* 카드 내용 */}
                       <CardContent>
                         <Typography variant="h6" fontWeight="bold" sx={{mb: 1}}>
                           {pkg.name}
@@ -153,7 +147,6 @@ const PackageList = () => {
                             : pkg.description}
                         </Typography>
 
-                        {/* 가격 정보 */}
                         {pkg.discountRate > 0 ? (
                           <>
                             <Typography
@@ -177,7 +170,6 @@ const PackageList = () => {
                         )}
                       </CardContent>
 
-                      {/* 수정/삭제 버튼 */}
                       <Box
                         sx={{
                           display: 'flex',
@@ -185,14 +177,10 @@ const PackageList = () => {
                           px: 2,
                           pb: 2
                         }}>
-                        {/* 수정 버튼 (오렌지색) */}
                         <Button
                           variant="contained"
                           size="small"
-                          sx={{
-                            bgcolor: '#f57c00',
-                            '&:hover': {bgcolor: '#ef6c00'}
-                          }}
+                          sx={{bgcolor: '#f57c00', '&:hover': {bgcolor: '#ef6c00'}}}
                           startIcon={<EditIcon />}
                           onClick={e => {
                             e.stopPropagation();
@@ -201,14 +189,10 @@ const PackageList = () => {
                           수정
                         </Button>
 
-                        {/* 삭제 버튼 (빨간색) */}
                         <Button
                           variant="contained"
                           size="small"
-                          sx={{
-                            bgcolor: '#d32f2f',
-                            '&:hover': {bgcolor: '#c62828'}
-                          }}
+                          sx={{bgcolor: '#d32f2f', '&:hover': {bgcolor: '#c62828'}}}
                           startIcon={<DeleteIcon />}
                           onClick={e => {
                             e.stopPropagation();
@@ -223,7 +207,6 @@ const PackageList = () => {
               })}
             </Grid>
 
-            {/* 페이지네이션 */}
             <Pagination
               count={totalPages}
               page={page}

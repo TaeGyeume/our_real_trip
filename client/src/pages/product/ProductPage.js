@@ -104,7 +104,7 @@ const ProductPage = () => {
           <div style={headerContainerStyle}>
             <FontAwesomeIcon
               icon={faSquarePlus}
-              onClick={() => navigate('/packages')}
+              onClick={() => navigate('/product/packages/list')}
               style={plusButtonStyle}
             />
           </div>
