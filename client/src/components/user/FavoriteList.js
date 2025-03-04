@@ -11,10 +11,12 @@ const FavoriteList = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
-  // 🔹 로그인 여부 확인 함수
+  const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+
+  //  로그인 여부 확인 함수
   const checkLoginStatus = async () => {
     try {
-      await authAPI.getUserProfile(); // ✅ 로그인한 사용자 정보 요청
+      await authAPI.getUserProfile(); //  로그인한 사용자 정보 요청
       setIsLoggedIn(true); // 로그인 성공
     } catch (error) {
       console.warn('⚠️ [클라이언트] 로그인하지 않은 사용자 → 즐겨찾기 조회 안 함.');
@@ -25,7 +27,7 @@ const FavoriteList = () => {
   //  즐겨찾기 목록 불러오기
   const fetchFavorites = async () => {
     if (!isLoggedIn) {
-      console.log('🚫 [클라이언트] 로그인하지 않은 사용자는 즐겨찾기 API 요청 안 함.');
+      console.log(' [클라이언트] 로그인하지 않은 사용자는 즐겨찾기 API 요청 안 함.');
       setLoading(false);
       return;
     }
@@ -113,7 +115,7 @@ const FavoriteList = () => {
                   {/*  이미지 컨테이너 내부에 즐겨찾기 아이콘 배치 */}
                   <div className="favorite-item-image-container">
                     <img
-                      src={`http://localhost:5000${item.images?.[0]}`}
+                      src={`${SERVER_URL}${item.images?.[0]}`}
                       alt={item.title}
                       className="favorite-item-image"
                     />
