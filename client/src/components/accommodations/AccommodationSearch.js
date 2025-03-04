@@ -24,6 +24,17 @@ const AccommodationSearch = ({
     }
   }, [startDate, endDate, setEndDate]);
 
+  // URL에서 검색 조건을 가져와 state 업데이트
+  useEffect(() => {
+    const urlStartDate = searchParams.get('startDate');
+    const urlEndDate = searchParams.get('endDate');
+    const urlAdults = searchParams.get('adults');
+
+    if (urlStartDate) setStartDate(new Date(urlStartDate));
+    if (urlEndDate) setEndDate(new Date(urlEndDate));
+    if (urlAdults) setAdults(Number(urlAdults));
+  }, [searchParams, setStartDate, setEndDate, setAdults]); // 의존성 추가
+
   // 날짜 또는 인원 변경 시 자동으로 URL 업데이트 및 검색 실행
   useEffect(() => {
     const newParams = {

@@ -103,7 +103,7 @@ const TravelItemForm = ({isEdit = false, itemId = null, onItemCreated = () => {}
 
       fetchItem();
     }
-  }, [isEdit, finalItemId, categories]);
+  }, [isEdit, finalItemId, categories, SERVER_URL]);
 
   const handleTopCategoryChange = e => {
     const selectedTopCategory = e.target.value;

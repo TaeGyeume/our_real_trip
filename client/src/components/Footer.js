@@ -43,17 +43,17 @@ const Footer = () => {
               소개
             </Typography>
             <Typography variant="body2">
-              <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
                 회사소개
               </a>
             </Typography>
             <Typography variant="body2">
-              <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
                 채용
               </a>
             </Typography>
             <Typography variant="body2">
-              <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
                 광고
               </a>
             </Typography>
@@ -65,17 +65,17 @@ const Footer = () => {
               파트너
             </Typography>
             <Typography variant="body2">
-              <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
                 파트너 홈
               </a>
             </Typography>
             <Typography variant="body2">
-              <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
                 제휴 문의
               </a>
             </Typography>
             <Typography variant="body2">
-              <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
                 광고 문의
               </a>
             </Typography>
@@ -87,12 +87,12 @@ const Footer = () => {
               지원
             </Typography>
             <Typography variant="body2">
-              <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
                 공지사항/FAQ
               </a>
             </Typography>
             <Typography variant="body2">
-              <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
                 최저가 보장제
               </a>
             </Typography>
@@ -104,17 +104,17 @@ const Footer = () => {
         {/* 이용 약관 */}
         <Stack direction="row" justifyContent="center" spacing={3}>
           <Typography variant="body2">
-            <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+            <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
               이용 약관
             </a>
           </Typography>
           <Typography variant="body2">
-            <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+            <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
               개인정보 처리방침
             </a>
           </Typography>
           <Typography variant="body2">
-            <a href="#" style={{textDecoration: 'none', color: 'inherit'}}>
+            <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
               취소 및 환불 정책
             </a>
           </Typography>

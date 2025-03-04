@@ -62,7 +62,7 @@ const RoomModify = () => {
     };
 
     fetchRoom();
-  }, [roomId]);
+  }, [roomId, SERVER_URL]);
 
   // 입력값 변경 핸들러
   const handleChange = e => {
@@ -116,7 +116,7 @@ const RoomModify = () => {
     };
 
     fetchRoom();
-  }, [roomId]);
+  }, [roomId, SERVER_URL]);
 
   // 파일 업로드 핸들러 (미리보기 포함)
   const handleFileChange = e => {
