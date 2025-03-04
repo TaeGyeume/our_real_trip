@@ -186,16 +186,70 @@ async function getPackageById(packageId) {
       populate: {
         path: 'rooms',
         model: 'Room',
-        select: 'name pricePerNight description',
-        strictPopulate: false
+        select: 'name pricePerNight description'
       }
     })
-    .populate('flights') // 항공 정보
-    .populate('tours'); // 투어 정보
+    .populate({
+      path: 'flights.flightId', // 항공편 정보 정확히 가져오기
+      model: 'Flight'
+    })
+    .populate('tours'); // 투어 정보도 가져오기
+
   if (!pkg) {
     throw new Error('해당 패키지를 찾을 수 없습니다.');
   }
-  return pkg;
+
+  //  1) 객실(Room) 가격 계산 (숙박 일수 반영)
+  let totalRoomPrice = 0;
+  if (pkg.roomIds.length > 0 && pkg.startDates.length > 0 && pkg.endDates.length > 0) {
+    for (let i = 0; i < pkg.roomIds.length; i++) {
+      const roomId = pkg.roomIds[i];
+      const startDate = new Date(pkg.startDates[i]);
+      const endDate = new Date(pkg.endDates[i]);
+
+      // 숙박 일수 계산 (최소 1박 보장)
+      const nights = Math.max(
+        1,
+        Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
+      );
+
+      // 해당 객실 정보 가져오기
+      const room = await Room.findById(roomId);
+      if (room) {
+        totalRoomPrice += (room.pricePerNight || 0) * nights;
+      }
+    }
+  }
+
+  //  2) 항공 가격 계산
+  let totalFlightPrice = 0;
+  if (pkg.flights.length > 0) {
+    for (const flightObj of pkg.flights) {
+      if (flightObj.flightId && flightObj.flightId.price) {
+        totalFlightPrice += flightObj.flightId.price * (flightObj.seatsToUse || 1);
+      }
+    }
+  }
+
+  //  3) 투어 가격 계산
+  let totalTourPrice = pkg.tours.reduce((sum, tour) => sum + (tour.price || 0), 0);
+
+  //  4) 기본 가격 (할인 전)
+  const basePrice = totalRoomPrice + totalFlightPrice + totalTourPrice;
+
+  //  5) 할인 가격 적용 (정확한 계산)
+  const packageDiscount = Math.round(basePrice * (pkg.discountRate / 100)); // 반올림 적용
+  const finalPrice = basePrice - packageDiscount;
+
+  return {
+    ...pkg.toObject(),
+    totalRoomPrice,
+    totalFlightPrice,
+    totalTourPrice,
+    basePrice,
+    packageDiscount,
+    finalPrice
+  };
 }
 
 /**

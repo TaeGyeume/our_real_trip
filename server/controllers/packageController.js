@@ -307,60 +307,80 @@ exports.getPackageById = async (req, res) => {
   try {
     const {id} = req.params;
 
+    // 패키지 정보 조회 및 필요한 데이터 populate
     const packageData = await Package.findById(id)
       .populate({
         path: 'accommodations',
-        // 방(room)에서 roomType, pricePerNight를 보고 싶다면 select 문 추가
         populate: {
           path: 'rooms',
           select: 'roomType pricePerNight name'
         }
       })
       .populate({
-        path: 'flights.flightId',
-        // 항공편에서 보고 싶은 필드 추가
+        path: 'flights.flightId', // 항공편 상세 정보 가져오기
         select: 'flightNumber airline price departureDate'
       })
-      // 투어티켓에서 title, price, images를 보고 싶다면
-      .populate('tours', 'title price images');
+      .populate('tours', 'title price images'); // 투어 정보
 
     if (!packageData) {
       return res.status(404).json({message: '패키지를 찾을 수 없습니다.'});
     }
 
-    // flightId가 없을 경우 대비
-    packageData.flights = packageData.flights.map(flight => ({
-      ...flight,
-      flightId: flight.flightId || {}
-    }));
+    //  1) 객실(Room) 가격 계산 (숙박 일수 포함)
+    let totalRoomPrice = 0;
+    if (
+      packageData.roomIds.length > 0 &&
+      packageData.startDates.length > 0 &&
+      packageData.endDates.length > 0
+    ) {
+      for (let i = 0; i < packageData.roomIds.length; i++) {
+        const roomId = packageData.roomIds[i];
+        const startDate = new Date(packageData.startDates[i]);
+        const endDate = new Date(packageData.endDates[i]);
 
-    // 객실 가격 총합
-    const totalRoomPrice = packageData.accommodations.reduce((sum, acc) => {
-      return (
-        sum + acc.rooms.reduce((roomSum, room) => roomSum + (room.pricePerNight || 0), 0)
-      );
+        // 숙박 일수 계산 (최소 1박 보장)
+        const nights = Math.max(
+          1,
+          Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
+        );
+
+        // 해당 객실 정보 가져오기
+        const room = await Room.findById(roomId);
+        if (room) {
+          totalRoomPrice += (room.pricePerNight || 0) * nights;
+        }
+      }
+    }
+
+    //  2) 항공 가격 계산 (좌석 수 포함)
+    let totalFlightPrice = packageData.flights.reduce((sum, flight) => {
+      return sum + (flight.flightId?.price || 0) * (flight.seatsToUse || 1);
     }, 0);
 
-    // 항공 가격
-    const totalFlightPrice = packageData.flights.reduce((sum, flight) => {
-      return sum + (flight.flightId.price || 0) * (flight.seatsToUse || 1);
-    }, 0);
-
-    // 투어티켓 가격 (quantity가 없으면 1로 처리)
-    const totalTourPrice = packageData.tours.reduce((sum, tour) => {
-      const qty = tour.quantity || 1;
+    //  3) 투어 가격 계산 (quantity 고려)
+    let totalTourPrice = packageData.tours.reduce((sum, tour) => {
+      const qty = tour.quantity || 1; // 만약 quantity가 없다면 기본 1개
       return sum + (tour.price || 0) * qty;
     }, 0);
 
-    // 기본 가격
+    //  4) 기본 가격 (할인 전)
     const basePrice = totalRoomPrice + totalFlightPrice + totalTourPrice;
 
-    // 패키지 할인
+    //  5) 할인 적용
     const discountRate = packageData.discountRate || 0;
-    const packageDiscount = Math.floor((basePrice * discountRate) / 100);
+    const packageDiscount = Math.round((basePrice * discountRate) / 100);
     const finalPrice = Math.max(basePrice - packageDiscount, 0);
 
-    // 응답
+    console.log(`
+    🔹 [DEBUG] 객실 가격: ${totalRoomPrice}
+    🔹 [DEBUG] 항공 가격: ${totalFlightPrice}
+    🔹 [DEBUG] 투어 가격: ${totalTourPrice}
+    🔹 [DEBUG] basePrice (총 가격): ${basePrice}
+    🔹 [DEBUG] 패키지 할인 (${discountRate}%): -${packageDiscount}
+    🔹 [DEBUG] 최종 결제 금액 (finalPrice): ${finalPrice}
+    `);
+
+    // 최종 응답 데이터
     res.json({
       ...packageData.toObject(),
       totalRoomPrice,
