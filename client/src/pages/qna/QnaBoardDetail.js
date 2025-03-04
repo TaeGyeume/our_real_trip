@@ -10,6 +10,8 @@ import {
 import {getUserProfile} from '../../api/user/user'; //  사용자 정보 조회 API
 import './styles/QnaBoardDetail.css'; // 스타일 파일 (별도로 생성 필요)
 
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+
 const QnaBoardDetail = () => {
   const {qnaBoardId} = useParams();
   // console.log(' QnA 게시글 ID:', qnaBoardId);
