@@ -77,7 +77,10 @@ const AccommodationCard = ({
   };
 
   // 이미지 URL 변환 로직 추가
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
   let imageUrl = accommodation.images?.[0] || '/default-image.jpg';
 
   // 이미지가 상대 경로(`/uploads/...`)일 경우, 서버 주소 추가

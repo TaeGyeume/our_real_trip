@@ -1,6 +1,10 @@
 import {io} from 'socket.io-client';
 
-const SOCKET_SERVER_URL = 'http://localhost:5000';
+// 환경 변수에서 SOCKET_SERVER_URL 가져오기
+const SOCKET_SERVER_URL =
+  process.env.REACT_APP_ENV === 'production'
+    ? 'https://ourrealtrip.shop' // 배포 환경 (서버 도메인)
+    : 'http://localhost:5000'; // 개발 환경 (로컬 서버)
 
 let socket;
 

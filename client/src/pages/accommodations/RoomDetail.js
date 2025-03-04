@@ -34,7 +34,11 @@ const RoomDetail = () => {
   if (error) return <div>{error}</div>;
   if (!roomData) return <div>객실 정보를 찾을 수 없습니다.</div>;
 
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   const imageUrls =
     roomData.images?.length > 0
       ? roomData.images.map(img =>

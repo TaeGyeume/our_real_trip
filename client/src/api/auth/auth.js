@@ -65,8 +65,25 @@ export const authAPI = {
     clearCookiesManually();
   },
 
-  getUserProfile: () =>
-    handleRequest(api.get('/auth/profile', requestConfig), '프로필 조회 중 오류 발생'),
+  getUserProfile: async () => {
+    try {
+      const response = await api.get('/auth/profile', requestConfig);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 400) {
+        return null; // 🚀 400 에러가 발생해도 콘솔에 표시되지 않도록 무시
+      }
+
+      if (error.response?.status === 401) {
+        console.warn('인증 실패: 자동 로그아웃 처리');
+        await authAPI.logoutUser();
+        return null;
+      }
+
+      console.error('프로필 조회 실패:', error.response?.data || error);
+      return null;
+    }
+  },
 
   checkDuplicate: data => {
     if (!data || Object.values(data).every(val => !val.trim())) {

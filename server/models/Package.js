@@ -22,11 +22,11 @@ const PackageSchema = new mongoose.Schema(
         flightId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'flight',
-          required: true
+          required: false
         },
         seatsToUse: {
           type: Number,
-          required: true,
+          required: false,
           min: 1
         }
       }
@@ -84,13 +84,14 @@ PackageSchema.index({name: 'text', description: 'text', category: 'text'});
 /**
  * ✅ 패키지 저장 전에 유효성 검증
  */
+// ✅ 🔥 여기에 `pre('save')` 훅 추가!
 PackageSchema.pre('save', function (next) {
-  const totalItems =
-    (this.accommodations ? this.accommodations.length : 0) +
-    (this.flights ? this.flights.length : 0) +
-    (this.tours ? this.tours.length : 0);
+  const accommodationCount = this.accommodations ? this.accommodations.length : 0;
+  const tourCount = this.tours ? this.tours.length : 0;
+  const flightCount = this.flights ? this.flights.length : 0;
 
-  if (totalItems < 2) {
+  // 🔥 최소 2개의 상품이 포함되었는지 확인
+  if (accommodationCount + tourCount + flightCount < 2) {
     return next(new Error('패키지는 최소 2개의 상품을 포함해야 합니다.'));
   }
 
