@@ -41,7 +41,7 @@ const UserCouponSchema = new mongoose.Schema(
   }
 );
 
-// 📌 **저장 전 한국 시간 변환 (`save` Hook)**
+// **저장 전 한국 시간 변환 (`save` Hook)**
 UserCouponSchema.pre('save', function (next) {
   this.issuedAt = moment().tz('Asia/Seoul').toDate();
   this.expiresAt = moment(this.expiresAt).tz('Asia/Seoul').toDate();
@@ -50,13 +50,13 @@ UserCouponSchema.pre('save', function (next) {
   next();
 });
 
-// 📌 **업데이트 시 한국 시간 변환 (`updateOne` Hook)**
+// **업데이트 시 한국 시간 변환 (`updateOne` Hook)**
 UserCouponSchema.pre('updateOne', function (next) {
   this.set({updatedAt: moment().tz('Asia/Seoul').toDate()});
   next();
 });
 
-// 📌 **조회 시 KST 변환된 값 제공 (Virtual 필드)**
+// **조회 시 KST 변환된 값 제공 (Virtual 필드)**
 UserCouponSchema.virtual('issuedAtKST').get(function () {
   return moment(this.issuedAt).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss');
 });
