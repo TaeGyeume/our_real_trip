@@ -84,7 +84,9 @@ const ReviewForm = () => {
           height: 8,
           borderRadius: 4,
           backgroundColor: '#eee',
-          '& .MuiLinearProgress-bar': {backgroundColor: 'dodgerblue'}
+          '& .MuiLinearProgress-bar': {
+            backgroundImage: 'linear-gradient(90deg, #0072ff,rgba(0, 242, 255, 0.78))' // 푸른 계열 + 에메랄드
+          }
         }}
       />
 
@@ -122,12 +124,21 @@ const ReviewForm = () => {
       />
 
       <div className="review-helper">
-        <h4>리뷰 작성이 어렵다면?</h4>
-        <ul>
-          <li>🌟 이 여행에서 가장 좋았던 점은?</li>
-          <li>🛑 아쉬웠던 점이 있다면?</li>
-          <li>📷 추천할 만한 포인트는?</li>
-        </ul>
+        <h4>📝 리뷰 작성이 어렵다면?</h4>
+        <div className="helper-content">
+          <div className="helper-item">
+            <span>🌟</span>
+            <p>이 여행에서 가장 좋았던 점은?</p>
+          </div>
+          <div className="helper-item">
+            <span>🛑</span>
+            <p>아쉬웠던 점이 있다면?</p>
+          </div>
+          <div className="helper-item">
+            <span>📷</span>
+            <p>추천할 만한 포인트는?</p>
+          </div>
+        </div>
       </div>
 
       <div className="upload-container">
@@ -146,7 +157,7 @@ const ReviewForm = () => {
       </div>
 
       <div className="review-preview">
-        <h3>미리보기</h3>
+        <h3 style={{color: '#555'}}>미리보기</h3>
         <div className="preview-rating">
           <Rating
             value={rating}
@@ -155,7 +166,7 @@ const ReviewForm = () => {
             size="large"
             style={{color: 'dodgerblue'}}
           />
-          <span>{rating.toFixed(1)} / 5.0</span>
+          <span style={{color: 'dodgerblue', fontWeight: 'bold'}}>{rating} / 5</span>
         </div>
         <p className="preview-text">{content || '입력한 내용이 여기에 표시됩니다.'}</p>
         <div className="preview-images">
@@ -173,9 +184,15 @@ const ReviewForm = () => {
 
       <Button
         className="submit-button"
-        variant="contained"
-        color="primary"
-        onClick={handleSubmit}>
+        onClick={handleSubmit}
+        sx={{
+          width: '100%',
+          height: '50px',
+          fontSize: '16px',
+          border: '1px solid #0072ff',
+          backgroundColor: 'rgba(0, 136, 255, 0.78)',
+          color: 'white'
+        }}>
         작성 완료
       </Button>
     </Box>
