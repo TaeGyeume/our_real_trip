@@ -396,7 +396,8 @@ const BookingForm = () => {
             <button onClick={handlePayment} className="payment-btn">
               {(
                 room.pricePerNight * formData.rooms[0].count -
-                discountAmount
+                discountAmount -
+                usedMileage
               ).toLocaleString()}
               원 결제하기
             </button>
