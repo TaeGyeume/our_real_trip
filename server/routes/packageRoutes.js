@@ -6,6 +6,7 @@ const authorizeRoles = require('../middleware/authorizeRoles'); // 별도로 가
 const Accommodation = require('../models/Accommodation'); // 숙소 모델 추가
 const TourTicket = require('../models/TourTicket'); // 투어/티켓 모델 추가
 const Flight = require('../models/Flight'); // 항공 모델 추가
+const upload = require('../middleware/uploadMiddleware'); // multer 미들웨어 (이미지 업로드)
 
 // 패키지 생성에 필요한 데이터 가져오기 (숙소, 투어/티켓, 항공)
 router.get('/create', packageController.getPackageCreateData);
@@ -15,6 +16,7 @@ router.post(
   '/',
   verifyToken,
   authorizeRoles('admin'), // 올바르게 적용
+  upload, // multer 미들웨어 적용,
   packageController.createPackage
 );
 
@@ -29,6 +31,7 @@ router.put(
   '/:id',
   verifyToken,
   authorizeRoles('admin'), // 올바르게 적용
+  upload, // multer 미들웨어 적용 (새 이미지 업로드 시)
   packageController.updatePackage
 );
 

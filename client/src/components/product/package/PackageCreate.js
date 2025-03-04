@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {
   Button,
   Checkbox,
-  FormControlLabel,
   Typography,
   Container,
   TextField,
@@ -19,15 +18,18 @@ import {
   Box,
   Card,
   CardContent,
-  CardMedia
+  CardMedia,
+  IconButton
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 import {useNavigate} from 'react-router-dom';
+import authAPI from '../../../api/auth/auth';
 
 // API
 import {createPackage, getCreatePackageData} from '../../../api/package/packageService';
 
-// 항공사 로고 예시 (원하는 이미지 경로로 수정)
+// 항공사 로고 예시
 const AIRLINE_LOGOS = {
   대한항공: '/images/logos/korean.png',
   아시아나항공: '/images/logos/asiana.png',
@@ -39,7 +41,7 @@ const AIRLINE_LOGOS = {
 };
 
 /** 항공편 카드 */
-function FlightCard({flight, isSelected, onSelect, onSeatChange}) {
+function FlightCard({flight, isSelected, onToggleFlight, onSeatChange}) {
   // 항공사 로고
   const logoSrc = AIRLINE_LOGOS[flight.airline] || '/images/logos/default.png';
 
@@ -54,17 +56,17 @@ function FlightCard({flight, isSelected, onSelect, onSeatChange}) {
       />
 
       <CardContent sx={{flex: 1}}>
-        <Typography variant="h6" component="div" gutterBottom>
+        <Typography variant="h6" gutterBottom>
           {flight.flightNumber} - {flight.airline}
         </Typography>
-        <Typography variant="body2" component="div" color="text.secondary">
+        <Typography variant="body2" color="text.secondary">
           날짜: {flight.departureDate || '정보 없음'} / 가격:{' '}
           {flight.price?.toLocaleString() ?? 0}원 / 잔여석: {flight.seatsAvailable ?? 0}석
         </Typography>
       </CardContent>
 
-      {/* 선택된 항공이면 좌석 수 입력 노출 */}
-      {isSelected ? (
+      {/* 이미 선택된 항공이면 좌석 수 입력 노출 */}
+      {isSelected && (
         <TextField
           label="좌석 수"
           type="number"
@@ -73,19 +75,18 @@ function FlightCard({flight, isSelected, onSelect, onSeatChange}) {
           value={isSelected.seatsToUse}
           onChange={e => onSeatChange(flight._id, e.target.value)}
         />
-      ) : null}
+      )}
 
       <Button
         variant={isSelected ? 'contained' : 'outlined'}
-        color="primary"
-        onClick={() => onSelect(flight)}>
+        onClick={() => onToggleFlight(flight)}>
         {isSelected ? '선택 해제' : '선택'}
       </Button>
     </Card>
   );
 }
 
-const PackageCreate = () => {
+export default function PackageCreate() {
   const navigate = useNavigate();
 
   // 1) API에서 불러올 상품들 (숙소, 투어/티켓, 항공)
@@ -94,17 +95,23 @@ const PackageCreate = () => {
   const [flights, setFlights] = useState([]);
 
   // 2) 선택 상태
-  const [selectedAccommodations, setSelectedAccommodations] = useState([]);
+  //    - 숙소 & 방: { [accId]: [roomId1, roomId2, ...] }
   const [selectedRooms, setSelectedRooms] = useState({});
+  //    - 투어/티켓: 배열( [tourId1, tourId2, ...] )
   const [selectedTourTickets, setSelectedTourTickets] = useState([]);
+  //    - 항공: [ { flightId, seatsToUse }, ... ]
   const [selectedFlights, setSelectedFlights] = useState([]);
+
+  // 별도로 숙소 id 목록을 저장하기보다, 'Object.keys(selectedRooms)' 등으로 숙소 id를 알 수 있음
+  // (필요하다면 selectedAccommodations 등으로 중복 저장 가능)
 
   // 3) 패키지 기본 정보
   const [packageName, setPackageName] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
   const [discountRate, setDiscountRate] = useState(0);
-  const [packageQuantity, setPackageQuantity] = useState(1);
-  const [packageImages, setPackageImages] = useState([]); // 이미지 업로드용
+
+  // ✅ 이미지 업로드용 (미리보기 & 제거 가능)
+  const [packageImages, setPackageImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // 모달 열림/닫힘 상태
@@ -121,9 +128,9 @@ const PackageCreate = () => {
   const [flightPage, setFlightPage] = useState(1);
   const flightsPerPage = 5;
 
-  // ------------------------------
-  // A) 데이터 로드
-  // ------------------------------
+  /**
+   * A) 데이터 로드
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -138,16 +145,22 @@ const PackageCreate = () => {
     fetchData();
   }, []);
 
-  // ------------------------------
-  // B) 이미지 업로드 핸들러
-  // ------------------------------
+  /**
+   * B) 이미지 업로드 핸들러
+   */
   const handleImageChange = e => {
-    setPackageImages([...e.target.files]);
+    // 새로 선택한 파일들을 state에 추가
+    setPackageImages(prev => [...prev, ...Array.from(e.target.files)]);
   };
 
-  // ------------------------------
-  // C) 모달 열기/닫기
-  // ------------------------------
+  // 미리보기 제거
+  const handleRemoveImage = index => {
+    setPackageImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  /**
+   * C) 모달 열기/닫기
+   */
   const handleOpenAccommodationModal = () => setOpenAccommodationModal(true);
   const handleCloseAccommodationModal = () => setOpenAccommodationModal(false);
 
@@ -163,47 +176,71 @@ const PackageCreate = () => {
   const handleOpenFlightModal = () => setOpenFlightModal(true);
   const handleCloseFlightModal = () => setOpenFlightModal(false);
 
-  // ------------------------------
-  // D) 숙소 & 방 선택 로직
-  // ------------------------------
-  /** 숙소 클릭 시 -> 방 모달 오픈 (숙소만 선택 불가) */
-  const handleSelectAccommodation = acc => {
-    setCurrentAccommodation(acc);
-    setOpenRoomModal(true);
+  /**
+   * D) 숙소 & 방 선택 로직
+   */
+  // 방 토글: 이미 있으면 해제, 없으면 추가
+  const toggleRoomSelection = (accId, roomId) => {
+    setSelectedRooms(prev => {
+      const oldRooms = prev[accId] || [];
+      const isSelected = oldRooms.includes(roomId);
+      let newRooms;
+      if (isSelected) {
+        // 이미 선택된 방 -> 해제
+        newRooms = oldRooms.filter(r => r !== roomId);
+      } else {
+        // 미선택 방 -> 추가
+        newRooms = [...oldRooms, roomId];
+      }
+      return {
+        ...prev,
+        [accId]: newRooms
+      };
+    });
   };
 
-  /** 방 선택 -> 숙소 & 방 모두 선택 처리 */
-  const handleSelectRoom = (accId, roomId) => {
-    // 1) 방 ID 저장
-    setSelectedRooms(prev => ({...prev, [accId]: roomId}));
-    // 2) 숙소 배열에도 추가 (중복 방지)
-    setSelectedAccommodations(prev => (prev.includes(accId) ? prev : [...prev, accId]));
-    setOpenRoomModal(false);
+  // 숙소 전체 해제
+  const handleRemoveAccommodation = accId => {
+    setSelectedRooms(prev => {
+      const newObj = {...prev};
+      delete newObj[accId];
+      return newObj;
+    });
   };
 
-  // ------------------------------
-  // E) 투어/티켓 선택 로직
-  // ------------------------------
-  const toggleTourTicketSelection = id => {
-    setSelectedTourTickets(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
+  /**
+   * E) 투어/티켓 선택 로직
+   */
+  // 투어 토글
+  const toggleTourTicketSelection = tourId => {
+    setSelectedTourTickets(prev => {
+      const isSelected = prev.includes(tourId);
+      if (isSelected) {
+        return prev.filter(id => id !== tourId);
+      } else {
+        return [...prev, tourId];
+      }
+    });
   };
 
-  // ------------------------------
-  // F) 항공 선택 & 좌석 수 변경
-  // ------------------------------
+  /**
+   * F) 항공 선택 & 좌석 수 변경
+   */
+  // 항공 토글
   const toggleFlightSelection = flight => {
-    const exists = selectedFlights.find(f => f.flightId === flight._id);
-    if (exists) {
-      // 이미 선택된 항공이면 해제
-      setSelectedFlights(prev => prev.filter(f => f.flightId !== flight._id));
-    } else {
-      // 새로 선택 (flight._id는 문자열로 전달됨)
-      setSelectedFlights(prev => [...prev, {flightId: flight._id, seatsToUse: 1}]);
-    }
+    setSelectedFlights(prev => {
+      const exists = prev.find(f => f.flightId === flight._id);
+      if (exists) {
+        // 이미 선택 -> 해제
+        return prev.filter(f => f.flightId !== flight._id);
+      } else {
+        // 새 선택
+        return [...prev, {flightId: flight._id, seatsToUse: 1}];
+      }
+    });
   };
 
+  // 항공 좌석 수 변경
   const handleFlightSeatChange = (flightId, value) => {
     setSelectedFlights(prev =>
       prev.map(f => (f.flightId === flightId ? {...f, seatsToUse: Number(value)} : f))
@@ -224,34 +261,51 @@ const PackageCreate = () => {
     flightPage * flightsPerPage
   );
 
-  /** 이미 선택된 항공인지 체크 */
   const findSelectedFlight = flightId =>
     selectedFlights.find(f => f.flightId === flightId);
 
-  // ------------------------------
-  // G) 패키지 생성
-  // ------------------------------
+  /**
+   * G) 패키지 생성
+   */
   const handleSubmit = async () => {
     setLoading(true);
-
-    // 이미지 업로드를 하려면 FormData + 백엔드 multer 등이 필요
-    const newPackage = {
-      name: packageName,
-      description: packageDescription,
-      discountRate,
-      accommodations: selectedAccommodations,
-      rooms: selectedRooms,
-      tours: selectedTourTickets,
-      flights: selectedFlights,
-      quantity: packageQuantity,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      category: 'Tour Package',
-      createdBy: '1234567890abcdef' // 예시
-    };
-
     try {
-      await createPackage(newPackage);
+      // 로그인 사용자
+      const userProfile = await authAPI.getUserProfile();
+      if (!userProfile || !userProfile._id) {
+        console.error('[ERROR] 로그인 정보를 가져올 수 없습니다.');
+        setLoading(false);
+        return;
+      }
+
+      // FormData 준비
+      const formData = new FormData();
+      formData.append('name', packageName);
+      formData.append('description', packageDescription);
+      formData.append('discountRate', discountRate);
+      formData.append('startDate', '2025-01-01');
+      formData.append('endDate', '2025-12-31');
+      formData.append('category', 'Tour Package');
+      formData.append('createdBy', userProfile._id);
+
+      // 숙소 & 방: accommodations -> Object.keys(selectedRooms)
+      //           rooms -> selectedRooms (dict)
+      formData.append('accommodations', JSON.stringify(Object.keys(selectedRooms)));
+      formData.append('rooms', JSON.stringify(selectedRooms));
+
+      // 투어
+      formData.append('tours', JSON.stringify(selectedTourTickets));
+
+      // 항공
+      formData.append('flights', JSON.stringify(selectedFlights));
+
+      // 이미지 파일들
+      packageImages.forEach(file => {
+        formData.append('images', file);
+      });
+
+      // API 호출
+      await createPackage(formData);
       navigate('/packages');
     } catch (error) {
       console.error('패키지 생성 실패:', error);
@@ -260,9 +314,12 @@ const PackageCreate = () => {
     }
   };
 
-  // ------------------------------
-  // H) 렌더링: 선택된 상품들 "세로 목록"으로 표시
-  // ------------------------------
+  /**
+   * H) 렌더링: 선택된 상품들
+   */
+  // 숙소 id 배열
+  const selectedAccommodations = Object.keys(selectedRooms);
+
   return (
     <Container sx={{py: 4}}>
       <Typography variant="h4" sx={{mb: 3}}>
@@ -270,19 +327,47 @@ const PackageCreate = () => {
       </Typography>
 
       {/* 패키지 이미지 업로드 */}
-      <Typography variant="h6" component="div" sx={{mb: 1}}>
+      <Typography variant="h6" sx={{mb: 1}}>
         패키지 이미지 업로드
       </Typography>
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        onChange={handleImageChange}
-        style={{marginBottom: '16px'}}
-      />
+      <Box sx={{mb: 2}}>
+        <Button variant="outlined" component="label">
+          이미지 선택
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            hidden
+            onChange={handleImageChange}
+          />
+        </Button>
+      </Box>
+
+      {/* 미리보기 */}
+      <Box sx={{display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3}}>
+        {packageImages.map((file, idx) => {
+          const previewUrl = URL.createObjectURL(file);
+          return (
+            <Box key={idx} sx={{position: 'relative'}}>
+              <img
+                src={previewUrl}
+                alt="preview"
+                style={{width: 100, height: 100, objectFit: 'cover', borderRadius: 4}}
+              />
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleRemoveImage(idx)}
+                sx={{position: 'absolute', top: 0, right: 0}}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          );
+        })}
+      </Box>
 
       {/* 패키지 기본 정보 */}
-      <Typography variant="h6" component="div" sx={{mb: 1}}>
+      <Typography variant="h6" sx={{mb: 1}}>
         패키지명
       </Typography>
       <TextField
@@ -293,7 +378,7 @@ const PackageCreate = () => {
         sx={{mb: 2}}
       />
 
-      <Typography variant="h6" component="div" sx={{mb: 1}}>
+      <Typography variant="h6" sx={{mb: 1}}>
         설명
       </Typography>
       <TextField
@@ -306,7 +391,7 @@ const PackageCreate = () => {
         sx={{mb: 2}}
       />
 
-      <Typography variant="h6" component="div" sx={{mb: 1}}>
+      <Typography variant="h6" sx={{mb: 1}}>
         할인율
       </Typography>
       <TextField
@@ -318,17 +403,17 @@ const PackageCreate = () => {
         sx={{mb: 3}}
       />
 
-      {/* 숙소 & 방 선택 */}
+      {/* 숙소/방 선택 */}
       <Button variant="outlined" onClick={handleOpenAccommodationModal} sx={{mb: 1}}>
         숙소 및 방 선택
       </Button>
 
-      {/* (1) 선택된 숙소 세로 목록 */}
-      <Typography variant="h6" component="div" sx={{mt: 2}}>
+      {/* 숙소 목록 */}
+      <Typography variant="h6" sx={{mt: 2}}>
         선택된 숙소
       </Typography>
       {selectedAccommodations.length === 0 ? (
-        <Typography variant="body2" component="div" sx={{color: 'text.secondary'}}>
+        <Typography variant="body2" color="text.secondary">
           선택된 숙소가 없습니다.
         </Typography>
       ) : (
@@ -340,7 +425,8 @@ const PackageCreate = () => {
             const imgUrl = found.images?.[0] || '';
             const price = found.minPrice
               ? `${found.minPrice.toLocaleString()}원`
-              : '가격 없음';
+              : '가격 정보 없음';
+
             return (
               <Box key={accId} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
                 <Avatar
@@ -349,46 +435,56 @@ const PackageCreate = () => {
                   variant="square"
                   sx={{width: 40, height: 40, mr: 1}}
                 />
-                <Typography variant="body1" component="div">
+                <Typography sx={{mr: 2}}>
                   {found.name} ({price})
                 </Typography>
+                <Button
+                  variant="text"
+                  color="error"
+                  onClick={() => handleRemoveAccommodation(accId)}>
+                  전체 해제
+                </Button>
               </Box>
             );
           })}
         </Box>
       )}
 
-      {/* (2) 선택된 방 세로 목록 */}
-      <Typography variant="h6" component="div" sx={{mt: 2}}>
+      {/* 방 목록 */}
+      <Typography variant="h6" sx={{mt: 2}}>
         선택된 방
       </Typography>
-      {Object.keys(selectedRooms).length === 0 ? (
-        <Typography variant="body2" component="div" sx={{color: 'text.secondary'}}>
-          선택된 방이 없습니다.
+      {selectedAccommodations.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">
+          방도 없습니다.
         </Typography>
       ) : (
         <Box sx={{mt: 1}}>
-          {Object.entries(selectedRooms).map(([accId, roomId]) => {
+          {selectedAccommodations.map(accId => {
             const foundAcc = accommodations.find(a => a._id === accId);
-            const foundRoom = foundAcc?.rooms?.find(r => r._id === roomId);
-            if (!foundAcc || !foundRoom) {
-              return (
-                <Typography key={`${accId}-${roomId}`} component="div">
-                  {accId}:{roomId}
-                </Typography>
-              );
-            }
-            const roomPrice = foundRoom.pricePerNight
-              ? `${foundRoom.pricePerNight.toLocaleString()}원`
-              : '가격 정보 없음';
+            const roomIds = selectedRooms[accId] || [];
+            if (!foundAcc) return null;
 
             return (
-              <Box
-                key={`${accId}-${roomId}`}
-                sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                <Typography variant="body1" component="div" sx={{mr: 1}}>
-                  {foundAcc.name} - {foundRoom.name} ({roomPrice})
+              <Box key={accId} sx={{mb: 1}}>
+                <Typography sx={{fontWeight: 'bold', mb: 0.5}}>
+                  {foundAcc.name}
                 </Typography>
+                {roomIds.map(roomId => {
+                  const foundRoom = foundAcc.rooms.find(r => r._id === roomId);
+                  if (!foundRoom) return null;
+                  const roomPrice = foundRoom.pricePerNight
+                    ? `${foundRoom.pricePerNight.toLocaleString()}원`
+                    : '가격 정보 없음';
+
+                  return (
+                    <Box key={roomId} sx={{display: 'flex', alignItems: 'center', ml: 2}}>
+                      <Typography>
+                        - {foundRoom.name} ({roomPrice})
+                      </Typography>
+                    </Box>
+                  );
+                })}
               </Box>
             );
           })}
@@ -400,12 +496,12 @@ const PackageCreate = () => {
         투어/티켓 선택
       </Button>
 
-      {/* (3) 선택된 투어/티켓 세로 목록 */}
-      <Typography variant="h6" component="div" sx={{mt: 2}}>
+      {/* 선택된 투어/티켓 */}
+      <Typography variant="h6" sx={{mt: 2}}>
         선택된 투어/티켓
       </Typography>
       {selectedTourTickets.length === 0 ? (
-        <Typography variant="body2" component="div" sx={{color: 'text.secondary'}}>
+        <Typography variant="body2" color="text.secondary">
           선택된 투어/티켓이 없습니다.
         </Typography>
       ) : (
@@ -426,7 +522,7 @@ const PackageCreate = () => {
                   variant="square"
                   sx={{width: 40, height: 40, mr: 1}}
                 />
-                <Typography variant="body1" component="div">
+                <Typography>
                   {foundTour.title} ({price})
                 </Typography>
               </Box>
@@ -440,12 +536,12 @@ const PackageCreate = () => {
         항공 선택
       </Button>
 
-      {/* (4) 선택된 항공 세로 목록 */}
-      <Typography variant="h6" component="div" sx={{mt: 2}}>
+      {/* 선택된 항공 */}
+      <Typography variant="h6" sx={{mt: 2}}>
         선택된 항공
       </Typography>
       {selectedFlights.length === 0 ? (
-        <Typography variant="body2" component="div" sx={{color: 'text.secondary'}}>
+        <Typography variant="body2" color="text.secondary">
           선택된 항공이 없습니다.
         </Typography>
       ) : (
@@ -454,7 +550,7 @@ const PackageCreate = () => {
             const foundFlight = flights.find(fl => fl._id === f.flightId);
             if (!foundFlight) {
               return (
-                <Typography key={idx} component="div">
+                <Typography key={idx} color="text.secondary">
                   {f.flightId} - (데이터 없음)
                 </Typography>
               );
@@ -464,10 +560,10 @@ const PackageCreate = () => {
               ? `${foundFlight.price.toLocaleString()}원`
               : '0원';
             return (
-              <Box key={idx} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                <Typography variant="body1" component="div">
+              <Box key={idx} sx={{mb: 1}}>
+                <Typography>
                   {foundFlight.flightNumber} - {foundFlight.airline} ({flightPrice}) /{' '}
-                  {flightDate}
+                  {flightDate} / 좌석 {f.seatsToUse}
                 </Typography>
               </Box>
             );
@@ -489,16 +585,14 @@ const PackageCreate = () => {
       <Dialog
         open={openAccommodationModal}
         onClose={handleCloseAccommodationModal}
-        fullWidth
-        disableEnforceFocus
-        disableRestoreFocus>
+        fullWidth>
         <DialogTitle>숙소 목록</DialogTitle>
         <DialogContent>
           {accommodations.length > 0 ? (
             <List>
               {accommodations.map(acc => (
                 <ListItem disablePadding key={acc._id}>
-                  <ListItemButton onClick={() => handleSelectAccommodation(acc)}>
+                  <ListItemButton onClick={() => handleOpenRoomModal(acc)}>
                     {/* 숙소 이미지 */}
                     <ListItemAvatar>
                       <Avatar
@@ -513,11 +607,10 @@ const PackageCreate = () => {
                     <ListItemText
                       primaryTypographyProps={{component: 'span'}}
                       secondaryTypographyProps={{component: 'span'}}
-                      primary={`${acc.name} ${
-                        acc.minPrice
-                          ? `- ${acc.minPrice.toLocaleString()}원`
-                          : '- 가격 정보 없음'
-                      }`}
+                      primary={
+                        acc.name +
+                        (acc.minPrice ? ` - ${acc.minPrice.toLocaleString()}원` : '')
+                      }
                       secondary={acc.description || '상세 설명이 없습니다.'}
                     />
                   </ListItemButton>
@@ -525,7 +618,7 @@ const PackageCreate = () => {
               ))}
             </List>
           ) : (
-            <Typography component="div">숙소 데이터가 없습니다.</Typography>
+            <Typography>숙소 데이터가 없습니다.</Typography>
           )}
         </DialogContent>
         <DialogActions>
@@ -533,87 +626,103 @@ const PackageCreate = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 방 선택 모달 */}
-      <Dialog
-        open={openRoomModal}
-        onClose={handleCloseRoomModal}
-        fullWidth
-        disableEnforceFocus
-        disableRestoreFocus>
+      {/* 방 선택 모달: flight와 유사하게 "선택/해제" 버튼 보여주기 */}
+      <Dialog open={openRoomModal} onClose={handleCloseRoomModal} fullWidth>
         <DialogTitle>
           {currentAccommodation ? `${currentAccommodation.name} - 방 선택` : '방 선택'}
         </DialogTitle>
         <DialogContent>
           {currentAccommodation?.rooms && currentAccommodation.rooms.length > 0 ? (
             <List>
-              {currentAccommodation.rooms.map(room => (
-                <ListItemButton
-                  key={room._id}
-                  onClick={() => handleSelectRoom(currentAccommodation._id, room._id)}>
-                  <ListItemText
-                    primaryTypographyProps={{component: 'span'}}
-                    secondaryTypographyProps={{component: 'span'}}
-                    primary={room.name}
-                    secondary={
-                      room.pricePerNight
-                        ? `${room.pricePerNight.toLocaleString()}원`
-                        : '가격 정보 없음'
-                    }
-                  />
-                </ListItemButton>
-              ))}
+              {currentAccommodation.rooms.map(room => {
+                // 이미 선택된 숙소/방인지 확인
+                const accId = currentAccommodation._id;
+                const selectedRoomIds = selectedRooms[accId] || [];
+                const isSelected = selectedRoomIds.includes(room._id);
+
+                const roomPrice = room.pricePerNight
+                  ? `${room.pricePerNight.toLocaleString()}원`
+                  : '가격 정보 없음';
+
+                return (
+                  <ListItem key={room._id} disablePadding>
+                    <ListItemButton
+                      onClick={() => toggleRoomSelection(accId, room._id)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                      <ListItemText primary={`${room.name}`} secondary={roomPrice} />
+                      <Button
+                        variant={isSelected ? 'contained' : 'outlined'}
+                        size="small">
+                        {isSelected ? '선택 해제' : '선택'}
+                      </Button>
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
             </List>
           ) : (
-            <Typography sx={{color: 'text.secondary'}} component="div">
+            <Typography sx={{color: 'text.secondary'}}>
               선택 가능한 방이 없습니다.
             </Typography>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseRoomModal}>취소</Button>
+          <Button onClick={handleCloseRoomModal}>확인</Button>
         </DialogActions>
       </Dialog>
 
-      {/* 투어/티켓 선택 모달 */}
-      <Dialog
-        open={openTourModal}
-        onClose={handleCloseTourModal}
-        fullWidth
-        disableEnforceFocus
-        disableRestoreFocus>
+      {/* 투어/티켓 선택 모달: flight와 유사하게 "선택/해제" 버튼 */}
+      <Dialog open={openTourModal} onClose={handleCloseTourModal} fullWidth>
         <DialogTitle>투어/티켓 선택</DialogTitle>
         <DialogContent>
           {tourTickets.length > 0 ? (
             <List>
-              {tourTickets.map(ticket => (
-                <ListItemButton
-                  key={ticket._id}
-                  onClick={() => {
-                    toggleTourTicketSelection(ticket._id);
-                  }}>
-                  <ListItemAvatar>
-                    <Avatar
-                      src={ticket.images?.[0] || ''}
-                      alt={ticket.title}
-                      variant="square"
-                      sx={{width: 60, height: 60, mr: 1}}
-                    />
-                  </ListItemAvatar>
+              {tourTickets.map(ticket => {
+                const isSelected = selectedTourTickets.includes(ticket._id);
+                const priceText = ticket.price
+                  ? `${ticket.price.toLocaleString()}원`
+                  : '가격 정보 없음';
 
-                  <FormControlLabel
-                    control={
-                      <Checkbox checked={selectedTourTickets.includes(ticket._id)} />
-                    }
-                    label={
-                      ticket.title +
-                      (ticket.price ? ` - ${ticket.price.toLocaleString()}원` : '')
-                    }
-                  />
-                </ListItemButton>
-              ))}
+                return (
+                  <ListItem key={ticket._id} disablePadding>
+                    <ListItemButton
+                      onClick={() => toggleTourTicketSelection(ticket._id)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                      <ListItemAvatar>
+                        <Avatar
+                          src={ticket.images?.[0] || ''}
+                          alt={ticket.title}
+                          variant="square"
+                          sx={{width: 60, height: 60, mr: 1}}
+                        />
+                      </ListItemAvatar>
+
+                      <ListItemText
+                        primary={ticket.title}
+                        secondary={priceText}
+                        sx={{mr: 2}}
+                      />
+
+                      <Button
+                        variant={isSelected ? 'contained' : 'outlined'}
+                        size="small">
+                        {isSelected ? '선택 해제' : '선택'}
+                      </Button>
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
             </List>
           ) : (
-            <Typography component="div">투어 티켓 데이터가 없습니다.</Typography>
+            <Typography>투어 티켓 데이터가 없습니다.</Typography>
           )}
         </DialogContent>
         <DialogActions>
@@ -622,12 +731,7 @@ const PackageCreate = () => {
       </Dialog>
 
       {/* 항공 선택 모달 */}
-      <Dialog
-        open={openFlightModal}
-        onClose={handleCloseFlightModal}
-        fullWidth
-        disableEnforceFocus
-        disableRestoreFocus>
+      <Dialog open={openFlightModal} onClose={handleCloseFlightModal} fullWidth>
         <DialogTitle>항공 선택</DialogTitle>
         <DialogContent>
           {/* 항공 검색 */}
@@ -653,7 +757,7 @@ const PackageCreate = () => {
                     key={flight._id}
                     flight={flight}
                     isSelected={selected}
-                    onSelect={toggleFlightSelection}
+                    onToggleFlight={toggleFlightSelection}
                     onSeatChange={handleFlightSeatChange}
                   />
                 );
@@ -677,7 +781,7 @@ const PackageCreate = () => {
               </Box>
             </>
           ) : (
-            <Typography component="div">항공 데이터가 없습니다.</Typography>
+            <Typography>항공 데이터가 없습니다.</Typography>
           )}
         </DialogContent>
         <DialogActions>
@@ -686,6 +790,4 @@ const PackageCreate = () => {
       </Dialog>
     </Container>
   );
-};
-
-export default PackageCreate;
+}

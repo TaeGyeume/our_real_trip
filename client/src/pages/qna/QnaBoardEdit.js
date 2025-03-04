@@ -27,6 +27,8 @@ import {
 } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css'; // (선택 사항: Bootstrap을 사용한다면)
 
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+
 const QnaBoardEdit = () => {
   const {qnaBoardId} = useParams();
   const navigate = useNavigate();
@@ -100,9 +102,7 @@ const QnaBoardEdit = () => {
         });
 
         // 기존 이미지 경로를 "http://localhost:5000/...경로" 형태로 전환
-        const oldImageURLs = (data.images || []).map(
-          path => `http://localhost:5000${path}`
-        );
+        const oldImageURLs = (data.images || []).map(path => `${SERVER_URL}/${path}`);
         setPreviewImages(oldImageURLs);
 
         setLoading(false);
