@@ -99,7 +99,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/product', productRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/tourTicket', userTourTicketRoutes);
-app.use('/booking', bookingRoutes);
+app.use('/api/booking', bookingRoutes);
 app.use('/api/qna', qnaRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/api', routes);

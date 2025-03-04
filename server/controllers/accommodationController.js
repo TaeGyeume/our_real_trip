@@ -260,7 +260,26 @@ exports.getNearbyAccommodations = async (req, res) => {
 
     res.status(200).json(accommodations);
   } catch (error) {
-    console.error('🚨 주변 숙소 조회 오류:', error);
+    console.error('주변 숙소 조회 오류:', error);
     res.status(500).json({error: error.message});
+  }
+};
+
+// 숙소의 평균 평점을 업데이트하는 API
+exports.updateRating = async (req, res) => {
+  try {
+    const {id} = req.params;
+
+    // 숙소의 평점 업데이트
+    const updatedRating = await accommodationService.updateAccommodationRating(id);
+
+    res.json({
+      message: '숙소 평점이 업데이트되었습니다.',
+      rating: updatedRating
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({message: '숙소 평점 업데이트 중 오류 발생', error: error.message});
   }
 };

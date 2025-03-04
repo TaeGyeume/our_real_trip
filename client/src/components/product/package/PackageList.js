@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {getPackages, deletePackage} from '../../../api/package/packageService';
+import {getPackages} from '../../../api/package/packageService';
 import {
   Container,
   Typography,
@@ -8,21 +8,22 @@ import {
   CardContent,
   CardMedia,
   Grid,
-  Box,
+  TextField,
   Button,
-  Pagination
+  Pagination,
+  Box,
+  Chip,
+  Stack
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
+import HotelIcon from '@mui/icons-material/Hotel';
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 
-// 서버 주소
-const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// 이미지 경로 정규화
+// 헬퍼 함수: 이미지 경로 정규화 (역슬래시를 슬래시로 변환하고, 앞에 '/' 추가)
 const normalizeImagePath = path => {
-  // 역슬래시 -> 슬래시
   let newPath = path.replace(/\\/g, '/');
-  // 앞에 '/' 없으면 추가
   if (!newPath.startsWith('/')) {
     newPath = '/' + newPath;
   }
@@ -30,18 +31,14 @@ const normalizeImagePath = path => {
 };
 
 const PackageList = () => {
-  const navigate = useNavigate();
-
-  // 패키지 목록 상태
   const [packages, setPackages] = useState([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // 페이지네이션 상태
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const navigate = useNavigate();
 
-  // 패키지 목록 불러오기
   useEffect(() => {
     fetchPackages();
     // eslint-disable-next-line
@@ -51,10 +48,7 @@ const PackageList = () => {
     try {
       setLoading(true);
       setError(null);
-
-      // 한 페이지당 6개씩
-      const data = await getPackages(page, 6);
-
+      const data = await getPackages(page, 6, search);
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
         setTotalPages(data.totalPages || 1);
@@ -62,161 +56,153 @@ const PackageList = () => {
         console.error('서버 응답이 올바르지 않음:', data);
         setError('서버 응답이 올바르지 않습니다.');
       }
-    } catch (err) {
-      console.error('패키지 목록 불러오기 실패:', err);
+    } catch (error) {
+      console.error('패키지 목록 불러오기 실패:', error);
       setError('패키지를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 상세보기
-  const handleDetail = id => {
-    navigate(`/package/${id}`);
+  const handleSearch = () => {
+    setPage(1);
+    fetchPackages();
   };
 
-  // 수정
-  const handleEdit = id => {
-    navigate(`/packages/${id}/edit`);
-  };
-
-  // 삭제
-  const handleDelete = async id => {
-    if (!window.confirm('정말 이 패키지를 삭제하시겠습니까?')) return;
-
-    try {
-      await deletePackage(id);
-      alert('패키지가 삭제되었습니다.');
-      fetchPackages(); // 삭제 후 목록 재호출
-    } catch (err) {
-      console.error('패키지 삭제 실패:', err);
-      alert('패키지 삭제 중 오류가 발생했습니다.');
+  // 포함된 서비스(항공, 숙박, 투어) 정보를 추출하는 함수
+  const getIncludedCategories = pkg => {
+    const categories = [];
+    if (pkg.flights && pkg.flights.length > 0) {
+      categories.push({label: '항공', icon: <FlightTakeoffIcon />});
     }
+    if (pkg.accommodations && pkg.accommodations.length > 0) {
+      categories.push({label: '숙박/숙소', icon: <HotelIcon />});
+    }
+    if (pkg.tours && pkg.tours.length > 0) {
+      categories.push({label: '투어/티켓', icon: <ConfirmationNumberIcon />});
+    }
+    return categories.slice(0, 3); // 최대 3개까지만 표시
   };
 
   return (
-    <Box sx={{py: 2}}>
-      <Container maxWidth="lg">
-        {/* 제목 왼쪽 정렬 */}
-        <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
-          패키지 목록
+    <Box sx={{minHeight: '100vh'}}>
+      <Container sx={{maxWidth: '1000px'}}>
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{fontWeight: 'bold', textAlign: 'center', mt: 4}}>
+          ✈️ 여행 패키지 검색
         </Typography>
 
+        {/* 검색 바 */}
+        <Box display="flex" gap={1} sx={{mb: 3, justifyContent: 'center'}}>
+          <TextField
+            label="여행지를 검색하세요..."
+            variant="outlined"
+            fullWidth
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            sx={{maxWidth: 400}}
+          />
+          <Button variant="contained" color="primary" onClick={handleSearch}>
+            검색
+          </Button>
+        </Box>
+
+        {/* 로딩/에러 처리 */}
         {loading ? (
-          <Typography variant="h6">로딩 중...</Typography>
+          <Typography variant="h6" align="center">
+            로딩 중...
+          </Typography>
         ) : error ? (
-          <Typography variant="h6" color="error">
+          <Typography variant="h6" align="center" color="error">
             {error}
           </Typography>
         ) : packages.length === 0 ? (
-          <Typography variant="h6">등록된 패키지가 없습니다.</Typography>
+          <Typography variant="h6" align="center">
+            등록된 패키지가 없습니다.
+          </Typography>
         ) : (
           <>
-            {/* 카드들을 왼쪽 정렬로 나열 */}
-            <Grid container spacing={2} justifyContent="flex-start">
+            {/* 패키지 리스트 */}
+            <Grid container spacing={2} justifyContent="center">
               {packages.map(pkg => {
-                // 메인 이미지
                 const mainImage =
                   pkg.images && pkg.images.length > 0
-                    ? SERVER_URL + normalizeImagePath(pkg.images[0])
+                    ? `${SERVER_URL}${normalizeImagePath(pkg.images[0])}`
                     : '/default-image.jpg';
 
                 return (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={pkg._id}>
+                  <Grid item xs={12} key={pkg._id}>
                     <Card
                       sx={{
-                        maxWidth: 280,
-                        borderRadius: 3,
-                        boxShadow: 3,
-                        mb: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        p: 2,
                         transition: '0.3s',
-                        cursor: 'pointer',
-                        '&:hover': {boxShadow: 6}
-                      }}>
-                      {/* 이미지 (클릭 시 상세보기 이동) */}
+                        '&:hover': {boxShadow: 5}
+                      }}
+                      onClick={() => navigate(`/package/${pkg._id}`)}>
+                      {/* 왼쪽 이미지 */}
                       <CardMedia
                         component="img"
-                        height="200"
+                        sx={{width: 180, height: 120, borderRadius: 2}}
                         image={mainImage}
-                        alt={pkg.name}
-                        onClick={() => handleDetail(pkg._id)}
+                        alt={`패키지 ${pkg.name}`}
                       />
 
-                      {/* 카드 내용 */}
-                      <CardContent>
-                        <Typography variant="h6" fontWeight="bold" sx={{mb: 1}}>
+                      {/* 오른쪽 텍스트 정보 */}
+                      <CardContent sx={{flex: 1, pl: 2}}>
+                        <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
                           {pkg.name}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
+
+                        {/* 포함된 서비스 표시 */}
+                        <Stack direction="row" spacing={1} sx={{mt: 1, mb: 1}}>
+                          {getIncludedCategories(pkg).map((category, index) => (
+                            <Chip
+                              key={index}
+                              icon={category.icon}
+                              label={category.label}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
+                          ))}
+                        </Stack>
+
+                        {/* 상세 정보 */}
+                        <Typography variant="body2" color="text.secondary">
                           {pkg.description.length > 80
-                            ? pkg.description.substring(0, 80) + '...'
+                            ? `${pkg.description.substring(0, 80)}...`
                             : pkg.description}
                         </Typography>
 
                         {/* 가격 정보 */}
-                        {pkg.discountRate > 0 ? (
-                          <>
-                            <Typography
-                              variant="body2"
-                              sx={{textDecoration: 'line-through', color: 'gray'}}>
-                              {pkg.price.toLocaleString()}원
-                            </Typography>
-                            <Typography
-                              variant="h6"
-                              sx={{fontWeight: 'bold', color: 'red'}}>
+                        <Box display="flex" alignItems="center" gap={1} sx={{mt: 1}}>
+                          {pkg.discountRate > 0 ? (
+                            <>
+                              <Typography
+                                variant="body2"
+                                sx={{textDecoration: 'line-through', color: 'gray'}}>
+                                {pkg.price.toLocaleString()}원
+                              </Typography>
+                              <Typography
+                                variant="h6"
+                                sx={{fontWeight: 'bold', color: 'red'}}>
+                                {pkg.finalPrice.toLocaleString()}원
+                              </Typography>
+                              <Typography variant="caption" sx={{color: 'blue'}}>
+                                ({pkg.discountRate}% 할인)
+                              </Typography>
+                            </>
+                          ) : (
+                            <Typography variant="h6" sx={{fontWeight: 'bold'}}>
                               {pkg.finalPrice.toLocaleString()}원
                             </Typography>
-                            <Typography variant="caption" sx={{color: 'blue'}}>
-                              ({pkg.discountRate}% 할인)
-                            </Typography>
-                          </>
-                        ) : (
-                          <Typography variant="h6" sx={{fontWeight: 'bold'}}>
-                            {pkg.finalPrice.toLocaleString()}원
-                          </Typography>
-                        )}
+                          )}
+                        </Box>
                       </CardContent>
-
-                      {/* 수정/삭제 버튼 */}
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          px: 2,
-                          pb: 2
-                        }}>
-                        {/* 수정 버튼 (오렌지색) */}
-                        <Button
-                          variant="contained"
-                          size="small"
-                          sx={{
-                            bgcolor: '#f57c00',
-                            '&:hover': {bgcolor: '#ef6c00'}
-                          }}
-                          startIcon={<EditIcon />}
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleEdit(pkg._id);
-                          }}>
-                          수정
-                        </Button>
-
-                        {/* 삭제 버튼 (빨간색) */}
-                        <Button
-                          variant="contained"
-                          size="small"
-                          sx={{
-                            bgcolor: '#d32f2f',
-                            '&:hover': {bgcolor: '#c62828'}
-                          }}
-                          startIcon={<DeleteIcon />}
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleDelete(pkg._id);
-                          }}>
-                          삭제
-                        </Button>
-                      </Box>
                     </Card>
                   </Grid>
                 );
@@ -229,7 +215,7 @@ const PackageList = () => {
               page={page}
               onChange={(event, value) => setPage(value)}
               color="primary"
-              sx={{mt: 2}}
+              sx={{mt: 4, display: 'flex', justifyContent: 'center'}}
             />
           </>
         )}

@@ -1,5 +1,5 @@
 // src/components/CouponSelector.js
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   Box,
   Typography,
@@ -22,31 +22,35 @@ const CouponSelector = ({userCoupons, itemPrice, count, onCouponSelect}) => {
     coupon => new Date(coupon.expiresAt) > Date.now()
   );
 
+  // 할인 금액 계산 함수를 useCallback으로 최적화
+  const calculateDiscount = useCallback(
+    coupon => {
+      if (!coupon) return 0;
+
+      let discount = 0;
+      const originalPrice = itemPrice * count;
+
+      if (coupon.coupon.discountType === 'percentage') {
+        discount = (originalPrice * coupon.coupon.discountValue) / 100;
+
+        if (coupon.coupon.maxDiscountAmount > 0) {
+          discount = Math.min(discount, coupon.coupon.maxDiscountAmount);
+        }
+      } else if (coupon.coupon.discountType === 'fixed') {
+        discount = coupon.coupon.discountValue || 0;
+      }
+
+      return discount;
+    },
+    [itemPrice, count] // itemPrice와 count가 변경될 때만 재생성
+  );
+
   useEffect(() => {
     if (selectedCoupon) {
       const selected = validCoupons.find(c => c._id === selectedCoupon);
       setDiscountAmount(calculateDiscount(selected));
     }
-  }, [selectedCoupon, count]);
-
-  const calculateDiscount = coupon => {
-    if (!coupon) return 0;
-
-    let discount = 0;
-    const originalPrice = itemPrice * count;
-
-    if (coupon.coupon.discountType === 'percentage') {
-      discount = (originalPrice * coupon.coupon.discountValue) / 100;
-
-      if (coupon.coupon.maxDiscountAmount > 0) {
-        discount = Math.min(discount, coupon.coupon.maxDiscountAmount);
-      }
-    } else if (coupon.coupon.discountType === 'fixed') {
-      discount = coupon.coupon.discountValue || 0;
-    }
-
-    return discount;
-  };
+  }, [selectedCoupon, validCoupons, calculateDiscount]);
 
   const handleCouponChange = event => {
     const selectedId = event.target.value;

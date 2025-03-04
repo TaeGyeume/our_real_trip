@@ -16,7 +16,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 // 서버 주소
-const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // 이미지 경로 정규화
 const normalizeImagePath = path => {

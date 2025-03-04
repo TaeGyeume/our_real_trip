@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const RefreshToken = require('../models/RefreshToken');
 const User = require('../models/User');
 
-// 🔹 인증이 필요하지 않은 API 목록 (조회용 API는 로그인 없이 접근 가능)
+//  인증이 필요하지 않은 API 목록 (조회용 API는 로그인 없이 접근 가능)
 const PUBLIC_ROUTES = ['/api/favorites', '/api/public-data'];
 
 const authMiddleware = async (req, res, next) => {
