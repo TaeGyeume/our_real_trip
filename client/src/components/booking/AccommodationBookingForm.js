@@ -72,7 +72,10 @@ const BookingForm = () => {
     fetchRoom();
   }, [roomId]);
 
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
 
   // room이 null이면 빈 배열을 반환하여 안전하게 처리
   let imageUrl = room?.images?.[0] || '/default-image.jpg';

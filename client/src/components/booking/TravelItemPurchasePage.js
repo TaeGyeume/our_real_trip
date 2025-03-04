@@ -29,6 +29,18 @@ const TravelItemPurchaseForm = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [openAlert, setOpenAlert] = useState(false);
 
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
+  // room이 null이면 빈 배열을 반환하여 안전하게 처리
+  let imageUrl = item?.images?.[0] || '/default-image.jpg';
+
+  if (imageUrl?.startsWith('/uploads/')) {
+    imageUrl = `${SERVER_URL}${imageUrl}`;
+  }
+
   useEffect(() => {
     const fetchItem = async () => {
       try {
@@ -180,13 +192,12 @@ const TravelItemPurchaseForm = () => {
           <div className="booking-details">
             <div className="ticket-info">
               <div className="ticket-header">
-                {/* {ticket.images && ticket.images.length > 0 && (
-                  <img
-                    src={`http://localhost:5000${ticket.images[0]}`}
-                    alt="투어 티켓 썸네일"
-                    className="ticket-thumbnail"
-                  />
-                )} */}
+                <img
+                  src={imageUrl}
+                  alt="상품 이미지"
+                  onError={e => (e.target.src = '/default-image.jpg')}
+                  className="ticket-thumbnail"
+                />
 
                 <div className="ticket-text">{item.name}</div>
               </div>

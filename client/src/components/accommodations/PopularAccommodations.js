@@ -27,13 +27,15 @@ const PopularAccommodations = () => {
     loadPopularAccommodations();
   }, []);
 
+  const isSliderActive = accommodations.length > 3;
+
   // lick Slider 설정
   const settings = {
     dots: true,
     infinite: true,
     speed: 500,
-    slidesToShow: 4,
-    slidesToScroll: 4,
+    slidesToShow: isSliderActive ? 4 : accommodations.length, // 데이터 개수만큼만 표시
+    slidesToScroll: isSliderActive ? 4 : 1,
     arrows: false, // 기본 화살표 버튼 숨김
     responsive: [
       {
@@ -64,44 +66,54 @@ const PopularAccommodations = () => {
           <CircularProgress />
         </Box>
       ) : accommodations.length > 0 ? (
-        <Box sx={{position: 'relative'}}>
-          {/* 왼쪽 버튼 */}
-          <IconButton
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '-50px',
-              transform: 'translateY(-50%)',
-              zIndex: 2
-            }}
-            onClick={() => sliderRef.current.slickPrev()}>
-            <ArrowBackIos />
-          </IconButton>
+        isSliderActive ? (
+          // 숙소 개수가 충분하면 슬라이더 활성화
+          <Box sx={{position: 'relative'}}>
+            {/* 왼쪽 버튼 */}
+            <IconButton
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '-50px',
+                transform: 'translateY(-50%)',
+                zIndex: 2
+              }}
+              onClick={() => sliderRef.current.slickPrev()}>
+              <ArrowBackIos />
+            </IconButton>
 
-          {/* 슬라이더 */}
-          <Slider ref={sliderRef} {...settings}>
+            {/* 슬라이더 */}
+            <Slider ref={sliderRef} {...settings}>
+              {accommodations.map(acc => (
+                <Box key={acc._id} sx={{px: 1}}>
+                  <AccommodationCard accommodation={acc} />
+                </Box>
+              ))}
+            </Slider>
+
+            {/* 오른쪽 버튼 */}
+            <IconButton
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                right: '-50px',
+                transform: 'translateY(-50%)',
+                zIndex: 2
+              }}
+              onClick={() => sliderRef.current.slickNext()}>
+              <ArrowForwardIos />
+            </IconButton>
+          </Box>
+        ) : (
+          // 숙소 개수가 적으면 일반 리스트로 표시
+          <Box sx={{display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap'}}>
             {accommodations.map(acc => (
-              <Box key={acc._id} sx={{px: 1}}>
-                {' '}
-                {/* 슬라이드 간격 조정 */}
+              <Box key={acc._id} sx={{width: '300px'}}>
                 <AccommodationCard accommodation={acc} />
               </Box>
             ))}
-          </Slider>
-
-          {/* 오른쪽 버튼 */}
-          <IconButton
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              right: '-50px',
-              transform: 'translateY(-50%)',
-              zIndex: 2
-            }}
-            onClick={() => sliderRef.current.slickNext()}>
-            <ArrowForwardIos />
-          </IconButton>
-        </Box>
+          </Box>
+        )
       ) : (
         <Typography variant="body1" textAlign="center" sx={{mt: 4}}>
           조회수가 높은 숙소가 없습니다.
