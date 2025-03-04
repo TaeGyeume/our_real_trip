@@ -29,16 +29,16 @@ const AdBanner = ({banners}) => {
         width: '100%',
         maxWidth: '1200px',
         margin: '20px auto 0',
-        overflow: 'visible' // ✅ 부모 컨테이너는 visible 유지
+        overflow: 'visible' //  부모 컨테이너는 visible 유지
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}>
-      {/* ✅ 배너를 감싸는 컨테이너 (배너만 hidden) */}
+      {/*  배너를 감싸는 컨테이너 (배너만 hidden) */}
       <div
         style={{
           position: 'relative',
           borderRadius: '12px',
-          overflow: 'hidden' // ✅ 배너만 hidden
+          overflow: 'hidden' //  배너만 hidden
         }}>
         {/* 배너 슬라이드 컨테이너 */}
         <div
@@ -64,13 +64,13 @@ const AdBanner = ({banners}) => {
         </div>
       </div>
 
-      {/* ✅ 버튼을 배너 밖에서도 보이게 배치 */}
+      {/*  버튼을 배너 밖에서도 보이게 배치 */}
       <IconButton
         onClick={handlePrev}
         style={{
           position: 'absolute',
           top: '50%',
-          left: '-24px', // ✅ 배너 밖으로 이동
+          left: '-24px', //  배너 밖으로 이동
           transform: 'translateY(-50%)',
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           borderRadius: '50%',
@@ -79,7 +79,7 @@ const AdBanner = ({banners}) => {
           opacity: isHovered ? 1 : 0,
           transition: 'opacity 0.3s ease-in-out',
           boxShadow: '0px 4px 10px',
-          zIndex: 20 // ✅ 버튼이 배너 위에 나타나도록 설정
+          zIndex: 20 //  버튼이 배너 위에 나타나도록 설정
         }}>
         <ChevronLeft />
       </IconButton>
@@ -89,7 +89,7 @@ const AdBanner = ({banners}) => {
         style={{
           position: 'absolute',
           top: '50%',
-          right: '-24px', // ✅ 배너 밖으로 이동
+          right: '-24px', //  배너 밖으로 이동
           transform: 'translateY(-50%)',
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           borderRadius: '50%',
@@ -98,7 +98,7 @@ const AdBanner = ({banners}) => {
           opacity: isHovered ? 1 : 0,
           transition: 'opacity 0.3s ease-in-out',
           boxShadow: '0px 4px 10px',
-          zIndex: 20 // ✅ 버튼이 배너 위에 나타나도록 설정
+          zIndex: 20 //  버튼이 배너 위에 나타나도록 설정
         }}>
         <ChevronRight />
       </IconButton>
@@ -114,7 +114,7 @@ const AdBanner = ({banners}) => {
           borderRadius: '12px',
           padding: '4px 8px',
           fontSize: '14px',
-          zIndex: 20 // ✅ 페이지 표시도 배너 위로
+          zIndex: 20 //  페이지 표시도 배너 위로
         }}>
         {currentIndex + 1}/{banners.length}
       </div>
