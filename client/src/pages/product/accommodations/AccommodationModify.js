@@ -88,7 +88,7 @@ const AccommodationModify = () => {
     };
 
     fetchAccommodation();
-  }, [accommodationId]);
+  }, [accommodationId, SERVER_URL]);
 
   // 객실 데이터 가져오기
   useEffect(() => {
