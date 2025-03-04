@@ -17,7 +17,7 @@ const CouponSelector = ({userCoupons, itemPrice, count, onCouponSelect}) => {
   const [selectedCoupon, setSelectedCoupon] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
 
-  // 만료되지 않은 쿠폰만 필터링
+  //  만료되지 않은 쿠폰만 필터링
   const validCoupons = userCoupons.filter(
     coupon => new Date(coupon.expiresAt) > Date.now()
   );

@@ -35,7 +35,7 @@
 // //   MWX: '무안공항'
 // // };
 
-// // ✅ 여러 개의 출발/도착 공항 코드 설정
+// // 여러 개의 출발/도착 공항 코드 설정
 // const DEPARTURE_AIRPORTS = [
 //   'GMP',
 //   'ICN',
@@ -161,13 +161,13 @@
 //   process.exit(1);
 // }
 
-// // ✅ MongoDB 연결
+// // MongoDB 연결
 // mongoose
 //   .connect(DB_URI)
 //   .then(() => console.log('MongoDB 연결 성공'))
 //   .catch(err => console.error('MongoDB 연결 실패:', err));
 
-// // ✅ 출발/도착 공항 코드 리스트
+// // 출발/도착 공항 코드 리스트
 // const DEPARTURE_AIRPORTS = [
 //   'GMP',
 //   'ICN',
@@ -181,7 +181,7 @@
 // ]; // 출발지
 // const ARRIVAL_AIRPORTS = ['GMP', 'ICN', 'PUS', 'CJU', 'TAE', 'KWJ', 'CJJ', 'RSU', 'MWX']; // 도착지
 
-// // ✅ 공항 코드와 공항명 매핑
+// // 공항 코드와 공항명 매핑
 // const AIRPORT_NAMES = {
 //   GMP: '김포공항',
 //   ICN: '인천공항',
@@ -220,11 +220,11 @@
 //           const flightData = response.data.response.body.items?.item || [];
 
 //           if (!flightData.length) {
-//             console.log(`⚠ No flight data for ${deptCity} → ${arrvCity}`);
+//             console.log(`No flight data for ${deptCity} → ${arrvCity}`);
 //             continue;
 //           }
 
-//           // ✅ 데이터 변환
+//           // 데이터 변환
 //           const flightsToSave = flightData.map(flight => ({
 //             airline: flight.airlineKorean,
 //             flightNumber: flight.domesticNum,
@@ -260,7 +260,7 @@
 
 //           totalFlights = totalFlights.concat(flightsToSave);
 //         } catch (error) {
-//           console.error(`❌ API 요청 실패 (${deptCity} → ${arrvCity}):`, error.message);
+//           console.error(`API 요청 실패 (${deptCity} → ${arrvCity}):`, error.message);
 //         }
 
 //         await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 딜레이
@@ -269,12 +269,12 @@
 
 //     if (totalFlights.length) {
 //       await Flight.insertMany(totalFlights);
-//       console.log(`🚀 총 ${totalFlights.length}개의 항공편 데이터 저장 완료!`);
+//       console.log(` 총 ${totalFlights.length}개의 항공편 데이터 저장 완료!`);
 //     } else {
-//       console.log('⚠ 저장할 데이터가 없습니다.');
+//       console.log('저장할 데이터가 없습니다.');
 //     }
 //   } catch (error) {
-//     console.error('❌ Error fetching flight data:', error);
+//     console.error('Error fetching flight data:', error);
 //   } finally {
 //     mongoose.connection.close();
 //   }
@@ -398,7 +398,7 @@ const saveFlightToDB = async (flight, deptCode, arrCode, isInternational) => {
 
 // 국내선 데이터 수집
 const fetchDomesticFlights = async () => {
-  console.log('✈️ 국내선 데이터 수집 시작...');
+  console.log('국내선 데이터 수집 시작...');
   for (const deptCity of Object.keys(AIRPORT_NAMES)) {
     for (const arrCity of Object.keys(AIRPORT_NAMES)) {
       if (deptCity === arrCity) continue;
@@ -423,7 +423,7 @@ const fetchDomesticFlights = async () => {
           await saveFlightToDB(flight, deptCity, arrCity, false);
         }
       } catch (error) {
-        console.error(`❌ API 요청 실패 (${deptCity} → ${arrCity}):`, error.message);
+        console.error(`API 요청 실패 (${deptCity} → ${arrCity}):`, error.message);
       }
 
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -458,7 +458,7 @@ const fetchInternationalFlights = async () => {
           await saveFlightToDB(flight, deptCity, arrCity, true);
         }
       } catch (error) {
-        console.error(`❌ API 요청 실패 (${deptCity} → ${arrCity}):`, error.message);
+        console.error(` API 요청 실패 (${deptCity} → ${arrCity}):`, error.message);
       }
 
       await new Promise(resolve => setTimeout(resolve, 1000));

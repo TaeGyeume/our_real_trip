@@ -39,7 +39,7 @@ export const searchFlights = async (departure, arrival, date, passengers) => {
   }
 };
 
-// ✈️ 모든 항공편 조회 (GET)
+// 모든 항공편 조회 (GET)
 export const getFlights = async () => {
   try {
     const response = await api.get('/flights/list');
@@ -50,7 +50,7 @@ export const getFlights = async () => {
   }
 };
 
-// ✈️ 특정 항공편 조회 (GET)
+// 특정 항공편 조회 (GET)
 export const getFlightById = async id => {
   try {
     const response = await api.get(`/flights/${id}`);
@@ -61,7 +61,7 @@ export const getFlightById = async id => {
   }
 };
 
-// ✈️ 항공편 추가 (POST)
+//항공편 추가 (POST)
 export const createFlight = async flightData => {
   try {
     const response = await api.post('/flights/create', flightData);
@@ -72,7 +72,7 @@ export const createFlight = async flightData => {
   }
 };
 
-// ✈️ 항공편 수정 (PUT)
+// 항공편 수정 (PUT)
 export const updateFlight = async (id, flightData) => {
   try {
     const response = await api.put(`/flights/${id}`, flightData);
@@ -83,7 +83,7 @@ export const updateFlight = async (id, flightData) => {
   }
 };
 
-// ✈️ 항공편 삭제 (DELETE)
+//  항공편 삭제 (DELETE)
 export const deleteFlight = async id => {
   try {
     await api.delete(`/flights/${id}`);
