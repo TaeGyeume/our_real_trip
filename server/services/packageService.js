@@ -201,6 +201,7 @@ async function getPackageById(packageId) {
 /**
  *  패키지 상품 수정 (관리자만 가능)
  */
+
 async function updatePackage(packageId, updateData) {
   console.log('🔍 [DEBUG] 요청 데이터:', updateData);
 
@@ -223,13 +224,12 @@ async function updatePackage(packageId, updateData) {
     status: updateData.status ?? existingPackage.status,
     images: updateData.images ?? existingPackage.images,
     availableDates: updateData.availableDates ?? existingPackage.availableDates,
-    // createdBy는 변경 불가 (작성자 유지)
-    createdBy: existingPackage.createdBy
+    createdBy: existingPackage.createdBy // createdBy는 변경 불가 (작성자 유지)
   };
 
-  // 3) 가격 계산 관련 임시 변수
-  let totalPrice = existingPackage.price; // 기존 가격
-  let finalPrice = existingPackage.finalPrice; // 기존 최종가격
+  // 3) 가격 계산 초기화
+  let totalPrice = 0;
+  let finalPrice = 0;
 
   // ------------------------------
   // A) 숙소 업데이트
@@ -238,12 +238,14 @@ async function updatePackage(packageId, updateData) {
     const accommodationData = await Accommodation.find({
       _id: {$in: updateData.accommodations}
     });
+
     if (
       !accommodationData ||
       accommodationData.length !== updateData.accommodations.length
     ) {
       throw new Error('숙소 정보를 찾을 수 없습니다.');
     }
+
     updatedFields.accommodations = updateData.accommodations;
   } else {
     updatedFields.accommodations = existingPackage.accommodations;
@@ -254,16 +256,13 @@ async function updatePackage(packageId, updateData) {
   // ------------------------------
   if (updateData.tours) {
     const tourData = await TourTicket.find({_id: {$in: updateData.tours}});
+
     if (!tourData || tourData.length !== updateData.tours.length) {
       throw new Error('투어 정보를 찾을 수 없습니다.');
     }
-    // 투어 가격들 합산 (참고: 실제로는 totalPrice에 누적 필요)
-    let tourSum = tourData.reduce((sum, tour) => sum + (tour.price || 0), 0);
-
-    // 만약 기존 totalPrice에 누적하려면:
-    totalPrice += tourSum;
 
     updatedFields.tours = updateData.tours;
+    totalPrice += tourData.reduce((sum, tour) => sum + (tour.price || 0), 0);
   } else {
     updatedFields.tours = existingPackage.tours;
   }
@@ -283,62 +282,64 @@ async function updatePackage(packageId, updateData) {
       }
       flightSum += (flightData.price || 0) * flight.seatsToUse;
     }
-    // 기존 totalPrice에 항공 가격 반영
-    totalPrice += flightSum;
-
     updatedFields.flights = updateData.flights;
+    totalPrice += flightSum;
   } else {
     updatedFields.flights = existingPackage.flights;
   }
 
   // ------------------------------
-  // D) 객실(룸) + 날짜 업데이트
+  // D) 객실(roomIds) + 날짜(startDates, endDates) 업데이트
   // ------------------------------
-  if (updateData.roomIds) {
-    // roomIds는 배열(JSON) 형태라고 가정
-    // startDates, endDates도 같은 인덱스로 배열
+  if (updateData.roomIds && updateData.startDates && updateData.endDates) {
+    // JSON 문자열로 전달될 경우 파싱 처리
     const roomIdArray = Array.isArray(updateData.roomIds)
       ? updateData.roomIds.map(r => new mongoose.Types.ObjectId(r))
-      : [];
+      : JSON.parse(updateData.roomIds).map(r => new mongoose.Types.ObjectId(r));
 
-    // 날짜 배열
     const startDatesArray = Array.isArray(updateData.startDates)
       ? updateData.startDates.map(d => new Date(d))
-      : [];
+      : JSON.parse(updateData.startDates).map(d => new Date(d));
+
     const endDatesArray = Array.isArray(updateData.endDates)
       ? updateData.endDates.map(d => new Date(d))
-      : [];
+      : JSON.parse(updateData.endDates).map(d => new Date(d));
 
-    // 스키마 필드: roomIds, startDates, endDates를 실제 doc에 저장
-    updatedFields.roomIds = roomIdArray; // ★ 주의: 여기서 rooms -> roomIds
+    updatedFields.roomIds = roomIdArray;
     updatedFields.startDates = startDatesArray;
     updatedFields.endDates = endDatesArray;
 
-    // 가격 계산
+    console.log(' [DEBUG] 업데이트된 roomIds:', updatedFields.roomIds);
+    console.log(' [DEBUG] 업데이트된 startDates:', updatedFields.startDates);
+    console.log(' [DEBUG] 업데이트된 endDates:', updatedFields.endDates);
+
+    // 룸 가격 계산
     if (roomIdArray.length > 0) {
       const roomData = await Room.find({_id: {$in: roomIdArray}});
       if (!roomData || roomData.length !== roomIdArray.length) {
         throw new Error('객실 정보를 찾을 수 없습니다.');
       }
+
       for (let i = 0; i < roomData.length; i++) {
         const room = roomData[i];
         const start = startDatesArray[i];
         const end = endDatesArray[i];
-        if (!start || !end) {
-          throw new Error('객실 예약 날짜가 누락되었습니다.');
+
+        if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+          throw new Error('객실 예약 날짜가 유효하지 않습니다.');
         }
-        const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-        totalPrice += (room.pricePerNight || 0) * nights;
+
+        // 최소 1박 보장
+        const nights = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+        const roomCost = (room.pricePerNight || 0) * nights;
+        totalPrice += roomCost;
 
         console.log(
-          ` [DEBUG] 객실 (${room._id}) 가격: ${room.pricePerNight} * ${nights}일 = ${
-            room.pricePerNight * nights
-          }`
+          ` [DEBUG] 객실 (${room._id}) 가격: ${room.pricePerNight} * ${nights}일 = ${roomCost}`
         );
       }
     }
   } else {
-    // 기존 데이터 유지
     updatedFields.roomIds = existingPackage.roomIds;
     updatedFields.startDates = existingPackage.startDates;
     updatedFields.endDates = existingPackage.endDates;
@@ -350,10 +351,12 @@ async function updatePackage(packageId, updateData) {
   if (updateData.discountRate !== undefined || totalPrice !== existingPackage.price) {
     finalPrice = Math.round(totalPrice - (totalPrice * updatedFields.discountRate) / 100);
   }
-  updatedFields.price = totalPrice ?? existingPackage.price;
-  updatedFields.finalPrice = finalPrice ?? existingPackage.finalPrice;
 
-  console.log(' [DEBUG] 최종 가격:', updatedFields.finalPrice);
+  updatedFields.price = totalPrice;
+  updatedFields.finalPrice = finalPrice;
+
+  console.log(' [DEBUG] 계산된 totalPrice:', totalPrice);
+  console.log(' [DEBUG] 최종 가격 (finalPrice):', finalPrice);
 
   // ------------------------------
   // F) DB 업데이트 & populate
@@ -365,7 +368,6 @@ async function updatePackage(packageId, updateData) {
     .populate('accommodations')
     .populate('flights.flightId')
     .populate('tours')
-    // roomIds를 populate
     .populate('roomIds');
 
   if (!updatedPackage) {
