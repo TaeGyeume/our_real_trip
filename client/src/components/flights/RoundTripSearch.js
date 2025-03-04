@@ -28,8 +28,8 @@ import {Add, Remove} from '@mui/icons-material';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 const DOMESTIC_AIRPORTS = {
-  서울: ['GMP'],
-  인천: ['ICN'],
+  서울: ['GMP', 'ICN'],
+  // 인천: ['ICN'],
   부산: ['PUS'],
   제주: ['CJU'],
   대구: ['TAE'],
@@ -196,6 +196,7 @@ const RoundTripSearch = () => {
               value={departure}
               onChange={e => setDeparture(e.target.value)}
               onClick={e => handlePopoverOpen(e, 'departure')}
+              readOnly
               label="출발지가 어디인가요?"
               notched={Boolean(departure)}
               sx={{backgroundColor: 'white'}}

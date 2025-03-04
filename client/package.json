@@ -23,6 +23,7 @@
     "cors": "2.8.5",
     "cra-template": "1.2.0",
     "date-fns": "^2.29.3",
+    "dayjs": "^1.11.13",
     "fortawesome": "0.0.1-security",
     "iamport": "^0.3.4",
     "js-cookie": "3.0.5",

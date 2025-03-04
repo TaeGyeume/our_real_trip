@@ -293,7 +293,7 @@ const TourTicketBookingForm = () => {
                 쿠폰 <span>{discountAmount.toLocaleString()}원</span>
               </p>
               <p>
-                마일리지 <span>{discountAmount.toLocaleString()}원</span>
+                마일리지 <span>{usedMileage.toLocaleString()}원</span>
               </p>
               <div>
                 <strong>
