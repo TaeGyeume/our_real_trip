@@ -23,6 +23,10 @@ exports.createReview = async (req, res) => {
         .json({message: '이미 해당 주문 건에 대한 리뷰를 작성하셨습니다!'});
     }
 
+    const imagePaths = req.files
+      ? req.files.map(file => `/uploads/${file.filename}`)
+      : [];
+
     // 새로운 리뷰 생성
     const newReview = await reviewService.createReview({
       userId,
@@ -30,8 +34,10 @@ exports.createReview = async (req, res) => {
       bookingId,
       rating,
       content,
-      images
+      images: imagePaths
     });
+    await newReview.save();
+
     res.status(201).json(newReview);
   } catch (error) {
     console.error('리뷰 등록 오류:', error);
