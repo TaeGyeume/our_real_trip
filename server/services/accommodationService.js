@@ -358,7 +358,7 @@ exports.updateAccommodation = async (accommodationId, updateData, imageFiles) =>
 // 숙소 삭제 함수
 exports.deleteAccommodation = async accommodationId => {
   try {
-    // 1️⃣ 숙소 존재 여부 확인
+    // 숙소 존재 여부 확인
     const existingAccommodation = await Accommodation.findById(accommodationId);
     if (!existingAccommodation) {
       throw new Error('숙소를 찾을 수 없습니다.');

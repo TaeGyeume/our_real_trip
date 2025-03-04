@@ -227,37 +227,41 @@ const BookingForm = () => {
                   className="ticket-thumbnail"
                 />
 
-                <div className="ticket-text">{room.name}</div>
-                {formData.rooms.map((roomData, index) => (
-                  <div key={index} className="room-group">
-                    <h4>🏨 객실 {index + 1}</h4>
-                    <label>📅 체크인 날짜</label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={roomData.startDate}
-                      onChange={e => handleRoomChange(index, 'startDate', e.target.value)}
-                    />
+                <div className="room-container">
+                  <h2 className="room-title">{room.name}</h2>{' '}
+                  {/* 객실 이름을 가장 위에 배치 */}
+                  {formData.rooms.map((roomData, index) => (
+                    <div key={index} className="room-group">
+                      <div className="room-content">
+                        <div className="date-input-group">
+                          <div className="date-input">
+                            <label>📅 체크인</label>
+                            <input
+                              type="date"
+                              name="startDate"
+                              value={roomData.startDate}
+                              onChange={e =>
+                                handleRoomChange(index, 'startDate', e.target.value)
+                              }
+                            />
+                          </div>
 
-                    <label>📅 체크아웃 날짜</label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={roomData.endDate}
-                      onChange={e => handleRoomChange(index, 'endDate', e.target.value)}
-                    />
-
-                    {/* <label>🏨 예약할 객실 개수</label>
-                    <input
-                      type="number"
-                      name="count"
-                      value={roomData.count}
-                      min="1"
-                      max={room.availableCount}
-                      onChange={e => handleRoomChange(index, 'count', e.target.value)}
-                    /> */}
-                  </div>
-                ))}
+                          <div className="date-input">
+                            <label>📅 체크아웃</label>
+                            <input
+                              type="date"
+                              name="endDate"
+                              value={roomData.endDate}
+                              onChange={e =>
+                                handleRoomChange(index, 'endDate', e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -360,10 +364,9 @@ const BookingForm = () => {
               <div>
                 <strong>
                   총 결제 금액:{' '}
-                  {(
-                    room.pricePerNight * formData.rooms[0].count -
-                    discountAmount -
-                    usedMileage
+                  {Math.max(
+                    totalPrice - discountAmount - usedMileage,
+                    0
                   ).toLocaleString()}
                   원
                 </strong>
