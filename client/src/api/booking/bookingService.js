@@ -2,8 +2,8 @@ import axios from '../axios';
 
 const BASE_URL =
   process.env.REACT_APP_ENV === 'development'
-    ? 'http://localhost:5000/booking'
-    : 'https://ourrealtrip.shop/api/booking';
+    ? 'http://localhost:5000/api/booking'
+    : 'https://ourrealtrip.shop/api';
 
 export const createBooking = async bookingData => {
   try {
@@ -63,7 +63,7 @@ export const verifyPayment = async paymentData => {
 
 export const getMyBookings = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/my`);
+    const response = await axios.get(`${BASE_URL}/booking/my`);
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 404) {
@@ -89,7 +89,7 @@ export const confirmBooking = async bookingId => {
 
 export const getBookingDetails = async bookingId => {
   try {
-    const response = await axios.get(`${BASE_URL}/detail/${bookingId}`);
+    const response = await axios.get(`${BASE_URL}/${bookingId}`);
     return response.data.data; // `data` 객체만 반환
   } catch (error) {
     console.error('예약 상세 조회 오류:', error.response?.data || error);
