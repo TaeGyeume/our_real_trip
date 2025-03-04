@@ -260,13 +260,18 @@
 .toggle-button {
   background: rgb(255, 255, 255);
   border: 1px solid #ccc;
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 4px 8px;
+  font-size: 12px;
   font-weight: bold;
   cursor: pointer;
   border-radius: 4px;
   pointer-events: auto;
   color: #444;
+  width: 150px;
+  min-width: unset;
+  height: 38px;
+  text-align: center;
+  font-family: 'BM Dohyeon', sans-serif;
 }
 
 .toggle-button:hover {

@@ -8,10 +8,10 @@ import './styles/TourTicketDetail.css';
 import ReviewList from '../../components/review/ReviewList';
 import {
   FaChevronRight,
+  FaChevronDown,
   FaMapMarkerAlt,
   FaCheckCircle,
   FaCreditCard,
-  FaRegBookmark,
   FaShareAlt,
   FaBolt,
   FaQuestionCircle
@@ -181,7 +181,8 @@ const TourTicketDetail = () => {
               {!showDetails && (
                 <div className="image-overlay">
                   <button className="toggle-button" onClick={() => setShowDetails(true)}>
-                    상품 설명 더 보기 ▼
+                    상품 설명 더 보기 &nbsp;
+                    <FaChevronDown />
                   </button>
                 </div>
               )}
