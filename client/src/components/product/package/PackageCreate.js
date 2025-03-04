@@ -110,7 +110,7 @@ export default function PackageCreate() {
   const [packageDescription, setPackageDescription] = useState('');
   const [discountRate, setDiscountRate] = useState(0);
 
-  // ✅ 이미지 업로드용 (미리보기 & 제거 가능)
+  //  이미지 업로드용 (미리보기 & 제거 가능)
   const [packageImages, setPackageImages] = useState([]);
   const [loading, setLoading] = useState(false);
 

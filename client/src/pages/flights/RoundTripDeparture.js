@@ -39,7 +39,7 @@ const RoundTripDeparture = () => {
     setTimeout(() => {
       setLoading(false);
       navigate('/flights/roundtrip-return', {
-        state: {selectedDeparture: flight, returnFlights: returnFlights || [], passengers} // ✅ returnFlights 전달
+        state: {selectedDeparture: flight, returnFlights: returnFlights || [], passengers} // returnFlights 전달
       });
     }, 500);
   };

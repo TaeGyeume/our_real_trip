@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import {useSearchParams} from 'react-router-dom';
 import {fetchSuggestions} from '../../api/accommodation/accommodationService';
 import {
   TextField,
@@ -17,13 +18,34 @@ import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {Add, Remove} from '@mui/icons-material';
 
 const SearchBar = ({onSearch}) => {
-  const [searchTerm, setSearchTerm] = useState('서울');
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(
-    new Date(new Date().setDate(new Date().getDate() + 1))
+  const [searchParams] = useSearchParams();
+
+  // URL에서 초기값 가져오기
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('city') || '서울');
+  const [startDate, setStartDate] = useState(() =>
+    searchParams.get('startDate') ? new Date(searchParams.get('startDate')) : new Date()
   );
-  const [adults, setAdults] = useState(1);
+  const [endDate, setEndDate] = useState(() =>
+    searchParams.get('endDate')
+      ? new Date(searchParams.get('endDate'))
+      : new Date(new Date().setDate(new Date().getDate() + 1))
+  );
+  const [adults, setAdults] = useState(() => Number(searchParams.get('adults')) || 1);
   const [suggestions, setSuggestions] = useState([]);
+
+  // URL 변경 시 상태 업데이트
+  useEffect(() => {
+    setSearchTerm(searchParams.get('city') || '서울');
+    setStartDate(
+      searchParams.get('startDate') ? new Date(searchParams.get('startDate')) : new Date()
+    );
+    setEndDate(
+      searchParams.get('endDate')
+        ? new Date(searchParams.get('endDate'))
+        : new Date(new Date().setDate(new Date().getDate() + 1))
+    );
+    setAdults(Number(searchParams.get('adults')) || 1);
+  }, [searchParams]);
 
   useEffect(() => {
     if (searchTerm.length === 0) {
@@ -98,6 +120,7 @@ const SearchBar = ({onSearch}) => {
               typeof option === 'string' ? option : option?.name || ''
             }
             onInputChange={(event, newValue) => setSearchTerm(newValue)}
+            value={searchTerm}
             renderOption={(props, option) => {
               const {key, ...restProps} = props; // key 속성을 분리
               return (

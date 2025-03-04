@@ -2,8 +2,8 @@ import axios from '../axios';
 
 const BASE_URL =
   process.env.REACT_APP_ENV === 'development'
-    ? 'http://localhost:5000/booking'
-    : 'https://ourrealtrip.shop/booking';
+    ? 'http://localhost:5000/api/booking'
+    : 'https://ourrealtrip.shop/api/booking';
 
 export const createBooking = async bookingData => {
   try {

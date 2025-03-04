@@ -2,6 +2,7 @@ const bookingService = require('../services/bookingService');
 
 exports.createBooking = async (req, res) => {
   try {
+    console.log('==== createBooking ====', req.body);
     const {
       types,
       productIds,

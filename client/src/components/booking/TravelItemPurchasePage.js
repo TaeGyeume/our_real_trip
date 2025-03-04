@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useParams} from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import {fetchTravelItemDetail} from '../../api/travelItem/travelItemService';
 import {createBooking, verifyPayment} from '../../api/booking/bookingService';
 import {fetchUserCoupons} from '../../api/coupon/couponService';
@@ -12,6 +12,7 @@ import './styles/TourTicketBookingForm.css';
 import {Alert, Snackbar, Button, TextField} from '@mui/material';
 
 const TravelItemPurchaseForm = () => {
+  const navigate = useNavigate();
   const {itemId} = useParams();
   const [item, setItem] = useState(null);
   const [user, setUser] = useState(null);
@@ -144,7 +145,11 @@ const TravelItemPurchaseForm = () => {
             });
 
             if (verifyResponse.message === '결제 검증 성공') {
-              alert('구매가 완료되었습니다.');
+              setOpenAlert(true);
+
+              setTimeout(() => {
+                navigate('/');
+              }, 2000);
             } else {
               alert(`결제 검증 실패: ${verifyResponse.message}`);
             }
@@ -316,7 +321,7 @@ const TravelItemPurchaseForm = () => {
                 쿠폰 <span>{discountAmount.toLocaleString()}원</span>
               </p>
               <p>
-                마일리지 <span>{discountAmount.toLocaleString()}원</span>
+                마일리지 <span>{usedMileage.toLocaleString()}원</span>
               </p>
               <div>
                 <strong>
@@ -352,7 +357,12 @@ const TravelItemPurchaseForm = () => {
             </div>
 
             <button onClick={handlePayment} className="payment-btn">
-              {(item.price * formData.count - discountAmount).toLocaleString()}원 결제하기
+              {(
+                item.price * formData.count -
+                discountAmount -
+                usedMileage
+              ).toLocaleString()}
+              원 결제하기
             </button>
           </div>
         </div>

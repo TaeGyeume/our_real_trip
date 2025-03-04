@@ -830,11 +830,13 @@ exports.getBookingDetails = async bookingId => {
             if (!product) return null;
             return {
               _id: product._id,
-              name: product.airline + ' - ' + product.flightNumber, // 예) "대한항공 - KE123"
+              name: product.airline,
+              flightNumber: product.flightNumber, // 예) "대한항공 - KE123"
               price: product.price,
               seatsAvailable: product.seatsAvailable,
               departure: product.departure,
-              arrival: product.arrival
+              arrival: product.arrival,
+              departuredate: product.departure.date
             };
           } else if (model === 'tourTicket') {
             product = await mongoose.model('tourTicket').findById(productId);

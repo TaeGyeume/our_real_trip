@@ -15,7 +15,12 @@ const AIRPORT_NAMES = {
   HND: '하네다공항',
   NRT: '나리타공항',
   JFK: '뉴욕 JFK공항',
-  CDG: '샤를 드골공항'
+  CDG: '샤를 드골공항',
+  PEK: '베이징공항',
+  TSA: '베이징 다싱공항',
+  LHR: '타이베이 송산공항',
+  SYD: '런던 히드로공항',
+  BKK: '방콕공항'
 };
 
 // 항공편 추가 (CREATE)
@@ -52,7 +57,7 @@ exports.getFlights = async () => {
   }
 };
 
-// ✈️ 편도 항공편 검색 서비스 (UTC 변환 적용)
+// 편도 항공편 검색 서비스 (UTC 변환 적용)
 exports.searchFlights = async (departure, arrival, date, passengers) => {
   try {
     if (!departure || !arrival || !date || !passengers) {
@@ -160,5 +165,14 @@ exports.deleteFlight = async flightId => {
     return deletedFlight;
   } catch (error) {
     throw new Error('항공편 삭제 중 오류 발생: ' + error.message);
+  }
+};
+
+exports.getFlightById = async flightId => {
+  try {
+    const flight = await Flight.findById(flightId);
+    return flight; // flight가 null일 수도 있음
+  } catch (error) {
+    throw new Error('특정 항공편 조회 중 오류 발생: ' + error.message);
   }
 };

@@ -192,11 +192,11 @@ const fetchInternationalFlights = async () => {
               );
 
               console.log(
-                `✅ 저장 완료: ${flightNumber} (${airline}), ${moment(departureDate).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')}, 좌석: ${seatsAvailable}, 가격: ${price.toLocaleString()}원, 등급: ${seatClass}`
+                `저장 완료: ${flightNumber} (${airline}), ${moment(departureDate).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')}, 좌석: ${seatsAvailable}, 가격: ${price.toLocaleString()}원, 등급: ${seatClass}`
               );
             }
           } catch (error) {
-            console.error(`❌ API 요청 오류 (${deptCode} → ${arrCode}):`, error.message);
+            console.error(`API 요청 오류 (${deptCode} → ${arrCode}):`, error.message);
           }
         }
       }

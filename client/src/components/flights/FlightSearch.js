@@ -18,7 +18,8 @@ import {
   List,
   ListItemButton,
   ListItemText,
-  Popover
+  Popover,
+  Stack
 } from '@mui/material';
 import {Add, Remove} from '@mui/icons-material';
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
@@ -27,8 +28,8 @@ import {ko} from 'date-fns/locale';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 const DOMESTIC_AIRPORTS = {
-  서울: ['GMP'],
-  인천: ['ICN'],
+  서울: ['GMP', 'ICN'],
+  // 인천: ['ICN'],
   부산: ['PUS'],
   제주: ['CJU'],
   대구: ['TAE'],
@@ -146,14 +147,11 @@ const FlightSearch = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
       <Paper elevation={0} sx={{p: 1, mt: 1}}>
-        <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+        <Stack direction="row" spacing={2} alignItems="center">
           {/* 출발 공항 */}
           <FormControl sx={{flex: 1, minWidth: '150px'}} variant="outlined">
-            <InputLabel shrink={Boolean(departure)} htmlFor="departure">
-              출발지가 어디인가요?
-            </InputLabel>
+            <InputLabel shrink={Boolean(departure)}>출발지가 어디인가요?</InputLabel>
             <OutlinedInput
-              id="departure"
               value={departure}
               onChange={e => setDeparture(e.target.value)}
               onClick={e => handlePopoverOpen(e, 'departure')}
@@ -176,11 +174,8 @@ const FlightSearch = () => {
 
           {/* 도착 공항 */}
           <FormControl sx={{flex: 1, minWidth: '150px'}} variant="outlined">
-            <InputLabel shrink={Boolean(arrival)} htmlFor="arrival">
-              도착지가 어디인가요?
-            </InputLabel>
+            <InputLabel shrink={Boolean(arrival)}>도착지가 어디인가요?</InputLabel>
             <OutlinedInput
-              id="arrival"
               value={arrival}
               onChange={e => setArrival(e.target.value)}
               onClick={e => handlePopoverOpen(e, 'arrival')}
@@ -261,15 +256,13 @@ const FlightSearch = () => {
           >
             검색
           </Button>
-        </Box>
+        </Stack>
 
         {/* 공항 선택 Popover */}
         <Popover
           open={Boolean(anchorEl)}
           anchorEl={anchorEl}
           onClose={handlePopoverClose}
-          disableAutoFocus
-          disableRestoreFocus
           anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
           transformOrigin={{vertical: 'top', horizontal: 'center'}}
           sx={{

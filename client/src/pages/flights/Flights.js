@@ -49,17 +49,17 @@ const Flights = () => {
   };
 
   const bannerData = [
-    {image: 'images/ad/air1.png'},
-    {image: 'images/ad/air2.png'},
-    {image: 'images/ad/air3.png'},
-    {image: 'images/ad/air4.png'}
+    {image: '/images/ad/air1.png'},
+    {image: '/images/ad/air2.png'},
+    {image: '/images/ad/air3.png'},
+    {image: '/images/ad/air4.png'}
   ];
 
   return (
     <div className="container mt-4">
-      <Typography variant="h5" fontWeight="bold" gutterBottom sx={{textAlign: 'center'}}>
+      {/* <Typography variant="h5" fontWeight="bold" gutterBottom sx={{textAlign: 'center'}}>
         항공편 검색
-      </Typography>
+      </Typography> */}
 
       {/* 편도/왕복 선택 버튼 */}
       <Box sx={{display: 'flex', justifyContent: 'left', gap: '10px', mb: 2}}>
