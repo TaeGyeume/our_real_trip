@@ -25,7 +25,7 @@ const PackageBookingForm = () => {
 
   // 패키지 및 항공 데이터
   const [packageData, setPackageData] = useState(null);
-  const [flightsData, setFlightsData] = useState([]);
+  const [, setFlightsData] = useState([]);
 
   // 사용자 & 쿠폰
   const [user, setUser] = useState(null);
