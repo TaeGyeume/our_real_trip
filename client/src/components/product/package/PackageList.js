@@ -19,7 +19,7 @@ import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import HotelIcon from '@mui/icons-material/Hotel';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 
-const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // 헬퍼 함수: 이미지 경로 정규화 (역슬래시를 슬래시로 변환하고, 앞에 '/' 추가)
 const normalizeImagePath = path => {

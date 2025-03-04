@@ -17,7 +17,7 @@ import './styles/TourTicketBookingForm.css';
 import {Typography, TextField, Snackbar, Alert, Button} from '@mui/material';
 
 // 서버 URL
-const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const PackageBookingForm = () => {
   const {id} = useParams();

@@ -144,7 +144,7 @@ const PackageEdit = () => {
   const flightsPerPage = 5;
 
   // 서버 URL
-  const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   // -----------------------------
   // A) 기존 패키지 데이터 로드
