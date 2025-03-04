@@ -3,11 +3,14 @@ const User = require('../models/User');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const accommodationService = require('../services/accommodationService');
 
 exports.createReview = async reviewData => {
   try {
     const newReview = new Review(reviewData);
     await newReview.save();
+    // 숙소 평점 업데이트
+    await accommodationService.updateAccommodationRating(reviewData.productId);
     return newReview;
   } catch (error) {
     console.error('리뷰 등록 오류:', error);
@@ -92,6 +95,8 @@ exports.updateReview = async (reviewId, updateData, imageFiles) => {
     }
 
     await review.save();
+    // 숙소 평점 업데이트
+    await accommodationService.updateAccommodationRating(review.productId);
     return review;
   } catch (error) {
     console.error('[서버] 리뷰 수정 실패:', error.message);
@@ -114,6 +119,8 @@ exports.deleteReview = async id => {
       throw new Error('리뷰를 찾을 수 없습니다.');
     }
 
+    // 숙소 평점 업데이트
+    await accommodationService.updateAccommodationRating(review.productId);
     console.log('[서버] 리뷰 및 댓글 삭제 성공');
   } catch (error) {
     console.error('[서버] 리뷰 삭제 실패:', error.message);

@@ -76,6 +76,9 @@ const AccommodationCard = ({
         <Typography variant="body1" color="primary">
           <strong>최저가:</strong> {accommodation.minPrice?.toLocaleString()}원 / 박
         </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{flexGrow: 1, mb: 1}}>
+          {accommodation.rating}
+        </Typography>
       </CardContent>
 
       {/* 즐겨찾기 버튼 (카드 내부에서 우측 상단에 배치) */}
