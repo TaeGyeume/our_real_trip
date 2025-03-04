@@ -773,39 +773,98 @@ exports.scheduleAutoConfirm = async (bookingId, createdAt) => {
   }
 };
 
+// bookingService.js (예시 수정본)
 exports.getBookingDetails = async bookingId => {
   try {
-    // 예약 정보 조회 + 연관된 데이터 가져오기
+    // 1) 예약 정보 조회 + 연관된 데이터 가져오기
     const booking = await Booking.findById(bookingId)
-      .populate('userId', 'name email phone') // 사용자 정보 포함
-      .populate('userCouponId', 'discountAmount') // 쿠폰 정보 포함
-      .populate('roomIds', 'name pricePerNight reservedDates'); // 객실 정보 포함
+      .populate('userId', 'name email phone') // 사용자 정보
+      .populate('userCouponId', 'discountAmount') // 쿠폰 정보
+      .populate('roomIds', 'name pricePerNight reservedDates'); // 객실 정보
 
     if (!booking) {
       return {status: 404, message: '예약 정보를 찾을 수 없습니다.'};
     }
 
-    // productIds를 동적으로 populate (투어티켓이면 title 가져오기)
+    // 2) productIds를 동적으로 populate
+    //   (tourTicket이면 title, flight면 항공편 전용 필드, package면 'Package' 모델 조회 등)
     const populatedProducts = await Promise.all(
       booking.productIds.map(async (productId, index) => {
-        const model = booking.types[index]; // 현재 productId의 타입 가져오기
-        if (!model) return null; // 모델이 없으면 null 반환
+        const model = booking.types[index]; // 현재 productId의 타입
+        if (!model) return null;
 
-        const product = await mongoose.model(model).findById(productId);
+        let product;
+        try {
+          if (model === 'package') {
+            // 패키지 모델 이름이 'Package'라고 가정
+            product = await mongoose.model('package').findById(productId);
+            if (!product) return null;
 
-        if (!product) return null;
-
-        return {
-          _id: product._id,
-          name: model === 'tourTicket' ? product.title : product.name, // 투어티켓이면 title, 그 외 name
-          price: product.price
-        };
+            // 패키지 전용 필드들 추출
+            return {
+              _id: product._id,
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              discountRate: product.discountRate || 0,
+              finalPrice: product.finalPrice || product.price,
+              accommodations: product.accommodations || [],
+              flights: product.flights || [],
+              tours: product.tours || []
+            };
+          } else if (model === 'flight') {
+            // flight 전용 필드
+            product = await mongoose.model('flight').findById(productId);
+            if (!product) return null;
+            return {
+              _id: product._id,
+              name: product.airline,
+              flightNumber: product.flightNumber, // 예) "대한항공 - KE123"
+              price: product.price,
+              seatsAvailable: product.seatsAvailable,
+              departure: product.departure,
+              arrival: product.arrival,
+              departuredate: product.departure.date
+            };
+          } else if (model === 'tourTicket') {
+            product = await mongoose.model('tourTicket').findById(productId);
+            if (!product) return null;
+            return {
+              _id: product._id,
+              name: product.title, // 투어티켓은 title 사용
+              price: product.price
+            };
+          } else {
+            // accommodation, travelItem 등 기타 타입
+            product = await mongoose.model(model).findById(productId);
+            if (!product) return null;
+            return {
+              _id: product._id,
+              name: product.name,
+              price: product.price
+            };
+          }
+        } catch (err) {
+          console.error(`모델(${model}) 조회 오류:`, err);
+          return null;
+        }
       })
     );
 
-    // `toObject()`로 Mongoose 객체를 일반 JavaScript 객체로 변환
+    // 3) booking 객체를 일반 JS 객체로 변환
     const bookingData = booking.toObject();
-    bookingData.productIds = populatedProducts.filter(p => p !== null); // productIds에 각 모델에서 가져온 실제 데이터 추가
+
+    // 4) 전체 상품 목록 대체 (null 제거)
+    bookingData.productIds = populatedProducts.filter(p => p !== null);
+
+    // 5) package만 따로 모아서 bookingData.packages 배열 생성
+    const packageList = [];
+    for (let i = 0; i < booking.types.length; i++) {
+      if (booking.types[i] === 'package' && populatedProducts[i]) {
+        packageList.push(populatedProducts[i]);
+      }
+    }
+    bookingData.packages = packageList;
 
     return {status: 200, data: bookingData};
   } catch (error) {
