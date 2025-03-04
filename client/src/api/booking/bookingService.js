@@ -3,7 +3,7 @@ import axios from '../axios';
 const BASE_URL =
   process.env.REACT_APP_ENV === 'development'
     ? 'http://localhost:5000/api/booking'
-    : 'https://ourrealtrip.shop/api';
+    : 'https://ourrealtrip.shop/api/booking';
 
 export const createBooking = async bookingData => {
   try {
@@ -63,7 +63,7 @@ export const verifyPayment = async paymentData => {
 
 export const getMyBookings = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/booking/my`);
+    const response = await axios.get(`${BASE_URL}/my`);
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 404) {
