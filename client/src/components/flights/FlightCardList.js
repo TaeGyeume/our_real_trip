@@ -58,57 +58,116 @@ const FlightCardList = ({flights}) => {
   };
 
   return (
+    //   <div className="container mt-4">
+    //     <h2 className="fw-bold mb-3 text-center">
+    //       🧸 나를 위한 리셋, 마음을 담은 국내 여행 💕 🧳
+    //     </h2>
+
+    //     {/* 슬라이더를 감싸는 div에 position: relative 추가 */}
+    //     <div className="position-relative">
+    //       <Slider {...settings}>
+    //         {uniqueFlights.map(flight => {
+    //           const departureName = AIRPORT_NAMES[flight.departure.airport] || '출발지';
+    //           const arrivalName = AIRPORT_NAMES[flight.arrival.airport] || '도착지';
+    //           const flightImage =
+    //             FLIGHT_IMAGES[arrivalName] || '/images/flights/default.jpg';
+
+    //           return (
+    //             <div key={flight._id} className="px-2">
+    //               <div
+    //                 className="card shadow-sm border-0 rounded-lg"
+    //                 onClick={() => handleCardClick(flight)}
+    //                 style={{cursor: 'pointer'}}>
+    //                 <img
+    //                   src={flightImage}
+    //                   className="card-img-top"
+    //                   alt={arrivalName}
+    //                   style={{height: '150px', objectFit: 'cover'}}
+    //                 />
+    //                 <div className="card-body">
+    //                   <h5 className="fw-bold">{arrivalName}</h5>
+    //                   <p className="text-muted">
+    //                     {departureName} → {arrivalName}
+    //                   </p>
+    //                   <p className="text-muted">
+    //                     {new Date(flight.departure.date).toLocaleDateString('ko-KR', {
+    //                       month: 'long',
+    //                       day: 'numeric'
+    //                     })}{' '}
+    //                     -{' '}
+    //                     {new Date(flight.arrival.date).toLocaleDateString('ko-KR', {
+    //                       month: 'long',
+    //                       day: 'numeric'
+    //                     })}
+    //                   </p>
+    //                   <p className="fw-bold">{flight.price.toLocaleString()}원 ~</p>
+    //                 </div>
+    //               </div>
+    //             </div>
+    //           );
+    //         })}
+    //       </Slider>
+    //     </div>
+    //   </div>
+    // );
+
     <div className="container mt-4">
       <h2 className="fw-bold mb-3 text-center">
         🧸 나를 위한 리셋, 마음을 담은 국내 여행 💕 🧳
       </h2>
 
-      {/* 슬라이더를 감싸는 div에 position: relative 추가 */}
-      <div className="position-relative">
-        <Slider {...settings}>
-          {uniqueFlights.map(flight => {
-            const departureName = AIRPORT_NAMES[flight.departure.airport] || '출발지';
-            const arrivalName = AIRPORT_NAMES[flight.arrival.airport] || '도착지';
-            const flightImage =
-              FLIGHT_IMAGES[arrivalName] || '/images/flights/default.jpg';
+      {/* uniqueFlights가 3개 이상일 때만 Slider 렌더링 */}
+      {uniqueFlights.length >= 3 ? (
+        <div className="position-relative">
+          <Slider {...settings}>
+            {uniqueFlights.map(flight => {
+              const departureName = AIRPORT_NAMES[flight.departure.airport] || '출발지';
+              const arrivalName = AIRPORT_NAMES[flight.arrival.airport] || '도착지';
+              const flightImage =
+                FLIGHT_IMAGES[arrivalName] || '/images/flights/default.jpg';
 
-            return (
-              <div key={flight._id} className="px-2">
-                <div
-                  className="card shadow-sm border-0 rounded-lg"
-                  onClick={() => handleCardClick(flight)}
-                  style={{cursor: 'pointer'}}>
-                  <img
-                    src={flightImage}
-                    className="card-img-top"
-                    alt={arrivalName}
-                    style={{height: '150px', objectFit: 'cover'}}
-                  />
-                  <div className="card-body">
-                    <h5 className="fw-bold">{arrivalName}</h5>
-                    <p className="text-muted">
-                      {departureName} → {arrivalName}
-                    </p>
-                    <p className="text-muted">
-                      {new Date(flight.departure.date).toLocaleDateString('ko-KR', {
-                        month: 'long',
-                        day: 'numeric'
-                      })}{' '}
-                      -{' '}
-                      {new Date(flight.arrival.date).toLocaleDateString('ko-KR', {
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                    <p className="fw-bold">{flight.price.toLocaleString()}원 ~</p>
-                    {/* <button className="text-primary border-0 bg-transparent">편도</button> */}
+              return (
+                <div key={flight._id} className="px-2">
+                  <div
+                    className="card shadow-sm border-0 rounded-lg"
+                    onClick={() => handleCardClick(flight)}
+                    style={{cursor: 'pointer'}}>
+                    <img
+                      src={flightImage}
+                      className="card-img-top"
+                      alt={arrivalName}
+                      style={{height: '150px', objectFit: 'cover'}}
+                    />
+                    <div className="card-body">
+                      <h5 className="fw-bold">{arrivalName}</h5>
+                      <p className="text-muted">
+                        {departureName} → {arrivalName}
+                      </p>
+                      <p className="text-muted">
+                        {new Date(flight.departure.date).toLocaleDateString('ko-KR', {
+                          month: 'long',
+                          day: 'numeric'
+                        })}{' '}
+                        -{' '}
+                        {new Date(flight.arrival.date).toLocaleDateString('ko-KR', {
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      <p className="fw-bold">{flight.price.toLocaleString()}원 ~</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </Slider>
-      </div>
+              );
+            })}
+          </Slider>
+        </div>
+      ) : (
+        // 3개 미만일 때는 "항공편이 부족합니다" 등 다른 UI를 노출
+        <div className="text-center py-5">
+          <p>표시할 항공편이 충분하지 않습니다.</p>
+        </div>
+      )}
     </div>
   );
 };
