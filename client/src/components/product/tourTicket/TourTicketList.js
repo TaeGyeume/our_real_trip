@@ -5,6 +5,7 @@ import {
 } from '../../../api/tourTicket/tourTicketService';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {Box, Card, CardMedia, CardContent, Typography} from '@mui/material';
+import './styles/TourTicketList.css';
 
 const TourTicketList = () => {
   const [tickets, setTickets] = useState([]);
@@ -80,7 +81,9 @@ const TourTicketList = () => {
 
   return (
     <div className="tour-ticket-container">
-      <h2>🎟 투어 & 티켓 상품</h2>
+      <Typography variant="h4" fontWeight="bold" sx={{mb: 3, textAlign: 'left'}}>
+        🎫 투어 & 티켓 상품
+      </Typography>
 
       {/* /product/tourTicket에서는 버튼을 숨김 */}
       {location.pathname !== '/product' && (
@@ -103,7 +106,13 @@ const TourTicketList = () => {
         </div>
       )}
 
-      <Box display="flex" flexWrap="wrap" gap={3} mt={3}>
+      <Box
+        display="flex"
+        flexWrap="wrap"
+        gap={3}
+        mt={3}
+        justifyContent="flex-start"
+        alignItems="flex-start">
         {tickets.length > 0 ? (
           tickets.map(ticket => (
             <Card
@@ -153,16 +162,12 @@ const TourTicketList = () => {
                   {ticket.title}
                 </Typography>
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{height: '2rem', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                  ✏️| {ticket.description}
-                </Typography>
-                <Typography variant="body1" sx={{color: 'primary.main', mt: 1}}>
+                  variant="h6"
+                  sx={{color: 'primary.main', mt: 1, fontWeight: 'bold'}}>
                   💰 {ticket.price.toLocaleString()}원
                 </Typography>
                 <Typography>재고: {ticket.stock}</Typography>
-                <Typography variant="body2" sx={{mt: 1}}>
+                <Typography variant="body1" sx={{mt: 1}}>
                   지역: {ticket.location}
                 </Typography>
               </CardContent>
