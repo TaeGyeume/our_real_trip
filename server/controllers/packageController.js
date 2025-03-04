@@ -371,14 +371,14 @@ exports.getPackageById = async (req, res) => {
     const packageDiscount = Math.round((basePrice * discountRate) / 100);
     const finalPrice = Math.max(basePrice - packageDiscount, 0);
 
-    console.log(`
-    🔹 [DEBUG] 객실 가격: ${totalRoomPrice}
-    🔹 [DEBUG] 항공 가격: ${totalFlightPrice}
-    🔹 [DEBUG] 투어 가격: ${totalTourPrice}
-    🔹 [DEBUG] basePrice (총 가격): ${basePrice}
-    🔹 [DEBUG] 패키지 할인 (${discountRate}%): -${packageDiscount}
-    🔹 [DEBUG] 최종 결제 금액 (finalPrice): ${finalPrice}
-    `);
+    // console.log(`
+    // 🔹 [DEBUG] 객실 가격: ${totalRoomPrice}
+    // 🔹 [DEBUG] 항공 가격: ${totalFlightPrice}
+    // 🔹 [DEBUG] 투어 가격: ${totalTourPrice}
+    // 🔹 [DEBUG] basePrice (총 가격): ${basePrice}
+    // 🔹 [DEBUG] 패키지 할인 (${discountRate}%): -${packageDiscount}
+    // 🔹 [DEBUG] 최종 결제 금액 (finalPrice): ${finalPrice}
+    // `);
 
     // 최종 응답 데이터
     res.json({
