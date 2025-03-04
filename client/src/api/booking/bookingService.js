@@ -3,11 +3,11 @@ import axios from '../axios';
 const BASE_URL =
   process.env.REACT_APP_ENV === 'development'
     ? 'http://localhost:5000/api/booking'
-    : 'https://ourrealtrip.shop/api/booking';
+    : 'https://ourrealtrip.shop/booking';
 
 export const createBooking = async bookingData => {
   try {
-    const response = await axios.post('booking/create', {
+    const response = await axios.post(`${BASE_URL}/create`, {
       types: bookingData.types,
       productIds: bookingData.productIds,
       roomIds: bookingData.roomIds,
