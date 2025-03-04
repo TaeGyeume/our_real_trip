@@ -156,7 +156,7 @@ const QnaBoardDetail = () => {
       {qnaBoard.images && qnaBoard.images.length > 0 && (
         <div className="qna-images">
           {qnaBoard.images.map((img, index) => (
-            <img key={index} src={`${SERVER_URL}/${img}`} alt="첨부 이미지" />
+            <img key={index} src={`${SERVER_URL}${img}`} alt="첨부 이미지" />
           ))}
         </div>
       )}
@@ -165,7 +165,7 @@ const QnaBoardDetail = () => {
           {qnaBoard.attachments.map((file, index) => (
             <a
               key={index}
-              href={`${SERVER_URL}/${file}`}
+              href={`${SERVER_URL}${file}`}
               download
               target="_blank"
               rel="noopener noreferrer">
