@@ -1,174 +1,186 @@
 import React, {useEffect, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
-import {getPackageById} from '../../api/package/packageService';
-import {fetchFlights} from '../../api/flight/flights';
 import {
   createBooking,
   verifyPayment,
   cancelBooking
 } from '../../api/booking/bookingService';
+import {getPackageById} from '../../api/package/packageService';
+import {fetchFlights} from '../../api/flight/flights';
 import {fetchUserCoupons} from '../../api/coupon/couponService';
 import {authAPI} from '../../api/auth/index';
+
 import CouponSelector from './CouponSelector';
 import MileageInput from '../mileage/MileageInput';
-import {
-  Alert,
-  Snackbar,
-  Button,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  Divider,
-  Box,
-  TextField
-} from '@mui/material';
+
+import './styles/TourTicketBookingForm.css';
+import {Typography, TextField, Snackbar, Alert, Button} from '@mui/material';
+
+// 서버 URL
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
 
 const PackageBookingForm = () => {
   const {id} = useParams();
   const navigate = useNavigate();
 
-  // ───────── 패키지 및 항공 정보 ─────────
+  // 패키지 및 항공 데이터
   const [packageData, setPackageData] = useState(null);
   const [flightsData, setFlightsData] = useState([]);
 
-  // ───────── 로그인 사용자 & 쿠폰 ─────────
+  // 사용자 & 쿠폰
   const [user, setUser] = useState(null);
   const [userCoupons, setUserCoupons] = useState([]);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
 
-  // ───────── 가격 상태 ─────────
-  const [basePrice, setBasePrice] = useState(0); // 패키지 기본가격 (수량은 1로 고정)
-  const [discountRate, setDiscountRate] = useState(0); // 패키지 자체 할인율
-  const [packageDiscount, setPackageDiscount] = useState(0); // 패키지 자체 할인액
-  const [couponDiscount, setCouponDiscount] = useState(0); // 쿠폰 할인액
-  const [finalPrice, setFinalPrice] = useState(0); // 최종 결제 금액
+  // 가격 상태
+  const [basePrice, setBasePrice] = useState(0);
+  const [discountRate, setDiscountRate] = useState(0);
+  const [packageDiscount, setPackageDiscount] = useState(0);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [finalPrice, setFinalPrice] = useState(0);
+  const [usedMileage, setUsedMileage] = useState(0);
 
-  // ───────── 예약자 정보 ─────────
+  // 예약자 정보
   const [reservationInfo, setReservationInfo] = useState({
     name: '',
     email: '',
     phone: ''
   });
 
-  // ───────── 마일리지 사용 ─────────
-  const [usedMileage, setUsedMileage] = useState(0);
-
-  // ───────── 알림/결제 완료 ─────────
+  // UI 상태
   const [openAlert, setOpenAlert] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
-  // ─────────────────────────────────────────────────────────
-  // 데이터 불러오기: 패키지, 항공, 사용자, 쿠폰
+  /**
+   * 패키지 데이터 로드
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // 1) 특정 패키지 조회
         const pkg = await getPackageById(id);
         setPackageData(pkg);
 
-        // 숙소 최고가 계산
-        const maxAccommodationPrice =
-          pkg.accommodations && pkg.accommodations.length > 0
-            ? Math.max(...pkg.accommodations.map(acc => acc.minPrice || 0))
-            : 0;
+        // 2) 항공편 상세(전체 항공 중에서 pkg.flights[].flightId) 불러오기
+        const flightIds = pkg.flights ? pkg.flights.map(f => f.flightId) : [];
+        const loadedFlightDocs = await Promise.all(
+          flightIds.map(async fid => {
+            const all = await fetchFlights();
+            return all.find(one => one._id === fid) || null;
+          })
+        );
+        const validFlights = loadedFlightDocs.filter(f => f !== null);
+        setFlightsData(validFlights);
 
-        // 객실(Room) 가격 합산
+        // 3) 객실(Room) 총합
         const totalRoomPrice =
-          pkg.accommodations && pkg.accommodations.length > 0
+          pkg.accommodations?.length > 0
             ? pkg.accommodations.reduce((sum, acc) => {
-                const roomTotal = acc.rooms
-                  ? acc.rooms.reduce(
-                      (roomSum, room) => roomSum + (room.pricePerNight || 0),
-                      0
-                    )
-                  : 0;
-                return sum + roomTotal;
+                if (!acc.rooms) return sum;
+                const rsum = acc.rooms.reduce((roomSum, room) => {
+                  return roomSum + (room.pricePerNight || 0);
+                }, 0);
+                return sum + rsum;
               }, 0)
             : 0;
 
-        // 투어/티켓 가격 합산
+        // 4) 투어/티켓 총합
         const totalTourPrice =
-          pkg.tours && pkg.tours.length > 0
-            ? pkg.tours.reduce((sum, tour) => sum + (tour.price || 0), 0)
+          pkg.tours?.length > 0
+            ? pkg.tours.reduce((sum, t) => sum + (t.price || 0), 0)
             : 0;
 
-        // 항공편 가격 합산
-        const flightIds = pkg.flights ? pkg.flights.map(f => f.flightId) : [];
-        const flightPromises = flightIds.map(fetchFlightById);
-        const loadedFlights = await Promise.all(flightPromises);
-        setFlightsData(loadedFlights);
+        // 5) 항공편 총합
+        const totalFlightPrice = validFlights.reduce((acc, f) => acc + (f.price || 0), 0);
 
-        const totalFlightPrice =
-          loadedFlights.length > 0
-            ? loadedFlights.reduce((sum, flight) => sum + (flight.price || 0), 0)
-            : 0;
-
-        // 기본 가격 설정 (객실 + 투어 + 항공)
+        // 6) basePrice
         const base = totalRoomPrice + totalTourPrice + totalFlightPrice;
         setBasePrice(base);
 
-        // 패키지 할인율 적용
-        const pkgDiscountRate = pkg.discountRate || 0;
-        setDiscountRate(pkgDiscountRate);
-        const pkgDiscount = Math.floor((base * pkgDiscountRate) / 100);
-        setPackageDiscount(pkgDiscount);
+        // 7) 패키지 자체 할인
+        const pDiscountRate = pkg.discountRate || 0;
+        setDiscountRate(pDiscountRate);
+        const pDiscountValue = Math.floor((base * pDiscountRate) / 100);
+        setPackageDiscount(pDiscountValue);
 
-        // 최종 가격 계산
-        setFinalPrice(base - pkgDiscount);
+        // 8) (쿠폰 전) 최종 금액
+        setFinalPrice(base - pDiscountValue);
       } catch (error) {
-        console.error('패키지 예약 데이터 로드 중 오류:', error);
+        console.error('패키지 예약 데이터 로드 오류:', error);
       }
     };
-
-    const fetchFlightById = async flightId => {
-      try {
-        const allFlights = await fetchFlights();
-        return allFlights.find(f => f._id === flightId) || null;
-      } catch (error) {
-        console.error('항공편 조회 오류:', error);
-        return null;
-      }
-    };
-
     fetchData();
   }, [id]);
 
-  // ─────────────────────────────────────────────────────────
-  // 쿠폰 선택 시 최종 가격 재계산
+  /**
+   * 사용자 정보 + 쿠폰 목록
+   */
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await authAPI.getUserProfile();
+        setUser(userData);
+
+        // 예약자 기본 정보
+        setReservationInfo({
+          name: userData.username,
+          email: userData.email,
+          phone: userData.phone
+        });
+
+        // 쿠폰 목록
+        const coupons = await fetchUserCoupons(userData._id);
+        setUserCoupons(coupons);
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error);
+      }
+    };
+    loadUser();
+  }, []);
+
+  /**
+   * 쿠폰 선택
+   */
   const handleCouponSelect = (coupon, discount) => {
     setSelectedCoupon(coupon);
     setCouponDiscount(discount);
+
     const afterPkgDiscount = basePrice - packageDiscount;
     const newFinal = afterPkgDiscount - discount;
     setFinalPrice(newFinal < 0 ? 0 : newFinal);
   };
 
-  // ─────────────────────────────────────────────────────────
-  // 예약자 정보 변경
+  /**
+   * 예약자 정보 수정
+   */
   const handleReservationChange = e => {
     const {name, value} = e.target;
     setReservationInfo(prev => ({...prev, [name]: value}));
   };
 
-  // ─────────────────────────────────────────────────────────
-  // 결제 처리
+  /**
+   * 결제 처리
+   */
   const handlePayment = async () => {
     if (!packageData || !user) return;
 
-    // 결제 금액은 최종 가격(finalPrice) 사용
-    const now = new Date(Date.now() + 9 * 60 * 60 * 1000); // 한국 시간
-    const formattedDate = now.toISOString().slice(2, 19).replace(/[-T:]/g, '');
-    const merchant_uid = `package_${user.username}_${formattedDate}`;
+    const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const merchant_uid = `package_${user.username}_${now
+      .toISOString()
+      .slice(2, 19)
+      .replace(/[-T:]/g, '')}`;
 
     try {
+      // 1) 예약 생성
       const bookingRes = await createBooking({
         types: ['package'],
         productIds: [packageData._id],
-        counts: [1], // 수량은 고정 1개
+        counts: [1],
         merchant_uid,
         totalPrice: basePrice,
         discountAmount: packageDiscount + couponDiscount,
         finalPrice,
+        usedMileage,
         userId: user._id,
         couponId: selectedCoupon ? selectedCoupon._id : null,
         reservationInfo
@@ -182,6 +194,8 @@ const PackageBookingForm = () => {
       return;
     }
 
+    // 2) 아임포트 결제
+    const payAmount = Math.max(finalPrice - usedMileage, 0);
     const {IMP} = window;
     IMP.init('imp22685348');
     IMP.request_pay(
@@ -190,7 +204,7 @@ const PackageBookingForm = () => {
         pay_method: 'card',
         merchant_uid,
         name: packageData.name,
-        amount: finalPrice,
+        amount: payAmount,
         buyer_email: user.email,
         buyer_name: user.username,
         buyer_tel: user.phone
@@ -198,6 +212,7 @@ const PackageBookingForm = () => {
       async rsp => {
         if (rsp.success) {
           try {
+            // 결제 검증
             const verifyResponse = await verifyPayment({
               imp_uid: rsp.imp_uid,
               merchant_uid,
@@ -214,8 +229,8 @@ const PackageBookingForm = () => {
             } else {
               alert(`결제 검증 실패: ${verifyResponse.message}`);
             }
-          } catch (error) {
-            alert('결제 검증 중 오류가 발생했습니다.');
+          } catch (err) {
+            alert('결제 검증 중 오류 발생했습니다.');
           }
         } else {
           alert(`결제 실패: ${rsp.error_msg}`);
@@ -227,181 +242,276 @@ const PackageBookingForm = () => {
     );
   };
 
-  // ─────────────────────────────────────────────────────────
   // 로딩 중
   if (!packageData || !user) {
     return <Typography>상품 정보를 불러오는 중...</Typography>;
   }
 
-  // ─────────────────────────────────────────────────────────
-  // 렌더링: 상품 상세정보, 가격, 포함사항, 예약자 정보, 쿠폰, 마일리지, 결제하기
+  // 썸네일
+  const thumbnail =
+    packageData.images?.length > 0
+      ? SERVER_URL + packageData.images[0]
+      : '/default-image.jpg';
+
+  // 최종 결제 금액
+  const payAmount = Math.max(finalPrice - usedMileage, 0);
+  // 총 할인
+  const totalDiscount = packageDiscount + couponDiscount + usedMileage;
+
   return (
-    <Container maxWidth="md" sx={{mt: 5}}>
-      <Typography variant="h4" gutterBottom>
-        예약하기
-      </Typography>
+    <>
+      <div className="booking-container">
+        <h2>예약하기</h2>
+        <div className="booking-content">
+          {/* 왼쪽 영역 */}
+          <div className="booking-details">
+            <div className="ticket-info">
+              <div className="ticket-header">
+                <img src={thumbnail} alt="패키지 썸네일" className="ticket-thumbnail" />
+                <div className="ticket-text">{packageData.name}</div>
+              </div>
+            </div>
 
-      {/* 상품명 및 설명 */}
-      <Typography variant="h5" sx={{mb: 2}}>
-        {packageData.name}
-      </Typography>
-      <Typography variant="body1" sx={{mb: 3}}>
-        {packageData.description}
-      </Typography>
+            <hr className="divider" />
+            <div className="package-info">
+              <h4>패키지 포함</h4>
 
-      {/* 이미지 목록 */}
-      {packageData.images && packageData.images.length > 0 && (
-        <Grid container spacing={2} sx={{mb: 3}}>
-          {packageData.images.map((img, idx) => (
-            <Grid item xs={6} sm={4} key={idx}>
-              <img
-                src={`http://localhost:5000${img}`}
-                alt={`패키지 이미지 ${idx}`}
-                style={{width: '100%', objectFit: 'cover', height: '180px'}}
+              {/* 포함/불포함 */}
+              {packageData.includedItems?.length > 0 && (
+                <p>
+                  <strong>포함사항: </strong>
+                  {packageData.includedItems.join(', ')}
+                </p>
+              )}
+              {packageData.excludedItems?.length > 0 && (
+                <p>
+                  <strong>불포함: </strong>
+                  {packageData.excludedItems.join(', ')}
+                </p>
+              )}
+
+              {/* 항공 정보 */}
+              {packageData.flights?.length > 0 && (
+                <div style={{marginTop: '10px'}}>
+                  <strong>항공편 정보</strong>
+                  <ul style={{marginTop: '5px'}}>
+                    {packageData.flights.map((flightObj, idx) => {
+                      if (!flightObj.flightId) return null;
+
+                      const flight = flightObj.flightId;
+                      const airline = flight.airline || '항공사명 없음';
+                      const flightNumber = flight.flightNumber || '편명 없음';
+                      const priceText = flight.price
+                        ? flight.price.toLocaleString() + '원'
+                        : '가격 정보 없음';
+
+                      return (
+                        <li key={idx}>
+                          {airline} / {flightNumber} / {priceText}
+                          {flightObj.seatsToUse
+                            ? ` / 사용 좌석: ${flightObj.seatsToUse}석`
+                            : ''}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              {/* 숙소 정보 */}
+              {packageData.accommodations?.length > 0 && (
+                <div style={{marginTop: '10px'}}>
+                  <strong>숙소 정보</strong>
+                  <ul style={{marginTop: '5px'}}>
+                    {packageData.accommodations.map(acc => (
+                      <li key={acc._id}>
+                        <strong>{acc.name}</strong>
+                        {acc.rooms && acc.rooms.length > 0 ? (
+                          <ul
+                            style={{
+                              marginLeft: '20px',
+                              marginTop: '5px'
+                            }}>
+                            {acc.rooms.map((room, rIdx) => {
+                              // ★ 변경점: room.name 우선 표시
+                              const roomDisplayName = room.name || '객실 이름 없음';
+                              const priceText = room.pricePerNight
+                                ? `${room.pricePerNight.toLocaleString()}원/1박`
+                                : '가격 정보 없음';
+                              return (
+                                <li key={rIdx}>
+                                  - {roomDisplayName}: {priceText}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : (
+                          <p style={{marginLeft: '20px'}}>객실 정보 없음</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* 투어 정보 */}
+              {packageData.tours?.length > 0 && (
+                <div style={{marginTop: '10px'}}>
+                  <strong>투어 정보</strong>
+                  <ul style={{marginTop: '5px'}}>
+                    {packageData.tours.map((tour, idx) => {
+                      const titleText = tour.title || '투어 제목 없음';
+                      const tourPrice = tour.price
+                        ? `${tour.price.toLocaleString()}원`
+                        : '가격 정보 없음';
+                      return (
+                        <li key={idx}>
+                          {titleText} ({tourPrice})
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <hr className="divider" />
+            {/* 쿠폰 선택 */}
+            <div className="coupon-section">
+              <h4>쿠폰 사용</h4>
+              <CouponSelector
+                userCoupons={userCoupons}
+                itemPrice={basePrice}
+                count={1}
+                onCouponSelect={handleCouponSelect}
               />
-            </Grid>
-          ))}
-        </Grid>
-      )}
+              <br />
+              <p className="coupon-info">
+                사용 가능한 쿠폰이 보이지 않나요? <br />
+                내 프로필 &gt; 쿠폰 메뉴에서 쿠폰 상태를 확인해 주세요. <br />
+                선착순 쿠폰은 소진 완료되면 더 이상 노출되지 않아요!
+              </p>
+            </div>
 
-      {/* 포함 사항 */}
-      <Card sx={{mb: 3}}>
-        <CardContent>
-          <Typography variant="h6">포함 사항</Typography>
-          <Divider sx={{my: 1}} />
-          <Box sx={{mt: 2}}>
-            {/* 숙소 */}
-            <Typography variant="body1" sx={{mb: 1}}>
-              <strong>숙소</strong> :{' '}
-              {packageData.accommodations && packageData.accommodations.length > 0
-                ? packageData.accommodations
-                    .map(acc => {
-                      const priceText = acc.minPrice
-                        ? `${acc.minPrice.toLocaleString()}원`
-                        : '가격 정보 없음';
-                      const desc = acc.description || '설명 없음';
-                      return `- ${acc.name} (${priceText})\n  ${desc}`;
-                    })
-                    .join('\n')
-                : '없음'}
-            </Typography>
-            {/* 투어 */}
-            <Typography variant="body1" sx={{mb: 1}}>
-              <strong>투어</strong> :{' '}
-              {packageData.tours && packageData.tours.length > 0
-                ? packageData.tours
-                    .map(t => {
-                      const priceText = t.price
-                        ? `${t.price.toLocaleString()}원`
-                        : '가격 정보 없음';
-                      const desc = t.description || '설명 없음';
-                      return `- ${t.title} (${priceText})\n  ${desc}`;
-                    })
-                    .join('\n')
-                : '없음'}
-            </Typography>
-            {/* 항공편 */}
-            <Typography variant="body1" sx={{mb: 1}}>
-              <strong>항공편</strong> :{' '}
-              {flightsData && flightsData.length > 0
-                ? flightsData
-                    .map(f => {
-                      const priceText = f.price
-                        ? `${f.price.toLocaleString()}원`
-                        : '가격 정보 없음';
-                      const seats = f.seatsAvailable
-                        ? `잔여좌석 ${f.seatsAvailable}석`
-                        : '잔여좌석 정보 없음';
-                      return `- ${f.flightNumber} / ${f.airline} / ${priceText} / ${seats}`;
-                    })
-                    .join('\n')
-                : '없음'}
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
+            <hr className="divider" />
+            {/* 마일리지 사용 */}
+            <div className="point-section">
+              <MileageInput
+                userMileage={user.mileage}
+                totalPrice={basePrice}
+                discountAmount={packageDiscount + couponDiscount}
+                onMileageChange={setUsedMileage}
+              />
+            </div>
 
-      {/* 가격 정보 */}
-      <Typography variant="h6" sx={{mb: 1}}>
-        원래 가격 :{' '}
-        <span style={{textDecoration: 'line-through'}}>
-          {basePrice.toLocaleString()}원
-        </span>
-        {discountRate > 0 && (
-          <span style={{color: 'red', marginLeft: '10px'}}>할인율 : {discountRate}%</span>
-        )}
-      </Typography>
-      <Typography variant="h6" sx={{mb: 3}}>
-        최종 가격 (할인 적용) : <strong>{finalPrice.toLocaleString()} 원</strong>
-      </Typography>
+            <hr className="divider" />
+            {/* 예약자 정보 */}
+            <div className="user-info">
+              <h4>예약자 정보</h4>
+              <TextField
+                label="이름"
+                variant="outlined"
+                name="name"
+                value={reservationInfo.name}
+                onChange={handleReservationChange}
+                disabled={!isEditing}
+                fullWidth
+                margin="normal"
+              />
 
-      {/* 쿠폰 선택 */}
-      <Divider sx={{my: 2}} />
-      <Typography variant="h6">쿠폰 사용</Typography>
-      <CouponSelector
-        userCoupons={userCoupons}
-        itemPrice={basePrice}
-        count={1}
-        onCouponSelect={handleCouponSelect}
-      />
+              <TextField
+                label="이메일"
+                variant="outlined"
+                name="email"
+                value={reservationInfo.email}
+                onChange={handleReservationChange}
+                disabled={!isEditing}
+                fullWidth
+                margin="normal"
+              />
 
-      {/* 예약자 정보 */}
-      <Divider sx={{my: 2}} />
-      <Typography variant="h6" sx={{mb: 1}}>
-        예약자 정보
-      </Typography>
-      <Grid container spacing={2} sx={{mb: 3}}>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            label="이름"
-            fullWidth
-            name="name"
-            value={reservationInfo.name}
-            onChange={handleReservationChange}
-          />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            label="이메일"
-            fullWidth
-            name="email"
-            value={reservationInfo.email}
-            onChange={handleReservationChange}
-          />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            label="전화번호"
-            fullWidth
-            name="phone"
-            value={reservationInfo.phone}
-            onChange={handleReservationChange}
-          />
-        </Grid>
-      </Grid>
+              <TextField
+                label="전화번호"
+                variant="outlined"
+                name="phone"
+                value={reservationInfo.phone}
+                onChange={handleReservationChange}
+                disabled={!isEditing}
+                fullWidth
+                margin="normal"
+              />
 
-      {/* 마일리지 사용 입력 */}
-      <Divider sx={{my: 2}} />
-      <Typography variant="h6" sx={{mb: 1}}>
-        마일리지 사용
-      </Typography>
-      {/* MileageInput 컴포넌트는 사용자로부터 사용 마일리지를 입력받아 onMileageChange로 전달 */}
-      <MileageInput
-        userMileage={user.mileage}
-        totalPrice={basePrice}
-        discountAmount={packageDiscount + couponDiscount}
-        onMileageChange={setUsedMileage}
-      />
+              {!isEditing ? (
+                <Button
+                  variant="contained"
+                  onClick={() => setIsEditing(true)}
+                  style={{backgroundColor: 'rgb(213, 58, 35)', marginRight: '10px'}}>
+                  수정
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={() => setIsEditing(false)}
+                  style={{backgroundColor: 'rgb(28, 103, 189)'}}>
+                  저장
+                </Button>
+              )}
+            </div>
+          </div>
 
-      {/* 결제하기 버튼 */}
-      <Button
-        variant="contained"
-        color="primary"
-        fullWidth
-        sx={{mt: 3}}
-        onClick={handlePayment}>
-        결제하기
-      </Button>
+          {/* 오른쪽 결제 영역 */}
+          <div className="payment-section">
+            <div className="payment-summary">
+              <h4>결제 정보</h4>
+              <p>기본 금액: {basePrice.toLocaleString()}원</p>
+              {packageDiscount > 0 && (
+                <p>
+                  패키지 할인
+                  {discountRate > 0 && ` (${discountRate}%)`}: -
+                  {packageDiscount.toLocaleString()}원
+                </p>
+              )}
+              {couponDiscount > 0 && (
+                <p>쿠폰 할인: -{couponDiscount.toLocaleString()}원</p>
+              )}
+              {usedMileage > 0 && <p>마일리지 사용: -{usedMileage.toLocaleString()}원</p>}
+
+              {/* 총 할인 */}
+              {totalDiscount > 0 && (
+                <p>
+                  총 할인:{' '}
+                  <span style={{color: 'red'}}>-{totalDiscount.toLocaleString()}원</span>
+                </p>
+              )}
+              <strong>총 결제 금액: {payAmount.toLocaleString()}원</strong>
+            </div>
+
+            <div className="terms-section">
+              <h4>약관 안내</h4>
+              <p>
+                개인정보 수집 및 이용 동의 (필수)
+                <br />
+                개인정보 제공 동의 (필수)
+              </p>
+              <p>위 약관을 확인하였으며, 본인은 약관 및 결제에 동의합니다.</p>
+            </div>
+
+            <div className="cancel-policy">
+              <h5>예약 취소 규정</h5>
+              <ul>
+                <li>부분환불 가능</li>
+                <li>유효기간 내 미사용 티켓 100% 환불 가능</li>
+                <li>유효기간 후 미사용 티켓 100% 환불 가능</li>
+                <li>사용한 티켓은 환불 불가능합니다.</li>
+              </ul>
+            </div>
+
+            <button onClick={handlePayment} className="payment-btn">
+              {payAmount.toLocaleString()}원 결제하기
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* 결제 완료 알림 */}
       <Snackbar
@@ -413,7 +523,7 @@ const PackageBookingForm = () => {
           패키지 예약이 완료되었습니다.
         </Alert>
       </Snackbar>
-    </Container>
+    </>
   );
 };
 
