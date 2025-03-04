@@ -23,6 +23,9 @@ import {useAuthStore} from '../../store/authStore';
 import {ButtonGroup, Button} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import ReviewImageGallery from './ReviewImageGallery';
 
 const ReviewList = ({
   productId,
@@ -43,6 +46,10 @@ const ReviewList = ({
   const [editedCommentContent, setEditedCommentContent] = useState('');
   const [removedImages, setRemovedImages] = useState([]); // 삭제된 기존 이미지
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedImages, setSelectedImages] = useState([]);
+
   const [topReview, setTopReview] = useState(null); // 좋아요 많은 리뷰
   const [visibleReviews, setVisibleReviews] = useState(0); // 초기 표시 개수
 
@@ -51,49 +58,6 @@ const ReviewList = ({
   const [ratingDistribution, setRatingDistribution] = useState([0, 0, 0, 0, 0]);
 
   const dropdownRef = useRef(null);
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const [reviewsData, userData] = await Promise.allSettled([
-  //         getReviews(productId),
-  //         authAPI.getUserProfile()
-  //       ]);
-
-  //       let validReviews = [];
-
-  //       if (reviewsData.status === 'fulfilled') {
-  //         const {reviews = []} = reviewsData.value;
-
-  //         validReviews = Array.isArray(reviews) ? reviews : [];
-  //         setReviews(validReviews);
-  //       } else {
-  //         console.error('리뷰 불러오기 실패:', reviewsData.reason);
-  //       }
-
-  //       if (userData.status === 'fulfilled') {
-  //         setCurrentUser(userData.value);
-  //       } else {
-  //         setCurrentUser(null); // 비로그인 상태
-  //       }
-
-  //       // 평점 계산
-  //       const totalRating = validReviews.reduce((sum, review) => sum + review.rating, 0);
-  //       const avgRating =
-  //         validReviews.length > 0 ? (totalRating / validReviews.length).toFixed(1) : 0;
-
-  //       const sortedReviews = [...validReviews].sort((a, b) => b.likes - a.likes);
-
-  //       setRatingInfo({avgRating, reviewCount: validReviews.length});
-  //       setTopReview(sortedReviews.length > 0 ? sortedReviews[0] : null);
-  //       setReviews(sortedReviews.slice(1)); // 나머지 리뷰 저장
-  //     } catch (err) {
-  //       console.error('데이터 불러오기 오류:', err);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [productId, setRatingInfo]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -271,48 +235,48 @@ const ReviewList = ({
 
     formData.append('content', editedContent);
 
-    // 새로 추가된 이미지
+    // ✅ 새로 추가된 이미지
     editedImages.forEach(img => {
       if (img instanceof File) {
         formData.append('images', img);
-      } else {
+      } else if (!removedImages.includes(img)) {
         formData.append('existingImages', img); // 기존 이미지 유지
       }
     });
 
-    // 삭제할 이미지 목록 서버로 전송
+    // ✅ 삭제할 이미지 목록을 FormData에 추가 (JSON 변환 제거)
     removedImages.forEach(img => {
       formData.append('removedImages', img);
     });
+
+    // ✅ 🔥 FormData 디버깅 로그 추가
+    console.log('📌 [클라이언트] 서버로 보낼 데이터:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
 
     try {
       await updateReview(reviewId, formData);
       alert('리뷰가 성공적으로 수정되었습니다.');
       setEditingReviewId(null);
 
+      // ✅ 삭제된 이미지 제외하고 업데이트
+      const filteredImages = editedImages.filter(img => !removedImages.includes(img));
       setReviews(prevReviews =>
         prevReviews.map(review =>
           review._id === reviewId
-            ? {
-                ...review,
-                content: editedContent,
-                images: editedImages.filter(img => !removedImages.includes(img)) // 삭제된 이미지 제외
-              }
+            ? {...review, content: editedContent, images: filteredImages}
             : review
         )
       );
 
       setTopReview(prevTopReview =>
         prevTopReview && prevTopReview._id === reviewId
-          ? {
-              ...prevTopReview,
-              content: editedContent,
-              images: editedImages.filter(img => !removedImages.includes(img)) // 삭제된 이미지 제외
-            }
+          ? {...prevTopReview, content: editedContent, images: filteredImages}
           : prevTopReview
       );
 
-      setRemovedImages([]); // 삭제 목록 초기화
+      setRemovedImages([]); // ✅ 삭제 목록 초기화
     } catch (error) {
       alert(`리뷰 수정 실패: ${error.message}`);
     }
@@ -413,8 +377,6 @@ const ReviewList = ({
   };
 
   const handleRemoveImage = index => {
-    // setEditedImages(prevImages => prevImages.filter((_, i) => i !== index));
-
     setEditedImages(prevImages => {
       const newImages = [...prevImages];
       const removedImage = newImages[index];
@@ -424,9 +386,37 @@ const ReviewList = ({
         setRemovedImages(prev => [...prev, removedImage]);
       }
 
-      // 배열에서 제거
-      return newImages.filter((_, i) => i !== index);
+      return newImages.filter((_, i) => i !== index); // 배열에서 제거
     });
+  };
+
+  const handleImageClick = imageUrl => {
+    setSelectedImages(imageUrl); // 선택된 이미지 저장
+    setIsModalOpen(true); // 모달 열기
+  };
+
+  const handleOpenModal = (index, images) => {
+    setCurrentImageIndex(index); // 선택된 이미지 인덱스 저장
+    setSelectedImages(images); // 이미지 리스트 저장
+    setIsModalOpen(true); // 모달 열기
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedImages([]);
+    setCurrentImageIndex(0);
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex(prevIndex =>
+      prevIndex === 0 ? selectedImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex(prevIndex =>
+      prevIndex === selectedImages.length - 1 ? 0 : prevIndex + 1
+    );
   };
 
   const isAdmin = currentUser?.roles?.includes('admin');
@@ -438,6 +428,8 @@ const ReviewList = ({
         <p className="no-reviews">등록된 리뷰가 없습니다.</p>
       ) : (
         <>
+          <ReviewImageGallery topReview={topReview} reviews={reviews} />
+
           {/* 가장 좋아요 많은 리뷰 1개 최상단 고정 */}
           {topReview && (
             <div key={topReview._id} className="review-card top-review">
@@ -567,7 +559,6 @@ const ReviewList = ({
                             alt={`기존 이미지 ${index + 1}`}
                           />
                         )}
-                        {/* <button onClick={() => handleRemoveImage(index)}>삭제</button> */}
                       </div>
                     ))}
                   </div>
@@ -606,8 +597,66 @@ const ReviewList = ({
                           src={`http://localhost:5000${image}`}
                           alt={`리뷰 이미지 ${index + 1}`}
                           className="review-thumbnail"
+                          onClick={() => handleOpenModal(index)}
+                          style={{cursor: 'pointer'}}
                         />
                       ))}
+
+                      {isModalOpen && (
+                        <div className="modal-overlay" onClick={handleCloseModal}>
+                          <div
+                            className="modal-content"
+                            onClick={e => e.stopPropagation()}>
+                            <IconButton
+                              className="modal-close"
+                              onClick={handleCloseModal}
+                              sx={{
+                                position: 'absolute',
+                                top: '10px',
+                                right: '10px',
+                                color: 'white',
+                                '&:hover': {color: 'rgba(0, 0, 0, 0.6)'}
+                              }}>
+                              <CloseIcon />
+                            </IconButton>
+
+                            <IconButton
+                              className="modal-prev"
+                              onClick={handlePrevImage}
+                              sx={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '10px',
+                                transform: 'translateY(-50%)',
+                                color: 'white',
+                                '&:hover': {color: 'rgba(0, 0, 0, 0.6)'}
+                              }}>
+                              <ArrowBackIosNewIcon />
+                            </IconButton>
+
+                            {/* 선택된 이미지 */}
+                            <img
+                              src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              alt="확대된 이미지"
+                              className="modal-image"
+                            />
+
+                            <IconButton
+                              className="modal-next"
+                              onClick={handleNextImage}
+                              sx={{
+                                position: 'absolute',
+                                top: '50%',
+                                right: '10px',
+                                transform: 'translateY(-50%)',
+                                color: 'white',
+                                '&:hover': {color: 'rgba(0, 0, 0, 0.6)'}
+                              }}>
+                              <ArrowForwardIosIcon />
+                            </IconButton>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
@@ -876,8 +925,68 @@ const ReviewList = ({
                           src={`http://localhost:5000${image}`}
                           alt={`리뷰 이미지 ${index + 1}`}
                           className="review-thumbnail"
+                          onClick={() =>
+                            handleOpenModal(index, review.images, review.content)
+                          }
+                          style={{cursor: 'pointer'}}
                         />
                       ))}
+
+                      {isModalOpen && (
+                        <div className="modal-overlay" onClick={handleCloseModal}>
+                          <div
+                            className="modal-content"
+                            onClick={e => e.stopPropagation()}>
+                            <IconButton
+                              className="modal-close"
+                              onClick={handleCloseModal}
+                              sx={{
+                                position: 'absolute',
+                                top: '10px',
+                                right: '10px',
+                                color: 'white',
+                                '&:hover': {color: 'rgba(0, 0, 0, 0.6)'}
+                              }}>
+                              <CloseIcon />
+                            </IconButton>
+
+                            <IconButton
+                              className="modal-prev"
+                              onClick={handlePrevImage}
+                              sx={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '10px',
+                                transform: 'translateY(-50%)',
+                                color: 'white',
+                                '&:hover': {color: 'rgba(0, 0, 0, 0.6)'}
+                              }}>
+                              <ArrowBackIosNewIcon />
+                            </IconButton>
+
+                            {/* 선택된 이미지 */}
+                            <img
+                              src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              alt="확대된 이미지"
+                              className="modal-image"
+                            />
+
+                            <IconButton
+                              className="modal-next"
+                              onClick={handleNextImage}
+                              sx={{
+                                position: 'absolute',
+                                top: '50%',
+                                right: '10px',
+                                transform: 'translateY(-50%)',
+                                color: 'white',
+                                '&:hover': {color: 'rgba(0, 0, 0, 0.6)'}
+                              }}>
+                              <ArrowForwardIosIcon />
+                            </IconButton>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>

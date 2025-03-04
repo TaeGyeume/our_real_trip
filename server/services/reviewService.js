@@ -70,6 +70,16 @@ exports.updateReview = async (reviewId, updateData, imageFiles) => {
       review.content = updateData.content;
     }
 
+    // 삭제할 이미지 처리 (JSON 변환 없이 배열로 처리)
+    if (updateData.removedImages && updateData.removedImages.length > 0) {
+      console.log('[서버] 삭제할 이미지 목록:', updateData.removedImages);
+
+      // 리뷰에서 해당 이미지 제거
+      review.images = review.images.filter(
+        img => !updateData.removedImages.includes(img)
+      );
+    }
+
     if (imageFiles && imageFiles.length > 0) {
       const newImagePaths = imageFiles.map(file => `/uploads/${file.filename}`);
       review.images.push(...newImagePaths);

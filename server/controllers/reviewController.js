@@ -80,10 +80,16 @@ exports.updateReview = async (req, res) => {
   const {content} = req.body;
   const imageFiles = req.files;
 
+  const removedImages = req.body.removedImages
+    ? Array.isArray(req.body.removedImages)
+      ? req.body.removedImages
+      : [req.body.removedImages]
+    : [];
+
   try {
     const updatedReview = await reviewService.updateReview(
       reviewId,
-      {content},
+      {content, removedImages},
       imageFiles
     );
 
