@@ -134,7 +134,7 @@ export const toggleLike = async (reviewId, userId) => {
     // console.log(`[프론트] 좋아요 요청 userId:`, userId);
 
     const response = await axios.patch(
-      `${BASE_URL}/${reviewId}/like`,
+      `reviews/${reviewId}/like`,
       {userId},
       {
         headers: {
@@ -154,7 +154,7 @@ export const toggleLike = async (reviewId, userId) => {
 
 export const getBestReviews = async productId => {
   try {
-    const response = await axios.get(`${BASE_URL}/${productId}/best`);
+    const response = await axios.get(`reviews/${productId}/best`);
     return response.data.reviews;
   } catch (error) {
     console.error(
