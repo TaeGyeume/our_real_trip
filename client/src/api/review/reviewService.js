@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../axios';
 import {authAPI} from '../auth/auth';
 
 const BASE_URL = 'http://localhost:5000/reviews';
@@ -12,7 +12,7 @@ const requestConfig = {
 };
 
 export const createReview = async formData => {
-  return await axios.post(`${BASE_URL}/create`, formData, {
+  return await axios.post(`reviews/create`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -21,7 +21,7 @@ export const createReview = async formData => {
 
 export const getReviews = async productId => {
   try {
-    const response = await axios.get(`${BASE_URL}/${encodeURIComponent(productId)}`);
+    const response = await axios.get(`reviews/${encodeURIComponent(productId)}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching reviews:', error);
@@ -33,13 +33,13 @@ export const updateReview = async (reviewId, updatedData) => {
   try {
     const response = await axios({
       method: 'put',
-      url: `${BASE_URL}/update/${reviewId}`,
+      url: `reviews/update/${reviewId}`,
       data: updatedData,
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
-    
+
     return response.data;
   } catch (error) {
     console.error('[프론트] 리뷰 수정 실패:', error.response?.data || error.message);
@@ -49,7 +49,7 @@ export const updateReview = async (reviewId, updatedData) => {
 
 export const deleteReview = async reviewId => {
   try {
-    const response = await axios.delete(`${BASE_URL}/delete/${reviewId}`);
+    const response = await axios.delete(`reviews/delete/${reviewId}`);
 
     return response.data;
   } catch (error) {
@@ -75,7 +75,7 @@ export const addComment = async (reviewId, commentContent) => {
     }
 
     const response = await axios.post(
-      `${BASE_URL}/${reviewId}/comments`,
+      `reviews/${reviewId}/comments`,
       {
         content: commentContent,
         userId: userId,
@@ -96,7 +96,7 @@ export const addComment = async (reviewId, commentContent) => {
 
 export const deleteComment = async (reviewId, commentId) => {
   try {
-    const response = await axios.delete(`${BASE_URL}/${reviewId}/comments/${commentId}`, {
+    const response = await axios.delete(`reviews/${reviewId}/comments/${commentId}`, {
       withCredentials: true
     });
 
@@ -113,7 +113,7 @@ export const deleteComment = async (reviewId, commentId) => {
 export const updateComment = async (reviewId, commentId, newContent) => {
   try {
     const response = await axios.patch(
-      `${BASE_URL}/${reviewId}/comments/${commentId}`,
+      `reviews/${reviewId}/comments/${commentId}`,
       {content: newContent},
       requestConfig
     );
@@ -130,6 +130,6 @@ export const updateComment = async (reviewId, commentId, newContent) => {
 };
 
 export const likeReview = async reviewId => {
-  const response = await axios.post(`${BASE_URL}/${reviewId}/like`);
+  const response = await axios.post(`reviews/${reviewId}/like`);
   return response.data;
 };
