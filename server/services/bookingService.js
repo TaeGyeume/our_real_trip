@@ -796,8 +796,20 @@ exports.getBookingDetails = async bookingId => {
         let product;
         try {
           if (model === 'package') {
-            // 패키지 모델 이름이 'Package'라고 가정
-            product = await mongoose.model('package').findById(productId);
+            // 🔥 'package' 모델로 찾을 때, 추가로 populate
+            product = await mongoose
+              .model('package') // 소문자 'package' 모델
+              .findById(productId)
+              .populate({
+                path: 'accommodations', // 1차: accommodations
+                populate: {
+                  path: 'rooms', // 2차: accommodations 내부의 rooms
+                  model: 'Room' // 실제 Room 모델에서 데이터를 가져옴
+                }
+              })
+              .populate('flights.flightId') // 항공편 실제 정보
+              .populate('tours'); // 투어 정보
+
             if (!product) return null;
 
             // 패키지 전용 필드들 추출

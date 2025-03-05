@@ -31,18 +31,19 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 
-/** 항공편 카드 컴포넌트 */
+const AIRLINE_LOGOS = {
+  대한항공: '/images/logos/korean.png',
+  아시아나항공: '/images/logos/asiana.png',
+  에어서울: '/images/logos/airseoul.png',
+  이스타항공: '/images/logos/eastar.png',
+  진에어: '/images/logos/jinair.png',
+  티웨이항공: '/images/logos/twayair.png',
+  제주항공: '/images/logos/jejuair.png',
+  default: '/images/logos/default.png'
+};
+
+/** 항공편 카드 */
 function FlightCard({flight, isSelected, onSelect, onSeatChange, onRemove}) {
-  const AIRLINE_LOGOS = {
-    대한항공: '/images/logos/korean.png',
-    아시아나항공: '/images/logos/asiana.png',
-    에어서울: '/images/logos/airseoul.png',
-    이스타항공: '/images/logos/eastar.png',
-    진에어: '/images/logos/jinair.png',
-    티웨이항공: '/images/logos/twayair.png',
-    제주항공: '/images/logos/jejuair.png',
-    default: '/images/logos/default.png'
-  };
   const logoSrc = AIRLINE_LOGOS[flight.airline] || AIRLINE_LOGOS.default;
 
   return (
@@ -62,7 +63,8 @@ function FlightCard({flight, isSelected, onSelect, onSeatChange, onRemove}) {
           {flight.price?.toLocaleString() ?? 0}원 / 잔여석: {flight.seatsAvailable ?? 0}석
         </Typography>
       </CardContent>
-      {isSelected ? (
+
+      {isSelected && (
         <TextField
           label="좌석 수"
           type="number"
@@ -71,7 +73,7 @@ function FlightCard({flight, isSelected, onSelect, onSeatChange, onRemove}) {
           value={isSelected.seatsToUse}
           onChange={e => onSeatChange(flight._id, e.target.value)}
         />
-      ) : null}
+      )}
       <Button
         variant={isSelected ? 'contained' : 'outlined'}
         color="primary"
@@ -88,7 +90,7 @@ function FlightCard({flight, isSelected, onSelect, onSeatChange, onRemove}) {
   );
 }
 
-// 헬퍼 함수: 이미지 경로 정규화 (역슬래시 -> 슬래시, 앞에 '/' 추가)
+// 서버 이미지 경로 정규화
 const normalizeImagePath = path => {
   let newPath = path.replace(/\\/g, '/');
   if (!newPath.startsWith('/')) {
@@ -97,11 +99,11 @@ const normalizeImagePath = path => {
   return newPath;
 };
 
-const PackageEdit = () => {
+export default function PackageEdit() {
   const {id} = useParams();
   const navigate = useNavigate();
+  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  // 로딩 상태
   const [loading, setLoading] = useState(false);
 
   // 패키지 기본 정보
@@ -114,127 +116,146 @@ const PackageEdit = () => {
     flights: [],
     images: []
   });
-  // 기존 이미지 (서버에 저장된 파일 경로)
-  const [existingImages, setExistingImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]); // 서버에 이미 있는 이미지
 
-  // 선택 상태
+  // 숙소 / 투어 / 항공 선택
   const [selectedAccommodations, setSelectedAccommodations] = useState([]);
-  const [selectedRooms, setSelectedRooms] = useState({});
   const [selectedTourTickets, setSelectedTourTickets] = useState([]);
   const [selectedFlights, setSelectedFlights] = useState([]);
 
-  // 옵션 데이터
-  const [availableAccommodations, setAvailableAccommodations] = useState([]);
-  const [availableTourTickets, setAvailableTourTickets] = useState([]);
-  const [availableFlights, setAvailableFlights] = useState([]);
+  // 방+날짜 정보: { roomId: { start, end } }
+  const [selectedRoomDates, setSelectedRoomDates] = useState({});
 
-  // 새로 업로드할 이미지
-  const [newImages, setNewImages] = useState([]);
-
-  // 모달 상태
+  // 모달 열림/닫힘
   const [openAccommodationModal, setOpenAccommodationModal] = useState(false);
   const [openRoomModal, setOpenRoomModal] = useState(false);
   const [openTourModal, setOpenTourModal] = useState(false);
   const [openFlightModal, setOpenFlightModal] = useState(false);
   const [currentAccommodation, setCurrentAccommodation] = useState(null);
 
+  // 새로 업로드할 이미지들
+  const [newImages, setNewImages] = useState([]);
+
+  // 선택 가능한 옵션 (숙소, 투어, 항공)
+  const [availableAccommodations, setAvailableAccommodations] = useState([]);
+  const [availableTourTickets, setAvailableTourTickets] = useState([]);
+  const [availableFlights, setAvailableFlights] = useState([]);
+
   // 항공 검색/페이징
   const [flightSearchQuery, setFlightSearchQuery] = useState('');
   const [flightPage, setFlightPage] = useState(1);
   const flightsPerPage = 5;
 
-  // 서버 URL
-  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-  // -----------------------------
-  // A) 기존 패키지 데이터 로드
-  // -----------------------------
+  // ------------------------------
+  // 1) 패키지 상세 & 옵션 데이터 로드
+  // ------------------------------
   useEffect(() => {
-    fetchPackageData();
-    fetchAvailableData();
-    // eslint-disable-next-line
-  }, []);
+    async function fetchData() {
+      try {
+        // (A) 패키지 상세 조회
+        const pkg = await getPackageById(id);
 
-  const fetchPackageData = async () => {
-    try {
-      const data = await getPackageById(id);
-      setPackageData({
-        name: data.name,
-        description: data.description,
-        discountRate: data.discountRate ?? 0,
-        accommodations: data.accommodations.map(a => a._id),
-        tours: data.tours.map(t => t._id),
-        flights: data.flights.map(f => ({
-          flightId: f.flightId._id || f.flightId,
-          seatsToUse: f.seatsToUse
-        })),
-        images: data.images || []
-      });
-      setExistingImages(data.images || []);
-      setSelectedAccommodations(data.accommodations.map(a => a._id));
-      setSelectedTourTickets(data.tours.map(t => t._id));
-      setSelectedFlights(
-        data.flights.map(f => ({
-          flightId: f.flightId._id || f.flightId,
-          seatsToUse: f.seatsToUse
-        }))
-      );
-      // rooms는 서버 구조에 따라 달라질 수 있으므로 여기서는 빈 객체로 처리
-      setSelectedRooms({});
-    } catch (error) {
-      console.error('패키지 조회 실패:', error);
+        // 기본 정보 세팅
+        setPackageData({
+          name: pkg.name,
+          description: pkg.description,
+          discountRate: pkg.discountRate ?? 0,
+          accommodations: pkg.accommodations.map(a => a._id),
+          tours: pkg.tours.map(t => t._id),
+          flights: pkg.flights.map(f => ({
+            flightId: f.flightId._id || f.flightId,
+            seatsToUse: f.seatsToUse
+          })),
+          images: pkg.images || []
+        });
+        setExistingImages(pkg.images || []);
+
+        // 숙소/투어/항공 (선택 상태)
+        setSelectedAccommodations(pkg.accommodations.map(a => a._id));
+        setSelectedTourTickets(pkg.tours.map(t => t._id));
+        setSelectedFlights(
+          pkg.flights.map(f => ({
+            flightId: f.flightId._id || f.flightId,
+            seatsToUse: f.seatsToUse
+          }))
+        );
+
+        // 방+날짜 (roomIds, startDates, endDates)
+        // pkg.roomIds, pkg.startDates, pkg.endDates 가 모두 배열
+        if (pkg.roomIds && pkg.startDates && pkg.endDates) {
+          const roomDateObj = {};
+          pkg.roomIds.forEach((roomIdValue, idx) => {
+            // roomIdValue가 { $oid: '...' } 형태이거나, 그냥 string일 수 있음
+            const rid =
+              typeof roomIdValue === 'object' && roomIdValue.$oid
+                ? roomIdValue.$oid
+                : roomIdValue.toString();
+
+            const startObj = pkg.startDates[idx];
+            const endObj = pkg.endDates[idx];
+
+            // 문자열 형태("2025-03-05T00:00:00.000Z")인지, { $date: ... }인지 구분해서 처리
+            let startDateStr = '';
+            if (typeof startObj === 'string') {
+              startDateStr = new Date(startObj).toISOString().slice(0, 10);
+            } else if (startObj && startObj.$date) {
+              startDateStr = new Date(startObj.$date).toISOString().slice(0, 10);
+            }
+
+            let endDateStr = '';
+            if (typeof endObj === 'string') {
+              endDateStr = new Date(endObj).toISOString().slice(0, 10);
+            } else if (endObj && endObj.$date) {
+              endDateStr = new Date(endObj.$date).toISOString().slice(0, 10);
+            }
+
+            // 최종적으로 state에 저장
+            roomDateObj[rid] = {
+              start: startDateStr,
+              end: endDateStr
+            };
+          });
+          setSelectedRoomDates(roomDateObj);
+        }
+
+        // (B) 생성용 옵션 데이터 (숙소, 투어, 항공)
+        const createData = await getCreatePackageData();
+        setAvailableAccommodations(createData.accommodations);
+        setAvailableTourTickets(createData.tourTickets);
+        setAvailableFlights(createData.flights);
+      } catch (err) {
+        console.error('패키지 데이터 로드 실패:', err);
+      }
     }
-  };
+    fetchData();
+  }, [id]);
 
-  // -----------------------------
-  // B) 선택 가능한 데이터 로드 (숙소, 투어, 항공)
-  // -----------------------------
-  const fetchAvailableData = async () => {
-    try {
-      const data = await getCreatePackageData();
-      setAvailableAccommodations(data.accommodations);
-      setAvailableTourTickets(data.tourTickets);
-      setAvailableFlights(data.flights);
-    } catch (error) {
-      console.error('데이터 가져오기 실패:', error);
-    }
-  };
-
-  // -----------------------------
-  // C) 이미지 업로드 핸들러
-  // -----------------------------
+  // ------------------------------
+  // 2) 이미지 핸들러
+  // ------------------------------
   const handleImageChange = e => {
     setNewImages([...newImages, ...Array.from(e.target.files)]);
   };
-
   const handleRemoveImage = index => {
     setNewImages(prev => prev.filter((_, i) => i !== index));
   };
-
-  // 기존 이미지 삭제 (미리보기에서 제거)
-  const handleRemoveExistingImage = index => {
-    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  const handleRemoveExistingImage = idx => {
+    setExistingImages(prev => prev.filter((_, i) => i !== idx));
   };
 
-  // -----------------------------
-  // D) 숙소 & 방 선택
-  // -----------------------------
-  const handleOpenAccommodationModal = () => {
-    setOpenAccommodationModal(true);
-  };
-  const handleCloseAccommodationModal = () => {
-    setOpenAccommodationModal(false);
-  };
+  // ------------------------------
+  // 3) 숙소 & 방 선택
+  // ------------------------------
+  const handleOpenAccommodationModal = () => setOpenAccommodationModal(true);
+  const handleCloseAccommodationModal = () => setOpenAccommodationModal(false);
 
   const handleOpenRoomModal = acc => {
     setCurrentAccommodation(acc);
     setOpenRoomModal(true);
   };
-  const handleCloseRoomModal = () => {
-    setOpenRoomModal(false);
-  };
+  const handleCloseRoomModal = () => setOpenRoomModal(false);
 
-  // 숙소 선택 -> 배열에 추가
+  // 숙소 클릭 시 (숙소 추가 & 방 모달 열기)
   const handleSelectAccommodation = acc => {
     if (!selectedAccommodations.includes(acc._id)) {
       setSelectedAccommodations(prev => [...prev, acc._id]);
@@ -242,71 +263,88 @@ const PackageEdit = () => {
     handleOpenRoomModal(acc);
   };
 
-  // 방 선택 -> 한 호텔에서 여러 방
-  const handleSelectRoom = (accId, roomId) => {
-    setSelectedRooms(prev => {
-      const existing = prev[accId] || [];
-      if (!existing.includes(roomId)) {
-        return {...prev, [accId]: [...existing, roomId]};
-      }
-      return prev;
-    });
+  // 숙소 취소
+  const handleRemoveAccommodation = accId => {
+    setSelectedAccommodations(prev => prev.filter(id => id !== accId));
+    // 해당 숙소의 방이 이미 선택되어 있으면 모두 제거
+    const foundAcc = availableAccommodations.find(a => a._id === accId);
+    if (foundAcc && foundAcc.rooms) {
+      foundAcc.rooms.forEach(rm => {
+        const rmid = rm._id;
+        setSelectedRoomDates(prev => {
+          const newObj = {...prev};
+          delete newObj[rmid];
+          return newObj;
+        });
+      });
+    }
+  };
+
+  // 방 선택
+  const handleSelectRoom = (accId, room) => {
+    const roomId = room._id;
+    // 이미 등록되어 있지 않다면 날짜 초기화
+    if (!selectedRoomDates[roomId]) {
+      setSelectedRoomDates(prev => ({
+        ...prev,
+        [roomId]: {start: '', end: ''}
+      }));
+    }
     handleCloseRoomModal();
   };
 
-  // 숙소 취소 -> 해당 숙소와 방들 제거
-  const handleRemoveAccommodation = accId => {
-    setSelectedAccommodations(prev => prev.filter(id => id !== accId));
-    setSelectedRooms(prev => {
-      const newRooms = {...prev};
-      delete newRooms[accId];
-      return newRooms;
+  // 날짜 변경
+  const handleRoomDateChange = (roomId, field, value) => {
+    setSelectedRoomDates(prev => ({
+      ...prev,
+      [roomId]: {
+        ...prev[roomId],
+        [field]: value
+      }
+    }));
+  };
+
+  // 방 취소
+  const handleRemoveRoom = roomId => {
+    setSelectedRoomDates(prev => {
+      const newObj = {...prev};
+      delete newObj[roomId];
+      return newObj;
     });
   };
 
-  // -----------------------------
-  // E) 투어/티켓 선택
-  // -----------------------------
-  const [tempTourTickets, setTempTourTickets] = useState([...selectedTourTickets]);
+  // ------------------------------
+  // 4) 투어/티켓
+  // ------------------------------
+  const [tempTourTickets, setTempTourTickets] = useState([]);
 
   const handleOpenTourModal = () => {
+    // 모달 열기 전, 임시 배열에 현재 선택값 복사
     setTempTourTickets([...selectedTourTickets]);
     setOpenTourModal(true);
   };
+  const handleCancelTourModal = () => setOpenTourModal(false);
+
+  // 모달 "확인" 누를 때 최종 반영
   const handleCloseTourModal = () => {
     setSelectedTourTickets([...tempTourTickets]);
     setOpenTourModal(false);
   };
-  const handleCancelTourModal = () => {
-    setOpenTourModal(false);
-  };
-  const toggleTourTicketSelectionTemp = id => {
-    setTempTourTickets(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
-  };
-  const handleRemoveTourTicket = id => {
-    setSelectedTourTickets(prev => prev.filter(item => item !== id));
-  };
 
-  // -----------------------------
-  // F) 항공 선택
-  // -----------------------------
-  const [tempFlights, setTempFlights] = useState([...selectedFlights]);
-  const [tempSeatCounts, setTempSeatCounts] = useState({});
+  // ------------------------------
+  // 5) 항공
+  // ------------------------------
+  const [tempFlights, setTempFlights] = useState([]);
 
   const handleOpenFlightModal = () => {
+    // 모달 열기 전, 임시 배열에 현재 선택값 복사
     setTempFlights([...selectedFlights]);
-    setTempSeatCounts(
-      selectedFlights.reduce((acc, f) => ({...acc, [f.flightId]: f.seatsToUse}), {})
-    );
     setOpenFlightModal(true);
   };
+  const handleCancelFlightModal = () => setOpenFlightModal(false);
+
   const handleCloseFlightModal = () => {
     setSelectedFlights([...tempFlights]);
-    setOpenFlightModal(false);
-  };
-  const handleCancelFlightModal = () => {
     setOpenFlightModal(false);
   };
 
@@ -314,17 +352,23 @@ const PackageEdit = () => {
     setTempFlights(prev => {
       const exists = prev.find(f => f.flightId === flight._id);
       if (exists) {
+        // 이미 있으면 제거
         return prev.filter(f => f.flightId !== flight._id);
       } else {
+        // 없으면 추가 (초기 seatsToUse = 1)
         return [...prev, {flightId: flight._id, seatsToUse: 1}];
       }
     });
   };
+
+  // 좌석 수 변경
   const handleFlightSeatChangeTemp = (flightId, value) => {
     setTempFlights(prev =>
       prev.map(f => (f.flightId === flightId ? {...f, seatsToUse: Number(value)} : f))
     );
   };
+
+  // 선택된 항공 중 해당 ID 찾기
   const findSelectedFlightTemp = flightId =>
     tempFlights.find(f => f.flightId === flightId);
 
@@ -333,7 +377,7 @@ const PackageEdit = () => {
     setSelectedFlights(prev => prev.filter(f => f.flightId !== flightId));
   };
 
-  // 항공 검색/페이징
+  // 항공 검색 & 페이징
   const filteredFlights = availableFlights.filter(f => {
     const query = flightSearchQuery.toLowerCase();
     return (
@@ -347,13 +391,15 @@ const PackageEdit = () => {
     flightPage * flightsPerPage
   );
 
-  // -----------------------------
-  // G) 패키지 수정 (FormData)
-  // -----------------------------
+  // ------------------------------
+  // 6) 패키지 수정하기
+  // ------------------------------
   const handleUpdate = async () => {
     setLoading(true);
     try {
       const formData = new FormData();
+
+      // 기본 정보
       formData.append('name', packageData.name);
       formData.append('description', packageData.description);
       formData.append('discountRate', packageData.discountRate);
@@ -361,44 +407,56 @@ const PackageEdit = () => {
       formData.append('endDate', '2025-12-31');
       formData.append('category', 'Tour Package');
 
-      // 숙소: 각각 append
-      selectedAccommodations.forEach(acc => {
-        formData.append('accommodations', acc);
+      // 숙소
+      selectedAccommodations.forEach(aid => {
+        formData.append('accommodations', aid);
       });
 
-      // rooms: JSON (객체)
-      formData.append('rooms', JSON.stringify(selectedRooms));
-
-      // 투어: 각각 append
-      selectedTourTickets.forEach(tour => {
-        formData.append('tours', tour);
+      // 투어
+      selectedTourTickets.forEach(tid => {
+        formData.append('tours', tid);
       });
 
-      // 항공: JSON (배열/객체)
+      // 항공(JSON으로 직렬화)
       formData.append('flights', JSON.stringify(selectedFlights));
 
-      // 기존 이미지: 각각 append
+      // 방+날짜 -> roomIds, startDates, endDates
+      const roomIdList = [];
+      const startList = [];
+      const endList = [];
+      Object.entries(selectedRoomDates).forEach(([rId, dateObj]) => {
+        roomIdList.push(rId);
+        startList.push(dateObj.start || '');
+        endList.push(dateObj.end || '');
+      });
+      formData.append('roomIds', JSON.stringify(roomIdList));
+      formData.append('startDates', JSON.stringify(startList));
+      formData.append('endDates', JSON.stringify(endList));
+
+      // 기존 이미지
       existingImages.forEach(img => {
         formData.append('existingImages', img);
       });
 
-      // 새 이미지: 각각 append
+      // 새 이미지
       newImages.forEach(file => {
         formData.append('images', file);
       });
 
+      // 실제 수정 API 호출
       await updatePackage(id, formData);
+      // 수정 성공 후 목록 페이지 등으로 이동
       navigate('/packages');
-    } catch (error) {
-      console.error('패키지 수정 실패:', error);
+    } catch (err) {
+      console.error('패키지 수정 실패:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // -----------------------------
-  // H) 렌더링
-  // -----------------------------
+  // ------------------------------
+  // 렌더링
+  // ------------------------------
   return (
     <Container sx={{py: 4}}>
       <Typography variant="h4" sx={{mb: 3}}>
@@ -411,11 +469,10 @@ const PackageEdit = () => {
           {existingImages.map((img, idx) => (
             <Box key={idx} sx={{position: 'relative'}}>
               <img
-                // 서버에서 넘어온 이미지 경로를 정규화해서 표시
                 src={
                   normalizeImagePath(img).startsWith('/')
-                    ? `${SERVER_URL}${normalizeImagePath(img)}`
-                    : `${SERVER_URL}/${img}`
+                    ? SERVER_URL + normalizeImagePath(img)
+                    : SERVER_URL + '/' + img
                 }
                 alt={`existing-${idx}`}
                 style={{width: 100, height: 100, objectFit: 'cover', borderRadius: 4}}
@@ -494,16 +551,13 @@ const PackageEdit = () => {
         value={packageData.discountRate === 0 ? '' : packageData.discountRate}
         onChange={e => {
           const val = Number(e.target.value);
-          setPackageData({
-            ...packageData,
-            discountRate: isNaN(val) ? 0 : val
-          });
+          setPackageData({...packageData, discountRate: isNaN(val) ? 0 : val});
         }}
         sx={{mb: 3}}
       />
 
-      {/* 숙소 & 방 선택 */}
-      <Button variant="outlined" onClick={handleOpenAccommodationModal} sx={{mb: 1}}>
+      {/* 숙소 & 방 */}
+      <Button variant="outlined" sx={{mb: 1}} onClick={handleOpenAccommodationModal}>
         숙소 및 방 선택
       </Button>
       <Typography variant="h6" sx={{mt: 2}}>
@@ -516,19 +570,23 @@ const PackageEdit = () => {
       ) : (
         <Box sx={{mt: 1}}>
           {selectedAccommodations.map(accId => {
-            const found = availableAccommodations.find(a => a._id === accId);
-            if (!found) return <Typography key={accId}>{accId}</Typography>;
+            const foundAcc = availableAccommodations.find(a => a._id === accId);
+            if (!foundAcc) {
+              return (
+                <Typography key={accId} color="text.secondary">
+                  {accId} (데이터 없음)
+                </Typography>
+              );
+            }
             return (
               <Box key={accId} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
                 <Avatar
-                  src={found.images?.[0] || ''}
-                  alt={found.name}
+                  src={foundAcc.images?.[0] || ''}
+                  alt={foundAcc.name}
                   variant="square"
                   sx={{width: 40, height: 40, mr: 1}}
                 />
-                <Typography variant="body1" sx={{mr: 2}}>
-                  {found.name}
-                </Typography>
+                <Typography sx={{mr: 2}}>{foundAcc.name}</Typography>
                 <Button
                   variant="text"
                   color="error"
@@ -541,59 +599,77 @@ const PackageEdit = () => {
         </Box>
       )}
 
-      {/* 선택된 방 (숙소별 여러 방) */}
+      {/* 방+날짜 */}
       <Typography variant="h6" sx={{mt: 2}}>
-        선택된 방
+        선택된 방 (예약 날짜 입력)
       </Typography>
-      {Object.keys(selectedRooms).length === 0 ? (
+      {Object.keys(selectedRoomDates).length === 0 ? (
         <Typography variant="body2" sx={{color: 'text.secondary'}}>
           선택된 방이 없습니다.
         </Typography>
       ) : (
         <Box sx={{mt: 1}}>
-          {Object.entries(selectedRooms).map(([accId, roomIds]) => {
-            const foundAcc = availableAccommodations.find(a => a._id === accId);
-            if (!foundAcc) return null;
-            return roomIds.map(roomId => {
-              const foundRoom = foundAcc.rooms?.find(r => r._id === roomId);
-              if (!foundRoom) return null;
-              const roomPrice = foundRoom.pricePerNight
-                ? `${foundRoom.pricePerNight.toLocaleString()}원`
-                : '가격 정보 없음';
+          {Object.entries(selectedRoomDates).map(([rId, dateObj]) => {
+            // 어떤 숙소에 속한 방인지 찾기
+            let foundAcc, foundRoom;
+            for (const acc of availableAccommodations) {
+              if (acc.rooms) {
+                const rm = acc.rooms.find(r => r._id === rId);
+                if (rm) {
+                  foundAcc = acc;
+                  foundRoom = rm;
+                  break;
+                }
+              }
+            }
+            if (!foundRoom) {
               return (
-                <Box
-                  key={`${accId}-${roomId}`}
-                  sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                  <Typography variant="body1" sx={{mr: 1}}>
-                    {foundAcc.name} - {foundRoom.name} ({roomPrice})
-                  </Typography>
+                <Box key={rId} sx={{mb: 1}}>
+                  방ID {rId} (데이터 없음)
+                </Box>
+              );
+            }
+            const priceText = foundRoom.pricePerNight
+              ? `${foundRoom.pricePerNight.toLocaleString()}원`
+              : '가격 정보 없음';
+
+            return (
+              <Box key={rId} sx={{mb: 2}}>
+                <Typography variant="body1" sx={{fontWeight: 'bold', mb: 1}}>
+                  {foundAcc?.name} - {foundRoom.name} ({priceText}/1박)
+                </Typography>
+                <Box sx={{display: 'flex', gap: 2, alignItems: 'center'}}>
+                  <TextField
+                    label="체크인"
+                    type="date"
+                    value={dateObj.start}
+                    onChange={e => handleRoomDateChange(rId, 'start', e.target.value)}
+                    InputLabelProps={{shrink: true}}
+                    sx={{width: 180}}
+                  />
+                  <TextField
+                    label="체크아웃"
+                    type="date"
+                    value={dateObj.end}
+                    onChange={e => handleRoomDateChange(rId, 'end', e.target.value)}
+                    InputLabelProps={{shrink: true}}
+                    sx={{width: 180}}
+                  />
                   <Button
                     variant="text"
                     color="error"
-                    onClick={() => {
-                      setSelectedRooms(prev => {
-                        const updated = {...prev};
-                        updated[accId] = updated[accId].filter(id => id !== roomId);
-                        if (updated[accId].length === 0) {
-                          setSelectedAccommodations(prevAcc =>
-                            prevAcc.filter(aid => aid !== accId)
-                          );
-                          delete updated[accId];
-                        }
-                        return updated;
-                      });
-                    }}>
+                    onClick={() => handleRemoveRoom(rId)}>
                     취소
                   </Button>
                 </Box>
-              );
-            });
+              </Box>
+            );
           })}
         </Box>
       )}
 
-      {/* 투어/티켓 선택 */}
-      <Button variant="outlined" onClick={handleOpenTourModal} sx={{mt: 2}}>
+      {/* 투어/티켓 */}
+      <Button variant="outlined" sx={{mt: 2}} onClick={handleOpenTourModal}>
         투어/티켓 선택
       </Button>
       <Typography variant="h6" sx={{mt: 2}}>
@@ -605,22 +681,29 @@ const PackageEdit = () => {
         </Typography>
       ) : (
         <Box sx={{mt: 1}}>
-          {selectedTourTickets.map(tourId => {
-            const foundTour = availableTourTickets.find(t => t._id === tourId);
-            if (!foundTour) return <Typography key={tourId}>{tourId}</Typography>;
-            const price = foundTour.price
+          {selectedTourTickets.map(tid => {
+            const foundTour = availableTourTickets.find(t => t._id === tid);
+            if (!foundTour) {
+              return (
+                <Typography key={tid} color="text.secondary">
+                  {tid} (데이터 없음)
+                </Typography>
+              );
+            }
+            const priceText = foundTour.price
               ? `${foundTour.price.toLocaleString()}원`
               : '가격 정보 없음';
+
             return (
-              <Box key={tourId} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                <Typography variant="body1" sx={{mr: 2}}>
-                  {foundTour.title} ({price})
+              <Box key={tid} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
+                <Typography sx={{mr: 2}}>
+                  {foundTour.title} ({priceText})
                 </Typography>
                 <Button
                   variant="text"
                   color="error"
                   onClick={() =>
-                    setSelectedTourTickets(prev => prev.filter(id => id !== tourId))
+                    setSelectedTourTickets(prev => prev.filter(id => id !== tid))
                   }>
                   취소
                 </Button>
@@ -630,8 +713,8 @@ const PackageEdit = () => {
         </Box>
       )}
 
-      {/* 항공 선택 */}
-      <Button variant="outlined" onClick={handleOpenFlightModal} sx={{mt: 2}}>
+      {/* 항공 */}
+      <Button variant="outlined" sx={{mt: 2}} onClick={handleOpenFlightModal}>
         항공 선택
       </Button>
       <Typography variant="h6" sx={{mt: 2}}>
@@ -646,16 +729,18 @@ const PackageEdit = () => {
           {selectedFlights.map((f, idx) => {
             const foundFlight = availableFlights.find(fl => fl._id === f.flightId);
             if (!foundFlight) {
-              return <Typography key={idx}>{f.flightId} - (데이터 없음)</Typography>;
+              return (
+                <Typography key={idx} color="text.secondary">
+                  {f.flightId} - (데이터 없음)
+                </Typography>
+              );
             }
-            const totalFlightPrice = foundFlight.price * f.seatsToUse;
-            const flightPrice = totalFlightPrice
-              ? `${totalFlightPrice.toLocaleString()}원`
-              : '0원';
+            const totalPrice = foundFlight.price * f.seatsToUse;
             return (
               <Box key={idx} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
-                <Typography variant="body1" sx={{mr: 2}}>
-                  {foundFlight.flightNumber} - {foundFlight.airline} ({flightPrice})
+                <Typography sx={{mr: 2}}>
+                  {foundFlight.flightNumber} ({foundFlight.airline}) -{' '}
+                  {totalPrice.toLocaleString()}원 (좌석 {f.seatsToUse})
                 </Typography>
                 <Button
                   variant="text"
@@ -673,9 +758,9 @@ const PackageEdit = () => {
       <Button
         variant="contained"
         color="primary"
+        disabled={loading}
         onClick={handleUpdate}
-        sx={{mt: 3}}
-        disabled={loading}>
+        sx={{mt: 3}}>
         {loading ? '패키지 수정 중...' : '패키지 수정'}
       </Button>
 
@@ -729,20 +814,18 @@ const PackageEdit = () => {
         <DialogContent>
           {currentAccommodation?.rooms && currentAccommodation.rooms.length > 0 ? (
             <List>
-              {currentAccommodation.rooms.map(room => (
-                <ListItemButton
-                  key={room._id}
-                  onClick={() => handleSelectRoom(currentAccommodation._id, room._id)}>
-                  <ListItemText
-                    primary={room.name}
-                    secondary={
-                      room.pricePerNight
-                        ? `${room.pricePerNight.toLocaleString()}원`
-                        : '가격 정보 없음'
-                    }
-                  />
-                </ListItemButton>
-              ))}
+              {currentAccommodation.rooms.map(room => {
+                const roomPriceText = room.pricePerNight
+                  ? `${room.pricePerNight.toLocaleString()}원`
+                  : '가격 정보 없음';
+                return (
+                  <ListItemButton
+                    key={room._id}
+                    onClick={() => handleSelectRoom(currentAccommodation._id, room)}>
+                    <ListItemText primary={room.name} secondary={roomPriceText} />
+                  </ListItemButton>
+                );
+              })}
             </List>
           ) : (
             <Typography>선택 가능한 방이 없습니다.</Typography>
@@ -760,27 +843,38 @@ const PackageEdit = () => {
         <DialogContent>
           {availableTourTickets.length > 0 ? (
             <List>
-              {availableTourTickets.map(ticket => (
-                <ListItemButton
-                  key={ticket._id}
-                  onClick={() => toggleTourTicketSelectionTemp(ticket._id)}>
-                  <ListItemAvatar>
-                    <Avatar
-                      src={ticket.images?.[0] || ''}
-                      alt={ticket.title}
-                      variant="square"
-                      sx={{width: 60, height: 60, mr: 1}}
+              {availableTourTickets.map(ticket => {
+                const isSelected = tempTourTickets.includes(ticket._id);
+                const priceText = ticket.price
+                  ? `${ticket.price.toLocaleString()}원`
+                  : '가격 정보 없음';
+
+                return (
+                  <ListItemButton
+                    key={ticket._id}
+                    onClick={() => {
+                      // 체크박스 토글처럼 동작
+                      if (isSelected) {
+                        setTempTourTickets(prev => prev.filter(id => id !== ticket._id));
+                      } else {
+                        setTempTourTickets(prev => [...prev, ticket._id]);
+                      }
+                    }}>
+                    <ListItemAvatar>
+                      <Avatar
+                        src={ticket.images?.[0] || ''}
+                        alt={ticket.title}
+                        variant="square"
+                        sx={{width: 60, height: 60, mr: 1}}
+                      />
+                    </ListItemAvatar>
+                    <FormControlLabel
+                      control={<Checkbox checked={isSelected} />}
+                      label={`${ticket.title} (${priceText})`}
                     />
-                  </ListItemAvatar>
-                  <FormControlLabel
-                    control={<Checkbox checked={tempTourTickets.includes(ticket._id)} />}
-                    label={
-                      ticket.title +
-                      (ticket.price ? ` - ${ticket.price.toLocaleString()}원` : '')
-                    }
-                  />
-                </ListItemButton>
-              ))}
+                  </ListItemButton>
+                );
+              })}
             </List>
           ) : (
             <Typography>투어 티켓 데이터가 없습니다.</Typography>
@@ -788,7 +882,14 @@ const PackageEdit = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelTourModal}>취소</Button>
-          <Button onClick={handleCloseTourModal}>확인</Button>
+          <Button
+            onClick={() => {
+              // 최종 반영
+              setSelectedTourTickets([...tempTourTickets]);
+              setOpenTourModal(false);
+            }}>
+            확인
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -819,7 +920,7 @@ const PackageEdit = () => {
                     onSelect={toggleFlightSelectionTemp}
                     onSeatChange={handleFlightSeatChangeTemp}
                     onRemove={flightId => {
-                      setTempFlights(prev => prev.filter(f => f.flightId !== flightId));
+                      setTempFlights(prev => prev.filter(x => x.flightId !== flightId));
                     }}
                   />
                 );
@@ -846,11 +947,16 @@ const PackageEdit = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelFlightModal}>취소</Button>
-          <Button onClick={handleCloseFlightModal}>확인</Button>
+          <Button
+            onClick={() => {
+              // 모달 "확인" 누르면 최종 반영
+              setSelectedFlights([...tempFlights]);
+              setOpenFlightModal(false);
+            }}>
+            확인
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>
   );
-};
-
-export default PackageEdit;
+}

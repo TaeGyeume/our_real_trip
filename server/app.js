@@ -101,7 +101,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/tourTicket', userTourTicketRoutes);
 app.use('/api/booking', bookingRoutes);
 app.use('/api/qna', qnaRoutes);
-app.use('/reviews', reviewRoutes);
+app.use('/api/reviews', reviewRoutes);
 app.use('/api', routes);
 app.use('/', routes);
 
