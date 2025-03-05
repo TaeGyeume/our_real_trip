@@ -14,19 +14,8 @@ const server = app.listen(PORT, () => {
 
 initSocket(server);
 
-// cron.schedule('0 0 * * *', async () => {
-//   console.log('예약 3일 전 알림 스케줄러 실행');
-//   try {
-//     await notificationService.sendBookingReminders();
-//     console.log('예약 알림 발송 완료');
-//   } catch (error) {
-//     console.error('예약 알림 발송 중 오류 발생:', error);
-//   }
-// });
-
-cron.schedule('* * * * *', async () => {
-  // 1분마다 실행
-  console.log('테스트용 예약 3일 전 알림 스케줄러 실행');
+cron.schedule('0 0 * * *', async () => {
+  console.log('예약 3일 전 알림 스케줄러 실행');
   try {
     await notificationService.sendBookingReminders();
     console.log('예약 알림 발송 완료');
@@ -34,3 +23,14 @@ cron.schedule('* * * * *', async () => {
     console.error('예약 알림 발송 중 오류 발생:', error);
   }
 });
+
+// cron.schedule('* * * * *', async () => {
+//   // 1분마다 실행
+//   console.log('테스트용 예약 3일 전 알림 스케줄러 실행');
+//   try {
+//     await notificationService.sendBookingReminders();
+//     console.log('예약 알림 발송 완료');
+//   } catch (error) {
+//     console.error('예약 알림 발송 중 오류 발생:', error);
+//   }
+// });
