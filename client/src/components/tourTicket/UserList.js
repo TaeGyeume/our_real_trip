@@ -11,6 +11,11 @@ const TourTicketList = () => {
 
   const navigate = useNavigate();
 
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   useEffect(() => {
     const fetchTickets = async () => {
       try {
@@ -34,6 +39,21 @@ const TourTicketList = () => {
     fetchFavorites();
   }, []);
 
+  // 각 티켓에 대해 이미지 URL을 다르게 설정
+  const getImageUrl = ticket => {
+    let imageUrl = '/default-image.jpg'; // 기본 이미지 설정
+
+    if (ticket && Array.isArray(ticket.images) && ticket.images.length > 0) {
+      imageUrl = ticket.images[0]; // 첫 번째 이미지 선택
+
+      if (imageUrl.startsWith('/uploads/')) {
+        imageUrl = `${SERVER_URL}${imageUrl}`;
+      }
+    }
+
+    return imageUrl;
+  };
+
   //  특정 아이템이 즐겨찾기 목록에 있는지 확인하는 함수
   const isFavoriteItem = itemId => {
     return favorites.some(fav => fav.itemId === itemId);
@@ -42,20 +62,12 @@ const TourTicketList = () => {
   //  필터링된 상품 (즐겨찾기 정보 반영)
   const filteredTickets = tickets.map(ticket => ({
     ...ticket,
+    imageUrl: getImageUrl(ticket), // 각 티켓에 대해 이미지 URL 설정
     isFavorite: isFavoriteItem(ticket._id) //  즐겨찾기 상태 반영
   }));
 
   return (
     <div className="tour-ticket-container">
-      {/* <TourTicketFilter
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        locationFilter={locationFilter}
-        setLocationFilter={setLocationFilter}
-      /> */}
-
       <div className="tour-ticket-grid">
         {filteredTickets.length > 0 ? (
           filteredTickets.map(ticket => (
@@ -66,11 +78,18 @@ const TourTicketList = () => {
                 e.stopPropagation();
                 navigate(`/tourTicket/list/${ticket._id}`);
               }}>
-              <img
+              {/* <img
                 src={`http://localhost:5000${ticket.images[0]}`}
                 alt={ticket.title}
                 className="ticket-image"
+              /> */}
+
+              <img
+                src={`${ticket.imageUrl}`}
+                alt={ticket.title}
+                className="ticket-image"
               />
+
               {/*  즐겨찾기 버튼 (즐겨찾기 상태 반영) */}
               <div className="favorite-list-icon">
                 <FavoriteButton
