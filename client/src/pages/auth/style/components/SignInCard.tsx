@@ -12,10 +12,21 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import {styled} from '@mui/material/styles';
 import ForgotPassword from './ForgotPassword';
-import {GoogleIcon, FacebookIcon, SitemarkIcon} from './CustomIcons';
+import {
+  GoogleIcon,
+  FacebookIcon,
+  SitemarkIcon,
+  KakaoIcon,
+  NaverIcon
+} from './CustomIcons';
 import {useNavigate} from 'react-router-dom';
 import {authAPI} from '../../../../api/auth';
 import {useAuthStore} from '../../../../store/authStore';
+
+const handleNaverLogin = () => {
+  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  window.location.href = `${SERVER_URL}/auth/naver`; // Naver 로그인 URL로 이동
+};
 
 const Card = styled(MuiCard)(({theme}) => ({
   display: 'flex',
@@ -222,6 +233,21 @@ export default function SignInCard() {
           onClick={() => alert('Sign in with Facebook')}
           startIcon={<FacebookIcon />}>
           Sign in with Facebook
+        </Button>
+        <Button
+          onClick={handleNaverLogin} // 버튼 클릭 시 Naver 로그인 URL로 이동
+          fullWidth
+          variant="outlined"
+          startIcon={<NaverIcon />}>
+          Sign in with Naver
+        </Button>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={() => alert('Sign in with Naver')}
+          startIcon={<NaverIcon />}>
+          Sign in with Naver
         </Button>
       </Box>
     </Card>

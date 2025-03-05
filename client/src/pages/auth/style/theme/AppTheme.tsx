@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import type { ThemeOptions } from '@mui/material/styles';
-import { inputsCustomizations } from './customizations/inputs';
-import { dataDisplayCustomizations } from './customizations/dataDisplay';
-import { feedbackCustomizations } from './customizations/feedback';
-import { navigationCustomizations } from './customizations/navigation';
-import { surfacesCustomizations } from './customizations/surfaces';
-import { colorSchemes, typography, shadows, shape } from './themePrimitives';
+import {ThemeProvider, createTheme} from '@mui/material/styles';
+import type {ThemeOptions} from '@mui/material/styles';
+import {inputsCustomizations} from './customizations/inputs';
+import {dataDisplayCustomizations} from './customizations/dataDisplay';
+import {feedbackCustomizations} from './customizations/feedback';
+import {navigationCustomizations} from './customizations/navigation';
+import {surfacesCustomizations} from './customizations/surfaces';
+import {colorSchemes, typography, shadows, shape} from './themePrimitives';
 
 interface AppThemeProps {
   children: React.ReactNode;
@@ -18,17 +18,19 @@ interface AppThemeProps {
 }
 
 export default function AppTheme(props: AppThemeProps) {
-  const { children, disableCustomTheme, themeComponents } = props;
+  const {children, disableCustomTheme, themeComponents} = props;
   const theme = React.useMemo(() => {
     return disableCustomTheme
       ? {}
       : createTheme({
-          // For more details about CSS variables configuration, see https://mui.com/material-ui/customization/css-theme-variables/configuration/
-          cssVariables: {
-            colorSchemeSelector: 'data-mui-color-scheme',
-            cssVarPrefix: 'template',
+          colorSchemes: {
+            light: {
+              // 여기에 라이트 모드만 설정
+              palette: {
+                mode: 'light' // 기본적으로 라이트 모드로 설정
+              }
+            }
           },
-          colorSchemes, // Recently added in v6 for building light & dark mode app, see https://mui.com/material-ui/customization/palette/#color-schemes
           typography,
           shadows,
           shape,
@@ -38,10 +40,11 @@ export default function AppTheme(props: AppThemeProps) {
             ...feedbackCustomizations,
             ...navigationCustomizations,
             ...surfacesCustomizations,
-            ...themeComponents,
-          },
+            ...themeComponents
+          }
         });
   }, [disableCustomTheme, themeComponents]);
+
   if (disableCustomTheme) {
     return <React.Fragment>{children}</React.Fragment>;
   }
