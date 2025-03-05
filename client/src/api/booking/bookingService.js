@@ -63,7 +63,7 @@ export const verifyPayment = async paymentData => {
 
 export const getMyBookings = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/my`);
+    const response = await axios.get(`booking/my`);
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 404) {
