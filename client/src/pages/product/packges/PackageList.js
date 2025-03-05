@@ -86,14 +86,8 @@ const AdminPackageList = () => {
             mb: 2
           }}>
           <Typography variant="h5" sx={{fontWeight: 'bold'}}>
-            📦 패키지 목록 (관리자)
+            📦 패키지 목록
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate('/product/package/create')}>
-            📦 패키지 생성
-          </Button>
         </Box>
 
         {loading ? (
