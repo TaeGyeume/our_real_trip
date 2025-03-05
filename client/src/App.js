@@ -166,9 +166,6 @@ const App = () => {
           <Route path="/flights/roundtrip-departure" element={<RoundTripDeparture />} />
           <Route path="/flights/roundtrip-return" element={<RoundTripReturn />} />
           <Route path="/flights/roundtrip-confirm" element={<RoundTripConfirm />} />
-          <Route path="/flights/list" element={<FlightsList />} />
-          <Route path="/flights/create" element={<FlightForm />} />
-          <Route path="/flights/edit/:id" element={<FlightForm />} />
 
           <Route path="/travelItems" element={<TravelItemList />} />
           <Route path="/travelItems/:itemId" element={<TravelItemDetail />} />
@@ -240,6 +237,9 @@ const App = () => {
               path="/product/travelItems/edit/:itemId"
               element={<TravelItemEditPage />}
             />
+            <Route path="/flights/list" element={<FlightsList />} />
+            <Route path="/flights/create" element={<FlightForm />} />
+            <Route path="/flights/edit/:id" element={<FlightForm />} />
           </Route>
           {/* 권한 없음 페이지 */}
           <Route path="/unauthorized" element={<Unauthorized />} />

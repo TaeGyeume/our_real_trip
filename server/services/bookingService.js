@@ -279,11 +279,12 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
       return {status: 400, message: '결제 금액 불일치'};
     }
 
+    const user = await User.findById(userId);
     if (totalUsedMileage > 0) {
       await userMileageService.useMileage(
         userId,
         totalUsedMileage,
-        `예약 확정 (${user.membershipLevel}, ${totalUsedMileage.toLocaleString()}P 사용)`
+        `예약 확정 (${totalUsedMileage.toLocaleString()}P 사용)`
       );
     }
 
@@ -397,7 +398,7 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
         await userMileageService.addMileageWithHistory(
           userId,
           earnedMileage,
-          `예약 적립 (${user.membershipLevel}, ${booking.totalPrice.toLocaleString()}원 기준)`
+          `예약 적립 (${booking.totalPrice.toLocaleString()}원 기준)`
         );
         const newPayment = new Payment({
           bookingId: booking._id,
@@ -642,7 +643,7 @@ exports.cancelBooking = async bookingIds => {
           await userMileageService.useMileage(
             userId,
             deductedMileage,
-            `예약 취소로 적립 회수 (${user.membershipLevel}, ${totalPrice.toLocaleString()}원 기준)`
+            `예약 취소로 적립 회수 (${totalPrice.toLocaleString()}원 기준)`
           );
           console.log(`[서버] 마일리지 차감 완료: ${deductedMileage}P`);
         } catch (error) {
@@ -680,7 +681,7 @@ exports.cancelBooking = async bookingIds => {
                 await userMileageService.addMileageWithHistory(
                   userId,
                   usedMileage,
-                  `예약 취소로 복구 (${user.membershipLevel}, ${usedMileage.toLocaleString()}P)`
+                  `예약 취소로 복구 (${usedMileage.toLocaleString()}P)`
                 );
               } else {
                 console.log(

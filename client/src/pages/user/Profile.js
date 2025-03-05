@@ -157,7 +157,7 @@ const Profile = () => {
               <button
                 className="btn btn-outline-success btn-sm"
                 onClick={goToMileagePage}>
-                상세정보
+                정보
               </button>
             ) : (
               key !== 'membershipLevel' && (

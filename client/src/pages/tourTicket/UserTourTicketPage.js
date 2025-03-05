@@ -21,10 +21,13 @@ const bannerData = [
 
 const UserTourTicketPage = () => {
   return (
-    <Routes>
-      <Route path="/list" element={<UserList />} />
-      <Route path="/list/:id" element={<UserDetail />} />
-    </Routes>
+    <div>
+      <AdBanner banners={bannerData} />
+      <Routes>
+        <Route path="/list" element={<UserList />} />
+        <Route path="/list/:id" element={<UserDetail />} />
+      </Routes>
+    </div>
   );
 };
 
