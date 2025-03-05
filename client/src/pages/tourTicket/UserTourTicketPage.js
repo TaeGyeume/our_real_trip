@@ -1,13 +1,13 @@
 import React from 'react';
 import {Routes, Route} from 'react-router-dom';
-import TourTicketList from '../../components/tourTicket/TourTicketList';
-import TourTicketDetail from '../../components/tourTicket/TourTicketDetail';
+import UserList from '../../components/tourTicket/UserList';
+import UserDetail from '../../components/tourTicket/UserDetail';
 
 const UserTourTicketPage = () => {
   return (
     <Routes>
-      <Route path="/list" element={<TourTicketList />} />
-      <Route path="/list/:id" element={<TourTicketDetail />} />
+      <Route path="/list" element={<UserList />} />
+      <Route path="/list/:id" element={<UserDetail />} />
     </Routes>
   );
 };

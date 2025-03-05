@@ -1,9 +1,9 @@
 .tour-ticket-container {
   display: flex;
   flex-direction: column;
-  align-items: center; /* 중앙 정렬 → 제거 필요 */
-  text-align: center;
+  text-align: left;
   padding: 20px;
+  width: 100%;
 }
 
 .add-ticket-button {
@@ -22,12 +22,19 @@
 }
 
 .tour-ticket-grid {
-  display: grid;
+  display: flex;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
-  justify-content: flex-start;
-  align-items: flex-start;
-  margin-top: 20px;
+  margin-top: 10px;
+}
+
+.tour-ticket-title {
+  width: 100%;
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+  text-align: left;
 }
 
 .tour-ticket-card {
@@ -38,6 +45,7 @@
   padding: 15px;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
+  text-align: left;
 }
 
 .tour-ticket-card:hover {
@@ -86,7 +94,7 @@
 /* 상품 등록 & 삭제 버튼 스타일 */
 .button-group {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 15px;
   margin-bottom: 20px;
 }

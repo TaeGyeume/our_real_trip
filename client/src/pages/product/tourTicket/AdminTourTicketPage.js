@@ -1,7 +1,7 @@
 import React from 'react';
 import {Routes, Route} from 'react-router-dom';
-import TourTicketList from '../../components/product/tourTicket/TourTicketList';
-import TourTicketDetail from '../../components/product/tourTicket/TourTicketDetail';
+import TourTicketList from '../../../components/product/tourTicket/TourTicketList';
+import TourTicketDetail from '../../../components/product/tourTicket/TourTicketDetail';
 import TourTicketModify from '../../../components/product/tourTicket/TourTicketModify';
 import TourTicketForm from '../../../components/product/tourTicket/TourTicketForm';
 

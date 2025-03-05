@@ -5,7 +5,7 @@ import {
 } from '../../../api/tourTicket/tourTicketService';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {Box, Card, CardMedia, CardContent, Typography} from '@mui/material';
-import './styles/TourTicketList.css';
+// import './styles/TourTicketList.css';
 
 const TourTicketList = () => {
   const [tickets, setTickets] = useState([]);
@@ -80,10 +80,12 @@ const TourTicketList = () => {
   };
 
   return (
-    <div className="tour-ticket-container">
-      <Typography variant="h4" fontWeight="bold" sx={{mb: 3, textAlign: 'left'}}>
-        🎫 투어 & 티켓 상품
-      </Typography>
+    <div className="tour-ticket-container" style={{flexDirection: 'column'}}>
+      <div className="tour-ticket-title">
+        <Typography variant="h4" fontWeight="bold" sx={{mb: 3, textAlign: 'left'}}>
+          🎫 투어 & 티켓 상품
+        </Typography>
+      </div>
 
       {/* /product/tourTicket에서는 버튼을 숨김 */}
       {location.pathname !== '/product' && (
@@ -106,13 +108,7 @@ const TourTicketList = () => {
         </div>
       )}
 
-      <Box
-        display="flex"
-        flexWrap="wrap"
-        gap={3}
-        mt={3}
-        justifyContent="flex-start"
-        alignItems="flex-start">
+      <Box display="flex" flexWrap="wrap" gap={3} mt={3} justifyContent="flex-start">
         {tickets.length > 0 ? (
           tickets.map(ticket => (
             <Card

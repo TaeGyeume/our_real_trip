@@ -4,8 +4,8 @@ import {getReviews} from '../../api/review/reviewService';
 import {useParams, useNavigate} from 'react-router-dom';
 import {useReviewContext} from '../../contexts/ReviewContext';
 import authAPI from '../../api/auth/auth';
-import './styles/TourTicketDetail.css';
-import ReviewList from '../../components/review/ReviewList';
+import './styles/UserDetail.css';
+import ReviewList from '../review/ReviewList';
 import {
   FaChevronRight,
   FaChevronDown,
