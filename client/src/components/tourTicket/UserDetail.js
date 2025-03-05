@@ -32,11 +32,29 @@ const TourTicketDetail = () => {
 
   const reviewSectionRef = useRef(null);
 
+  const [imageError, setImageError] = useState(false);
+
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   const scrollToReviews = () => {
     if (reviewSectionRef.current) {
       reviewSectionRef.current.scrollIntoView({behavior: 'smooth', block: 'start'});
     }
   };
+
+  // 기본 이미지 설정 (이미지 에러 발생 시 변경)
+  let imageUrl = '/default-image.jpg';
+
+  if (ticket && Array.isArray(ticket.images) && ticket.images.length > 0) {
+    imageUrl = ticket.images[0];
+
+    if (imageUrl.startsWith('/uploads/')) {
+      imageUrl = `${SERVER_URL}${imageUrl}`;
+    }
+  }
 
   useEffect(() => {
     // 로그인된 사용자 정보 가져오기
@@ -177,7 +195,9 @@ const TourTicketDetail = () => {
         <div className="details-section">
           <div className="image-list">
             <div className="image-wrapper">
-              <img src={`http://localhost:5000${ticket.images[0]}`} alt={ticket.title} />
+              {/* <img src={`http://localhost:5000${ticket.images[0]}`} alt={ticket.title} /> */}
+              {/* 서버 적용 시, 주석 해제 */}
+              <img src={`${imageUrl}`} alt={ticket.title} />
               {!showDetails && (
                 <div className="image-overlay">
                   <button className="toggle-button" onClick={() => setShowDetails(true)}>
@@ -191,10 +211,11 @@ const TourTicketDetail = () => {
             {showDetails &&
               ticket.images.slice(1).map((image, index) => (
                 <div className="image-wrapper" key={index}>
-                  <img
+                  {/* <img
                     src={`http://localhost:5000${image}`}
                     alt={`${ticket.title} 이미지 ${index + 2}`}
-                  />
+                  /> */}
+                  <img src={`${imageUrl}`} alt={`${ticket.title} 이미지 ${index + 2}`} />
                 </div>
               ))}
           </div>

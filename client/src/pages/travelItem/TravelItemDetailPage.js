@@ -78,6 +78,7 @@ const TravelItemDetailPage = () => {
       <div>
         <h2>📝 리뷰</h2>
         <ReviewList productId={itemId} />
+        
       </div>
     </div>
   );
