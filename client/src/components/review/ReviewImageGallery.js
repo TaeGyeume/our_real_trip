@@ -12,8 +12,8 @@ const ReviewImageGallery = ({topReview, reviews}) => {
   );
   const allImages = [...topReviewImages, ...reviewImages];
 
-  const displayedImages = allImages.length > 0 ? allImages.slice(0, 3) : [];
-  const remainingImages = Math.max(allImages.length - 3, 0);
+  const displayedImages = allImages.length > 0 ? allImages.slice(0, 4) : [];
+  const remainingImages = Math.max(allImages.length - 4, 0);
 
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -50,7 +50,7 @@ const ReviewImageGallery = ({topReview, reviews}) => {
             className="gallery-image"
             onClick={() => handleOpenGalleryModal(index)}>
             <img src={`http://localhost:5000${image}`} alt={`리뷰 이미지 ${index + 1}`} />
-            {index === 2 && remainingImages > 0 && (
+            {index === 3 && remainingImages > 0 && (
               <div className="more-images-overlay">+ {remainingImages}</div>
             )}
           </div>
