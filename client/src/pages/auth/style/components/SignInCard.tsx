@@ -28,6 +28,12 @@ const handleNaverLogin = () => {
   window.location.href = `${SERVER_URL}/auth/naver`; // Naver 로그인 URL로 이동
 };
 
+// Google 로그인 핸들러
+const handleGoogleLogin = () => {
+  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  window.location.href = `${SERVER_URL}/auth/google`;
+};
+
 const Card = styled(MuiCard)(({theme}) => ({
   display: 'flex',
   flexDirection: 'column',
@@ -221,9 +227,9 @@ export default function SignInCard() {
       <Divider>or</Divider>
       <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
         <Button
+          onClick={handleGoogleLogin}
           fullWidth
           variant="outlined"
-          onClick={() => alert('Sign in with Google')}
           startIcon={<GoogleIcon />}>
           Sign in with Google
         </Button>
@@ -245,9 +251,9 @@ export default function SignInCard() {
         <Button
           fullWidth
           variant="outlined"
-          onClick={() => alert('Sign in with Naver')}
+          onClick={() => alert('Sign in with KakaoTack')}
           startIcon={<NaverIcon />}>
-          Sign in with Naver
+          Sign in with KakaoTack
         </Button>
       </Box>
     </Card>
