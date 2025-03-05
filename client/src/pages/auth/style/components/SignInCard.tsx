@@ -14,7 +14,7 @@ import {styled} from '@mui/material/styles';
 import ForgotPassword from './ForgotPassword';
 import {
   GoogleIcon,
-  FacebookIcon,
+  // FacebookIcon,
   SitemarkIcon,
   KakaoIcon,
   NaverIcon
@@ -23,15 +23,22 @@ import {useNavigate} from 'react-router-dom';
 import {authAPI} from '../../../../api/auth';
 import {useAuthStore} from '../../../../store/authStore';
 
+// 네이버 로그인 핸들러
 const handleNaverLogin = () => {
   const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
   window.location.href = `${SERVER_URL}/auth/naver`; // Naver 로그인 URL로 이동
 };
 
-// Google 로그인 핸들러
+// 구글 로그인 핸들러
 const handleGoogleLogin = () => {
   const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
   window.location.href = `${SERVER_URL}/auth/google`;
+};
+
+// 카카오톡 로그인 핸들러
+const handleKakaoLogin = () => {
+  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  window.location.href = `${SERVER_URL}/auth/kakao`;
 };
 
 const Card = styled(MuiCard)(({theme}) => ({
@@ -180,6 +187,7 @@ export default function SignInCard() {
         <FormControl>
           <Box sx={{display: 'flex', justifyContent: 'space-between'}}>
             <FormLabel htmlFor="password">비밀번호</FormLabel>
+
             <Link
               component="button"
               type="button"
@@ -233,13 +241,13 @@ export default function SignInCard() {
           startIcon={<GoogleIcon />}>
           Sign in with Google
         </Button>
-        <Button
+        {/* <Button
           fullWidth
           variant="outlined"
           onClick={() => alert('Sign in with Facebook')}
           startIcon={<FacebookIcon />}>
           Sign in with Facebook
-        </Button>
+        </Button> */}
         <Button
           onClick={handleNaverLogin} // 버튼 클릭 시 Naver 로그인 URL로 이동
           fullWidth
@@ -251,8 +259,8 @@ export default function SignInCard() {
         <Button
           fullWidth
           variant="outlined"
-          onClick={() => alert('Sign in with KakaoTack')}
-          startIcon={<NaverIcon />}>
+          onClick={handleKakaoLogin}
+          startIcon={<KakaoIcon />}>
           Sign in with KakaoTack
         </Button>
       </Box>
