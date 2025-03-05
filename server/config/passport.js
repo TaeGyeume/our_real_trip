@@ -62,17 +62,17 @@ const socialLoginCallback = async (
 };
 
 //  소셜 로그인 전략 등록
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL
-    },
-    (accessToken, refreshToken, profile, done) =>
-      socialLoginCallback(accessToken, refreshToken, profile, done, 'google')
-  )
-);
+// passport.use(
+//   new GoogleStrategy(
+//     {
+//       clientID: process.env.GOOGLE_CLIENT_ID,
+//       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+//       callbackURL: process.env.GOOGLE_CALLBACK_URL
+//     },
+//     (accessToken, refreshToken, profile, done) =>
+//       socialLoginCallback(accessToken, refreshToken, profile, done, 'google')
+//   )
+// );
 
 passport.use(
   new FacebookStrategy(
