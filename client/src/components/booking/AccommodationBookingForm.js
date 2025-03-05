@@ -32,9 +32,9 @@ const BookingForm = () => {
   const defaultStartDate = searchParams.get('startDate') || '';
   const defaultEndDate = searchParams.get('endDate') || '';
 
-  const [formData, setFormData] = useState({
+  const formData = {
     rooms: [{startDate: defaultStartDate, endDate: defaultEndDate, count: 1}]
-  });
+  };
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -91,11 +91,11 @@ const BookingForm = () => {
   }
 
   // 입력값 변경 핸들러 (객실 개별 데이터 변경)
-  const handleRoomChange = (index, key, value) => {
-    const updatedRooms = [...formData.rooms];
-    updatedRooms[index][key] = value;
-    setFormData({...formData, rooms: updatedRooms});
-  };
+  // const handleRoomChange = (index, key, value) => {
+  //   const updatedRooms = [...formData.rooms];
+  //   updatedRooms[index][key] = value;
+  //   setFormData({...formData, rooms: updatedRooms});
+  // };
 
   // 쿠폰 선택 핸들러
   const handleCouponSelect = (coupon, discount) => {

@@ -1,8 +1,6 @@
 import axios from '../axios';
 import {authAPI} from '../auth/auth';
 
-const BASE_URL = 'http://localhost:5000/reviews';
-
 const requestConfig = {
   withCredentials: true,
   headers: {
