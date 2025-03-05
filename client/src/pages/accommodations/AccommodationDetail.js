@@ -1,6 +1,8 @@
 // src/pages/accommodation/AccommodationDetail.js
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
+import {getReviews} from '../../api/review/reviewService';
+import {useReviewContext} from '../../contexts/ReviewContext';
 import {fetchAccommodationDetail} from '../../api/accommodation/accommodationService';
 import RoomCard from '../../components/accommodations/RoomCard';
 import MapComponent from '../../components/accommodations/GoogleMapComponent';
@@ -9,7 +11,18 @@ import AccommodationAmenities from '../../components/accommodations/Accommodatio
 import AccommodationImageGallery from '../../components/accommodations/AccommodationImageGallery';
 import AccommodationSearch from '../../components/accommodations/AccommodationSearch';
 import NearbyAccommodations from '../../components/accommodations/NearbyAccommodations';
-import {Box, Typography, Card, CardContent, Stack, Divider} from '@mui/material';
+import authAPI from '../../api/auth/auth';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Stack,
+  Divider,
+  Snackbar,
+  Alert
+} from '@mui/material';
+import {FaChevronRight, FaShareAlt} from 'react-icons/fa';
 
 // 기본 날짜 설정 함수 (오늘 + n일)
 const getFormattedDate = (daysToAdd = 0) => {
@@ -24,6 +37,16 @@ const AccommodationDetail = () => {
   const [accommodationData, setAccommodationData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [user, setUser] = useState(null);
+  const {reviewStatus, setReviewStatus} = useReviewContext();
+  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
+  const [openAlert, setOpenAlert] = useState(false);
+  const reviewSectionRef = useRef(null);
+  const scrollToReviews = () => {
+    if (reviewSectionRef.current) {
+      reviewSectionRef.current.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+  };
 
   // `searchParams`에서 검색 조건 가져오되, 값이 없으면 기본값 사용
   const [startDate, setStartDate] = useState(
@@ -37,11 +60,21 @@ const AccommodationDetail = () => {
   const maxPrice = searchParams.get('maxPrice') || 500000;
 
   useEffect(() => {
+    // 로그인된 사용자 정보 가져오기
+    const fetchUserProfile = async () => {
+      try {
+        const userProfile = await authAPI.getUserProfile();
+        setUser(userProfile);
+      } catch (error) {
+        console.error('사용자 정보를 가져오는 중 오류 발생:', error);
+      }
+    };
+
     const loadAccommodationDetail = async () => {
       try {
         const params = {startDate, endDate, adults, minPrice, maxPrice};
         const data = await fetchAccommodationDetail(accommodationId, params);
-        console.log('🏨 불러온 숙소 데이터:', data);
+        console.log('불러온 숙소 데이터:', data);
 
         const updatedRooms = data.availableRooms.map(room => ({
           ...room,
@@ -60,8 +93,33 @@ const AccommodationDetail = () => {
       }
     };
 
-    loadAccommodationDetail();
-  }, [accommodationId, startDate, endDate, adults, minPrice, maxPrice]);
+    const fetchReviews = async () => {
+      try {
+        const data = await getReviews(accommodationId);
+        console.log('Fetched Reviews:', data);
+
+        const updatedReviewStatus = {};
+
+        // 유저 정보가 있을 때만 리뷰 상태 확인
+        if (user && user._id) {
+          data.forEach(review => {
+            if (review.userId._id === user._id) {
+              const key = `${review.productId}_${review.bookingId}`;
+              updatedReviewStatus[key] = true;
+            }
+          });
+        }
+
+        setReviewStatus(prev => ({...prev, ...updatedReviewStatus}));
+      } catch (err) {
+        console.error('리뷰 조회 오류:', err);
+      }
+    };
+    fetchUserProfile().then(() => {
+      loadAccommodationDetail();
+      fetchReviews();
+    });
+  }, [accommodationId, startDate, endDate, adults, minPrice, maxPrice, setReviewStatus]);
 
   if (loading) return <Typography>로딩 중...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
@@ -85,6 +143,18 @@ const AccommodationDetail = () => {
     setSearchParams(newParams);
   };
 
+  const handleCopyLink = () => {
+    const currentUrl = window.location.href;
+
+    navigator.clipboard
+      .writeText(currentUrl)
+      .then(() => {
+        setOpenAlert(true);
+        setTimeout(() => setOpenAlert(false), 3000);
+      })
+      .catch(err => console.error('링크 복사 실패:', err));
+  };
+
   return (
     <Box sx={{maxWidth: '1200px', mx: 'auto', p: 3}}>
       {/* 숙소 제목 & 설명 */}
@@ -94,6 +164,33 @@ const AccommodationDetail = () => {
       <Typography variant="body1" color="text.secondary" sx={{mb: 2}}>
         {accommodation.description}
       </Typography>
+
+      <div className="review-summary">
+        <FaShareAlt
+          style={{
+            top: '10px',
+            right: '10px',
+            border: 'none',
+            background: 'none',
+            fontSize: '18px',
+            color: 'dark gray'
+          }}
+          onClick={handleCopyLink}
+        />{' '}
+        &nbsp;&nbsp;
+        <Snackbar open={openAlert} anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
+          <Alert severity="success" variant="filled">
+            링크 복사 완료 🎉
+          </Alert>
+        </Snackbar>
+        <ReviewList
+          productId={accommodationId}
+          setRatingInfo={setRatingInfo}
+          ratingInfo={ratingInfo}
+          showOnlySummary={true}
+        />
+        <FaChevronRight className="more-icon" onClick={scrollToReviews} />
+      </div>
 
       {/* 숙소 이미지 갤러리 */}
       <AccommodationImageGallery
@@ -158,13 +255,34 @@ const AccommodationDetail = () => {
       </Box>
 
       {/* 리뷰 리스트  */}
-      <Box sx={{mt: 4}}>
-        <Typography variant="h5" fontWeight="bold" sx={{mb: 2}}>
-          📝 리뷰
-        </Typography>
-        <Divider sx={{mb: 2}} />
-        <ReviewList productId={accommodationId} />
-      </Box>
+      <div>
+        <h2
+          ref={reviewSectionRef}
+          style={{
+            fontSize: '24px',
+            textAlign: 'left',
+            marginBottom: '30px',
+            display: 'flex',
+            alignItems: 'center', // 세로 정렬
+            gap: '8px' // 간격 추가
+          }}>
+          여행자 리뷰
+          <span style={{fontSize: '24px', color: 'dodgerblue', fontWeight: 'bold'}}>
+            <ReviewList
+              productId={accommodationId}
+              setRatingInfo={setRatingInfo}
+              ratingInfo={ratingInfo}
+              showReviewCount={true}
+            />
+          </span>
+        </h2>
+        <ReviewList
+          productId={accommodationId}
+          setRatingInfo={setRatingInfo}
+          ratingInfo={ratingInfo}
+          showOnlySummary={false}
+        />
+      </div>
 
       {/* 주변 숙소 컴포넌트 추가 */}
       {accommodation.coordinates?.coordinates && (
