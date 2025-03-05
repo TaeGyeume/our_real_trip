@@ -32,9 +32,9 @@ const BookingForm = () => {
   const defaultStartDate = searchParams.get('startDate') || '';
   const defaultEndDate = searchParams.get('endDate') || '';
 
-  const [formData, setFormData] = useState({
+  const formData = {
     rooms: [{startDate: defaultStartDate, endDate: defaultEndDate, count: 1}]
-  });
+  };
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -91,11 +91,11 @@ const BookingForm = () => {
   }
 
   // 입력값 변경 핸들러 (객실 개별 데이터 변경)
-  const handleRoomChange = (index, key, value) => {
-    const updatedRooms = [...formData.rooms];
-    updatedRooms[index][key] = value;
-    setFormData({...formData, rooms: updatedRooms});
-  };
+  // const handleRoomChange = (index, key, value) => {
+  //   const updatedRooms = [...formData.rooms];
+  //   updatedRooms[index][key] = value;
+  //   setFormData({...formData, rooms: updatedRooms});
+  // };
 
   // 쿠폰 선택 핸들러
   const handleCouponSelect = (coupon, discount) => {
@@ -127,7 +127,7 @@ const BookingForm = () => {
 
     const now = new Date(Date.now() + 9 * 60 * 60 * 1000); // 한국 시간
     const formattedDate = now.toISOString().slice(2, 19).replace(/[-T:]/g, ''); // YYMMDDHHMMSS
-    const merchant_uid = `${user.username}_${formattedDate}`;
+    const merchant_uid = `accommodation_${user.username}_${formattedDate}`;
 
     const startDates = formData.rooms.map(room => room.startDate);
     const endDates = formData.rooms.map(room => room.endDate);
