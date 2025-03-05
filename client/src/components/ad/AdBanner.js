@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {IconButton} from '@mui/material';
 import {ChevronLeft, ChevronRight} from '@mui/icons-material';
 
@@ -6,21 +6,21 @@ const AdBanner = ({banners}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  // 다음 배너로 넘기기
-  const handleNext = () => {
+  // handleNext를 useCallback으로 감싸서 의존성을 안정화
+  const handleNext = useCallback(() => {
     setCurrentIndex(prevIndex => (prevIndex + 1) % banners.length);
-  };
+  }, [banners.length]);
 
-  // 이전 배너로 넘기기
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     setCurrentIndex(prevIndex => (prevIndex === 0 ? banners.length - 1 : prevIndex - 1));
-  };
+  }, [banners.length]);
 
-  // 2초마다 자동 슬라이드
+  // 5초마다 자동 슬라이드
   useEffect(() => {
     const interval = setInterval(handleNext, 5000);
     return () => clearInterval(interval);
-  }, [currentIndex]);
+    // handleNext를 의존성에 넣어줌
+  }, [handleNext]);
 
   return (
     <div
@@ -29,18 +29,16 @@ const AdBanner = ({banners}) => {
         width: '100%',
         maxWidth: '1200px',
         margin: '20px auto 0',
-        overflow: 'visible' //  부모 컨테이너는 visible 유지
+        overflow: 'visible'
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}>
-      {/*  배너를 감싸는 컨테이너 (배너만 hidden) */}
       <div
         style={{
           position: 'relative',
           borderRadius: '12px',
-          overflow: 'hidden' //  배너만 hidden
+          overflow: 'hidden'
         }}>
-        {/* 배너 슬라이드 컨테이너 */}
         <div
           style={{
             display: 'flex',
@@ -64,13 +62,12 @@ const AdBanner = ({banners}) => {
         </div>
       </div>
 
-      {/*  버튼을 배너 밖에서도 보이게 배치 */}
       <IconButton
         onClick={handlePrev}
         style={{
           position: 'absolute',
           top: '50%',
-          left: '-24px', //  배너 밖으로 이동
+          left: '-24px',
           transform: 'translateY(-50%)',
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           borderRadius: '50%',
@@ -79,7 +76,7 @@ const AdBanner = ({banners}) => {
           opacity: isHovered ? 1 : 0,
           transition: 'opacity 0.3s ease-in-out',
           boxShadow: '0px 4px 10px',
-          zIndex: 20 //  버튼이 배너 위에 나타나도록 설정
+          zIndex: 20
         }}>
         <ChevronLeft />
       </IconButton>
@@ -89,7 +86,7 @@ const AdBanner = ({banners}) => {
         style={{
           position: 'absolute',
           top: '50%',
-          right: '-24px', //  배너 밖으로 이동
+          right: '-24px',
           transform: 'translateY(-50%)',
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           borderRadius: '50%',
@@ -98,12 +95,11 @@ const AdBanner = ({banners}) => {
           opacity: isHovered ? 1 : 0,
           transition: 'opacity 0.3s ease-in-out',
           boxShadow: '0px 4px 10px',
-          zIndex: 20 //  버튼이 배너 위에 나타나도록 설정
+          zIndex: 20
         }}>
         <ChevronRight />
       </IconButton>
 
-      {/* 페이지 표시 */}
       <div
         style={{
           position: 'absolute',
@@ -114,7 +110,7 @@ const AdBanner = ({banners}) => {
           borderRadius: '12px',
           padding: '4px 8px',
           fontSize: '14px',
-          zIndex: 20 //  페이지 표시도 배너 위로
+          zIndex: 20
         }}>
         {currentIndex + 1}/{banners.length}
       </div>

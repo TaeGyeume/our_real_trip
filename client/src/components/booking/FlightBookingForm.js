@@ -32,7 +32,7 @@ const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
 
     const now = new Date(Date.now() + 9 * 60 * 60 * 1000); // 한국 시간
     const formattedDate = now.toISOString().slice(2, 19).replace(/[-T:]/g, ''); // YYMMDDHHMMSS
-    const merchant_uid = `${user.username}_${formattedDate}`;
+    const merchant_uid = `flight_${user.username}_${formattedDate}`;
 
     const bookingData = {
       types: selectedFlights.map(() => 'flight'),
