@@ -2,7 +2,7 @@ import axios from '../axios';
 import {authAPI} from '../auth/auth';
 import {useAuthStore} from '../../store/authStore';
 
-const BASE_URL = 'http://localhost:5000/reviews';
+// const BASE_URL = 'http://localhost:5000/reviews';
 
 const requestConfig = {
   withCredentials: true,
@@ -136,7 +136,7 @@ export const toggleLike = async (reviewId, userId) => {
     // console.log(`[프론트] 좋아요 요청 userId:`, userId);
 
     const response = await axios.patch(
-      `${BASE_URL}/${reviewId}/like`,
+      `${reviewId}/like`,
       {userId},
       {
         headers: {
@@ -156,7 +156,7 @@ export const toggleLike = async (reviewId, userId) => {
 
 export const getBestReviews = async productId => {
   try {
-    const response = await axios.get(`${BASE_URL}/${productId}/best`);
+    const response = await axios.get(`${productId}/best`);
     return response.data.reviews;
   } catch (error) {
     console.error(
