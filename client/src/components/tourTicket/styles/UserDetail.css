@@ -1,104 +1,102 @@
-.tour-ticket-container {
+.user-detail-tour-ticket-container {
   display: flex;
-  /* flex-direction: row; */
-  justify-content: space-between; /* 좌우 정렬 */
-  align-items: flex-start; /* 위에서부터 정렬 */
+  justify-content: space-between;
+  align-items: flex-start;
   width: 100%;
-  max-width: 1300px; /* 최대 크기 설정 */
-  margin: 0 auto; /* 가운데 정렬 */
-  gap: 40px; /* 양쪽 간격 조정 */
+  max-width: 1300px;
+  margin: 0 auto;
+  gap: 40px;
 }
 
-.tour-ticket-detail img {
-  /* width: 500px; */
+.user-detail-tour-ticket-detail img {
   height: auto;
   max-width: 1300px;
   border-radius: 1px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-.tour-ticket-detail {
+.user-detail-tour-ticket-detail {
   flex: 2;
   padding: 20px;
-  width: 100%; /* 크기 자동 조정 */
+  width: 100%;
   min-width: 60%;
 }
 
-.empty-space {
-  flex: 1; /* 오른쪽이 자동으로 배치됨 */
+.user-detail-empty-space {
+  flex: 1;
   min-width: 250px;
   max-width: 300px;
-  align-self: flex-start; /* 항상 위에서부터 정렬 */
-  position: sticky; /* 스크롤 시에도 유지 */
+  align-self: flex-start;
+  position: sticky;
   top: 20px;
   height: fit-content;
 }
 
-.ticket-title {
+.user-detail-ticket-title {
   font-size: 30px !important;
   font-weight: bold;
   text-align: left;
 }
 
-.rating {
+.user-detail-rating {
   font-size: 18px;
   margin-bottom: 10px;
 }
 
-.ticket-info p {
+.user-detail-ticket-info p {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-.info-box {
+.user-detail-info-box {
   background: #f7f7f7;
   padding: 15px;
   border-radius: 5px;
   margin-top: 10px;
 }
 
-.button-group {
+.user-detail-button-group {
   display: flex;
   gap: 10px;
 }
 
-.ticket-header {
+.user-detail-ticket-header {
   display: flex;
   flex-direction: column; /* 수직 정렬 */
   align-items: flex-start; /* 왼쪽 정렬 */
 }
 
-.review-summary {
+.user-detail-review-summary {
   display: flex;
   align-items: center; /* 수직 정렬 */
   gap: 8px; /* 요소 간 간격 */
 }
-.more-icon {
+.user-detail-more-icon {
   font-size: 16px; /* 아이콘 크기 조정 */
   cursor: pointer; /* 클릭 가능하게 변경 */
 }
 
-.sun {
+.user-detail-sun {
   border: none;
   border-top: 2px solid #bfbcbc; /* 옅은 회색 */
   margin: 15px 0;
 }
 
-.credit {
+.user-detail-credit {
   display: flex;
   flex-direction: column; /* 수직 정렬 */
   align-items: flex-start; /* 왼쪽 정렬 */
 }
 
-.image-list {
+.user-detail-image-list {
   width: 100%;
   max-width: 1300px;
   margin: 0 auto;
   gap: 10px;
 }
 
-.image-wrapper {
+.user-detail-image-wrapper {
   position: relative;
   width: 100%;
   max-width: 1300px;
@@ -106,7 +104,7 @@
   justify-content: center;
 }
 
-.image-wrapper img {
+.user-detail-image-wrapper img {
   width: 100%;
   height: auto;
   display: block;
@@ -116,24 +114,24 @@
   object-fit: cover; */
 }
 
-.tour-ticket-left {
+.user-detail-tour-ticket-left {
   flex: 1;
 }
 
-.main-image {
+.user-detail-main-image {
   width: 100%;
   max-width: 600px;
   border-radius: 0px;
 }
 
-.details-section {
+.user-detail-details-section {
   padding: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.tour-ticket-right {
+.user-detail-tour-ticket-right {
   width: 320px;
   background: #fff;
   padding: 20px;
@@ -142,11 +140,11 @@
   text-align: center;
 }
 
-.price-box {
+.user-detail-price-box {
   margin-bottom: 15px;
 }
 
-.booking-box {
+.user-detail-booking-box {
   flex: 1;
   min-width: 320px;
   background: #fff;
@@ -156,18 +154,18 @@
   text-align: center;
 }
 
-.price-info {
+.user-detail-price-info {
   margin-bottom: 15px;
 }
 
-.original-price {
+.user-detail-original-price {
   color: #252525;
   font-size: 28px;
   font-weight: bold;
   font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
 }
 
-.reserve-button {
+.user-detail-reserve-button {
   width: 100%;
   padding: 12px;
   font-size: 18px;
@@ -179,17 +177,17 @@
   cursor: pointer;
 }
 
-.reserve-button:hover {
+.user-detail-reserve-button:hover {
   background-color: #0056b3;
 }
 
-.action-buttons {
+.user-detail-action-buttons {
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
 }
 
-.share-btn {
+.user-detail-share-btn {
   top: 10px;
   right: 10px;
   border: none;
@@ -199,11 +197,11 @@
   color: #444;
 }
 
-.share-btn:hover {
+.user-detail-share-btn:hover {
   color: #007bff;
 }
 
-.instant-confirmation {
+.user-detail-instant-confirmation {
   font-size: 14px;
   color: #666;
   margin-top: 10px;
@@ -213,7 +211,7 @@
   gap: 5px;
 }
 
-.right-space {
+.user-detail-right-space {
   width: 100%;
   background: #fff;
   padding: 20px;
@@ -225,14 +223,13 @@
   height: fit-content;
 }
 
-.ticket-description {
+.user-detail-ticket-description {
   text-align: left;
   padding: 20px;
-  border: none;
   border: 1px solid #ddd;
 }
 
-.image-container {
+.user-detail-image-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -241,7 +238,7 @@
   gap: 10px;
 }
 
-.image-overlay {
+.user-detail-image-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -254,7 +251,7 @@
   pointer-events: none;
 }
 
-.toggle-button {
+.user-detail-toggle-button {
   background: rgb(255, 255, 255);
   border: 1px solid #ccc;
   padding: 4px 8px;
@@ -271,6 +268,6 @@
   font-family: 'BM Dohyeon', sans-serif;
 }
 
-.toggle-button:hover {
+.user-detail-toggle-button:hover {
   background: rgba(255, 255, 255, 1);
 }

@@ -132,19 +132,6 @@ const ReviewList = ({
     return <div>{ratingInfo?.reviewCount || 0}</div>;
   }
 
-  // 평점 통계 계산
-  const calculateRatingStats = reviews => {
-    const total = reviews.length;
-    const sumRatings = reviews.reduce((acc, review) => acc + review.rating, 0);
-    const avgRating = total ? (sumRatings / total).toFixed(1) : 0;
-
-    const distribution = [0, 0, 0, 0, 0]; // 5~1점 순서
-    reviews.forEach(review => {
-      const idx = 5 - Math.round(review.rating);
-      distribution[idx]++;
-    });
-  };
-
   const toggleMenu = (reviewId, e) => {
     if (e) e.stopPropagation();
     setMenuOpen(prev => (prev === reviewId ? null : reviewId));
@@ -1080,7 +1067,7 @@ const ReviewList = ({
           ))}
 
           {/* 리뷰 더 보기 버튼 */}
-          <div style={{alignItems: 'center'}}>
+          <div style={{display: 'flex', justifyContent: 'center', width: '100%'}}>
             {visibleReviews < reviews.length && (
               <button
                 className="load-more-btn"
