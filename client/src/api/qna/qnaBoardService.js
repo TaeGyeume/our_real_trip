@@ -156,17 +156,6 @@ export const updateQnaBoard = async (qnaBoardId, data, isMultipart) => {
     let requestData = data;
     let headers = isMultipart ? {} : {'Content-Type': 'application/json'};
 
-    //  전송 데이터 디버깅
-    // console.log(' 수정 요청 데이터:', requestData);
-
-    // if (isMultipart) {
-    //   for (let [key, value] of requestData.entries()) {
-    //     console.log(` ${key}:`, value);
-    //   }
-    // } else {
-    //   console.log(' JSON 데이터:', requestData);
-    //
-
     const response = await api.put(`/qna/${qnaBoardId}`, requestData, {
       headers,
       withCredentials: true

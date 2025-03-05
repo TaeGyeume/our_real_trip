@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { createReview } from '../../api/review/reviewService';
-import { useAuthStore } from '../../store/authStore';
-import { useReviewContext } from '../../contexts/ReviewContext';
+import React, {useState} from 'react';
+import {useSearchParams, useNavigate} from 'react-router-dom';
+import {createReview} from '../../api/review/reviewService';
+import {useAuthStore} from '../../store/authStore';
+import {useReviewContext} from '../../contexts/ReviewContext';
 
 const ReviewForm = () => {
   const [searchParams] = useSearchParams();
@@ -10,10 +10,10 @@ const ReviewForm = () => {
   const bookingId = searchParams.get('bookingId');
   const navigate = useNavigate();
 
-  const { user } = useAuthStore();
+  const {user} = useAuthStore();
   const userId = user?._id;
 
-  const { setReviewStatus } = useReviewContext(); // ReviewContext 사용
+  const {setReviewStatus} = useReviewContext(); // ReviewContext 사용
 
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState('');
@@ -42,16 +42,16 @@ const ReviewForm = () => {
       await createReview(formData);
       alert('리뷰 작성 완료!');
 
-      // ✅ 리뷰 상태 업데이트
+      //  리뷰 상태 업데이트
       setReviewStatus(prevStatus => ({
         ...prevStatus,
         [productId]: {
           ...prevStatus[productId],
-          [bookingId]: true, // 리뷰 작성 완료 표시
-        },
+          [bookingId]: true // 리뷰 작성 완료 표시
+        }
       }));
 
-      // ✅ 예약 목록으로 이동
+      //  예약 목록으로 이동
       navigate('/booking/my/?status=completed');
     } catch (error) {
       console.error('리뷰 작성 실패:', error.response ? error.response.data : error);
