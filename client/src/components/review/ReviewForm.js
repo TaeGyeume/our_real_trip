@@ -3,6 +3,9 @@ import {useSearchParams, useNavigate} from 'react-router-dom';
 import {createReview} from '../../api/review/reviewService';
 import {useAuthStore} from '../../store/authStore';
 import {useReviewContext} from '../../contexts/ReviewContext';
+import {TextField, Button, Rating, Box, Typography, LinearProgress} from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import './styles/ReviewForm.css';
 
 const ReviewForm = () => {
   const [searchParams] = useSearchParams();
@@ -13,16 +16,25 @@ const ReviewForm = () => {
   const {user} = useAuthStore();
   const userId = user?._id;
 
-  const {setReviewStatus} = useReviewContext(); // ReviewContext 사용
+  const {setReviewStatus} = useReviewContext();
 
   const [rating, setRating] = useState(5);
+  const [hover, setHover] = useState(-1); // 마우스 호버 상태 저장
   const [content, setContent] = useState('');
   const [images, setImages] = useState([]);
 
+  // 진행 바 상태
+  const progress =
+    (rating > 0 ? 1 : 0) +
+    (content.trim().length > 0 ? 1 : 0) +
+    (images.length > 0 ? 1 : 0);
+
+  // 이미지 변경 핸들러
   const handleImageChange = e => {
-    setImages([...e.target.files]);
+    setImages(prevImages => [...prevImages, ...Array.from(e.target.files)]);
   };
 
+  // 리뷰 제출 핸들러
   const handleSubmit = async () => {
     if (!userId) {
       alert('로그인이 필요합니다.');
@@ -36,22 +48,22 @@ const ReviewForm = () => {
     formData.append('rating', rating);
     formData.append('content', content);
 
-    images.forEach(image => formData.append('images', image));
+    images.forEach((image, index) => {
+      formData.append('images', image);
+    });
 
     try {
       await createReview(formData);
       alert('리뷰 작성 완료!');
 
-      //  리뷰 상태 업데이트
       setReviewStatus(prevStatus => ({
         ...prevStatus,
         [productId]: {
           ...prevStatus[productId],
-          [bookingId]: true // 리뷰 작성 완료 표시
+          [bookingId]: true
         }
       }));
 
-      //  예약 목록으로 이동
       navigate('/booking/my/?status=completed');
     } catch (error) {
       console.error('리뷰 작성 실패:', error.response ? error.response.data : error);
@@ -60,23 +72,130 @@ const ReviewForm = () => {
   };
 
   return (
-    <div>
-      <h2>리뷰 작성</h2>
-      <input
-        type="number"
-        value={rating}
-        onChange={e => setRating(e.target.value)}
-        min="1"
-        max="5"
+    <Box className="review-form">
+      <Typography variant="h5" className="review-title">
+        리뷰 작성
+      </Typography>
+
+      <LinearProgress
+        variant="determinate"
+        value={(progress / 3) * 100}
+        sx={{
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: '#eee',
+          '& .MuiLinearProgress-bar': {
+            backgroundImage: 'linear-gradient(90deg, #0072ff,rgba(0, 242, 255, 0.78))' // 푸른 계열 + 에메랄드
+          }
+        }}
       />
-      <textarea
+
+      <Box className="rating-container">
+        <Typography variant="subtitle1">평점</Typography>
+        <Rating
+          name="rating"
+          value={rating}
+          onChange={(e, newValue) => setRating(newValue)}
+          onChangeActive={(e, newHover) => setHover(newHover)}
+          precision={0.5}
+          size="large"
+          sx={{
+            color: 'dodgerblue',
+            '& .MuiRating-iconFilled': {color: 'dodgerblue'},
+            '& .MuiRating-iconHover': {color: 'dodgerblue'},
+            transition: 'none',
+            lineHeight: '1'
+          }}
+        />
+        <Typography variant="body1" className="rating-value">
+          {hover !== -1 ? hover : rating} / 5
+        </Typography>
+      </Box>
+
+      <TextField
+        className="review-textarea"
+        label="리뷰 작성"
+        multiline
+        rows={4}
+        fullWidth
+        variant="outlined"
         value={content}
         onChange={e => setContent(e.target.value)}
-        placeholder="리뷰 작성..."
       />
-      <input type="file" multiple onChange={handleImageChange} />
-      <button onClick={handleSubmit}>작성 완료</button>
-    </div>
+
+      <div className="review-helper">
+        <h4>📝 리뷰 작성이 어렵다면?</h4>
+        <div className="helper-content">
+          <div className="helper-item">
+            <span>🌟</span>
+            <p>이 여행에서 가장 좋았던 점은?</p>
+          </div>
+          <div className="helper-item">
+            <span>🛑</span>
+            <p>아쉬웠던 점이 있다면?</p>
+          </div>
+          <div className="helper-item">
+            <span>📷</span>
+            <p>추천할 만한 포인트는?</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="upload-container">
+        <input
+          accept="/uploads/*"
+          className="file-input"
+          id="image-upload"
+          multiple
+          type="file"
+          onChange={handleImageChange}
+        />
+        <label htmlFor="image-upload" className="upload-label">
+          <CloudUploadIcon className="upload-icon" />
+          이미지 업로드
+        </label>
+      </div>
+
+      <div className="review-preview">
+        <h3 style={{color: '#555'}}>미리보기</h3>
+        <div className="preview-rating">
+          <Rating
+            value={rating}
+            readOnly
+            precision={0.5}
+            size="large"
+            style={{color: 'dodgerblue'}}
+          />
+          <span style={{color: 'dodgerblue', fontWeight: 'bold'}}>{rating} / 5</span>
+        </div>
+        <p className="preview-text">{content || '입력한 내용이 여기에 표시됩니다.'}</p>
+        <div className="preview-images">
+          {images.length > 0 &&
+            images.map((img, idx) => (
+              <img
+                key={idx}
+                src={URL.createObjectURL(img)}
+                alt={`미리보기 ${idx + 1}`}
+                className="preview-image"
+              />
+            ))}
+        </div>
+      </div>
+
+      <Button
+        className="submit-button"
+        onClick={handleSubmit}
+        sx={{
+          width: '100%',
+          height: '50px',
+          fontSize: '16px',
+          border: '1px solid #0072ff',
+          backgroundColor: 'rgba(0, 136, 255, 0.78)',
+          color: 'white'
+        }}>
+        작성 완료
+      </Button>
+    </Box>
   );
 };
 

@@ -31,7 +31,7 @@ router.use('/auth', authRoutes);
 router.use('/auth', socialAuthRoutes); // '/api/auth'로 소셜 로그인 라우터 등록
 router.use('/travelItems', travelItemRoutes);
 router.use('/accommodations', accommodationRoutes);
-router.use('/bookings', bookingRoutes);
+router.use('/booking', bookingRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/favorites', favoriteRoutes);
 router.use('/flights', flightRoutes);

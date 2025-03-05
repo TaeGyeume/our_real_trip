@@ -201,11 +201,11 @@ const AdminFlightsList = () => {
           maxWidth: '900px',
           mx: 'auto',
           display: 'flex',
-          flexWrap: 'nowrap',
+          flexWrap: 'wrap',
           gap: 3,
-          mb: 3,
+          mb: 1,
           alignItems: 'center',
-          overflowX: 'auto'
+          overflowX: 'visible'
         }}
         noValidate
         autoComplete="off">

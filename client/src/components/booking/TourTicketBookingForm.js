@@ -18,7 +18,7 @@ const TourTicketBookingForm = () => {
   const [userCoupons, setUserCoupons] = useState([]);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
-  const [formData, setFormData] = useState({count: 0});
+  const [formData, setFormData] = useState({count: 1});
   const [usedMileage, setUsedMileage] = useState(0);
   const [reservationInfo, setReservationInfo] = useState({
     name: '',
