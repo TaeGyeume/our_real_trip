@@ -29,50 +29,57 @@ const AdBanner = ({banners}) => {
         width: '100%',
         maxWidth: '1200px',
         margin: '20px auto 0',
-        borderRadius: '12px',
-        overflow: 'hidden'
+        overflow: 'visible' //  부모 컨테이너는 visible 유지
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}>
-      {/* 배너 슬라이드 컨테이너 */}
+      {/*  배너를 감싸는 컨테이너 (배너만 hidden) */}
       <div
         style={{
-          display: 'flex',
-          transform: `translateX(-${currentIndex * 100}%)`,
-          transition: 'transform 0.5s ease-in-out'
+          position: 'relative',
+          borderRadius: '12px',
+          overflow: 'hidden' //  배너만 hidden
         }}>
-        {banners.map((banner, index) => (
-          <div key={index} style={{width: '100%', flexShrink: 0}}>
-            <img
-              src={banner.image}
-              alt="광고 배너"
-              style={{
-                width: '100%',
-                height: 'auto',
-                objectFit: 'contain',
-                borderRadius: '12px'
-              }}
-            />
-          </div>
-        ))}
+        {/* 배너 슬라이드 컨테이너 */}
+        <div
+          style={{
+            display: 'flex',
+            transform: `translateX(-${currentIndex * 100}%)`,
+            transition: 'transform 0.5s ease-in-out'
+          }}>
+          {banners.map((banner, index) => (
+            <div key={index} style={{width: '100%', flexShrink: 0}}>
+              <img
+                src={banner.image}
+                alt="광고 배너"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  objectFit: 'cover',
+                  borderRadius: '12px'
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* 버튼 컨테이너 (이미지 내부 좌우에 배치) */}
+      {/*  버튼을 배너 밖에서도 보이게 배치 */}
       <IconButton
         onClick={handlePrev}
         style={{
           position: 'absolute',
           top: '50%',
-          left: '0px',
+          left: '-24px', //  배너 밖으로 이동
           transform: 'translateY(-50%)',
-          backgroundColor: 'rgba(255, 255, 255)',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
           borderRadius: '50%',
-          width: '40px',
-          height: '40px',
+          width: '45px',
+          height: '45px',
           opacity: isHovered ? 1 : 0,
-          transition: 'opacity 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-          boxShadow: '0px 4px 10px rgba(0, 0, 0)',
-          zIndex: 10
+          transition: 'opacity 0.3s ease-in-out',
+          boxShadow: '0px 4px 10px',
+          zIndex: 20 //  버튼이 배너 위에 나타나도록 설정
         }}>
         <ChevronLeft />
       </IconButton>
@@ -82,19 +89,20 @@ const AdBanner = ({banners}) => {
         style={{
           position: 'absolute',
           top: '50%',
-          right: '0px',
+          right: '-24px', //  배너 밖으로 이동
           transform: 'translateY(-50%)',
-          backgroundColor: 'rgba(255, 255, 255)',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
           borderRadius: '50%',
-          width: '40px',
-          height: '40px',
+          width: '45px',
+          height: '45px',
           opacity: isHovered ? 1 : 0,
-          transition: 'opacity 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-          boxShadow: '0px 4px 10px rgba(0, 0, 0)',
-          zIndex: 10
+          transition: 'opacity 0.3s ease-in-out',
+          boxShadow: '0px 4px 10px',
+          zIndex: 20 //  버튼이 배너 위에 나타나도록 설정
         }}>
         <ChevronRight />
       </IconButton>
+
       {/* 페이지 표시 */}
       <div
         style={{
@@ -105,7 +113,8 @@ const AdBanner = ({banners}) => {
           color: 'white',
           borderRadius: '12px',
           padding: '4px 8px',
-          fontSize: '14px'
+          fontSize: '14px',
+          zIndex: 20 //  페이지 표시도 배너 위로
         }}>
         {currentIndex + 1}/{banners.length}
       </div>

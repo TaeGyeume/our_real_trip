@@ -31,7 +31,11 @@ const AccommodationCard = ({
     window.open(url, '_blank');
   };
 
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   let imageUrl = accommodation.images?.[0] || '/default-image.jpg';
 
   if (imageUrl.startsWith('/uploads/')) {
@@ -71,6 +75,9 @@ const AccommodationCard = ({
         </Typography>
         <Typography variant="body1" color="primary">
           <strong>최저가:</strong> {accommodation.minPrice?.toLocaleString()}원 / 박
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{flexGrow: 1, mb: 1}}>
+          {accommodation.rating}
         </Typography>
       </CardContent>
 

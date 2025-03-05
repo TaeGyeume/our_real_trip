@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useParams} from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import {fetchTravelItemDetail} from '../../api/travelItem/travelItemService';
 import {createBooking, verifyPayment} from '../../api/booking/bookingService';
 import {fetchUserCoupons} from '../../api/coupon/couponService';
@@ -12,6 +12,7 @@ import './styles/TourTicketBookingForm.css';
 import {Alert, Snackbar, Button, TextField} from '@mui/material';
 
 const TravelItemPurchaseForm = () => {
+  const navigate = useNavigate();
   const {itemId} = useParams();
   const [item, setItem] = useState(null);
   const [user, setUser] = useState(null);
@@ -20,6 +21,7 @@ const TravelItemPurchaseForm = () => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [formData, setFormData] = useState({count: 1});
   const [usedMileage, setUsedMileage] = useState(0);
+  const [imageError, setImageError] = useState(false);
   const [reservationInfo, setReservationInfo] = useState({
     name: '',
     email: '',
@@ -28,6 +30,18 @@ const TravelItemPurchaseForm = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [openAlert, setOpenAlert] = useState(false);
+
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
+  // room이 null이면 빈 배열을 반환하여 안전하게 처리
+  let imageUrl = item?.images?.[0] || '/default-image.jpg';
+
+  if (!imageError && imageUrl?.startsWith('/uploads/')) {
+    imageUrl = `${SERVER_URL}${imageUrl}`;
+  }
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -131,7 +145,11 @@ const TravelItemPurchaseForm = () => {
             });
 
             if (verifyResponse.message === '결제 검증 성공') {
-              alert('구매가 완료되었습니다.');
+              setOpenAlert(true);
+
+              setTimeout(() => {
+                navigate('/');
+              }, 2000);
             } else {
               alert(`결제 검증 실패: ${verifyResponse.message}`);
             }
@@ -180,13 +198,17 @@ const TravelItemPurchaseForm = () => {
           <div className="booking-details">
             <div className="ticket-info">
               <div className="ticket-header">
-                {/* {ticket.images && ticket.images.length > 0 && (
-                  <img
-                    src={`http://localhost:5000${ticket.images[0]}`}
-                    alt="투어 티켓 썸네일"
-                    className="ticket-thumbnail"
-                  />
-                )} */}
+                <img
+                  src={imageUrl}
+                  alt="상품 이미지"
+                  onError={e => {
+                    if (!imageError) {
+                      setImageError(true);
+                      e.target.src = '/default-image.jpg';
+                    }
+                  }}
+                  className="ticket-thumbnail"
+                />
 
                 <div className="ticket-text">{item.name}</div>
               </div>
@@ -262,8 +284,8 @@ const TravelItemPurchaseForm = () => {
               <TextField
                 label="주소"
                 variant="outlined"
-                name="adress"
-                value={reservationInfo.adress}
+                name="address"
+                value={reservationInfo.address}
                 onChange={handleReservationChange}
                 disabled={!isEditing}
                 fullWidth
@@ -299,7 +321,7 @@ const TravelItemPurchaseForm = () => {
                 쿠폰 <span>{discountAmount.toLocaleString()}원</span>
               </p>
               <p>
-                마일리지 <span>{discountAmount.toLocaleString()}원</span>
+                마일리지 <span>{usedMileage.toLocaleString()}원</span>
               </p>
               <div>
                 <strong>
@@ -335,7 +357,12 @@ const TravelItemPurchaseForm = () => {
             </div>
 
             <button onClick={handlePayment} className="payment-btn">
-              {(item.price * formData.count - discountAmount).toLocaleString()}원 결제하기
+              {(
+                item.price * formData.count -
+                discountAmount -
+                usedMileage
+              ).toLocaleString()}
+              원 결제하기
             </button>
           </div>
         </div>

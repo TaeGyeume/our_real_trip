@@ -1,7 +1,7 @@
-import axios from 'axios';
+// import axios from 'axios';
+import api from '../axios';
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api/qna';
+// const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/qna';
 
 // QnA 게시글 생성 (Busboy 사용)
 export const createQnaBoard = async (data, isMultipart) => {
@@ -58,7 +58,7 @@ export const createQnaBoard = async (data, isMultipart) => {
       : {'Content-Type': 'application/json'}; // JSON 요청 시 명시적 지정
 
     //  요청 보내기 (JSON 또는 FormData 자동 선택)
-    const response = await axios.post(API_BASE_URL, data, {
+    const response = await api.post('/qna', data, {
       headers,
       withCredentials: true
     });
@@ -73,7 +73,7 @@ export const createQnaBoard = async (data, isMultipart) => {
 //  QnA 게시글 목록 조회 (페이징)
 export const getQnaBoards = async (page = 1, limit = 10, category = null) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}`, {
+    const response = await api.get(`/qna`, {
       params: {page, limit, category},
       withCredentials: true
     });
@@ -87,7 +87,7 @@ export const getQnaBoards = async (page = 1, limit = 10, category = null) => {
 //  특정 QnA 게시글 조회 (상세보기)
 export const getQnaBoardById = async qnaBoardId => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/${qnaBoardId}`, {
+    const response = await api.get(`/qna/${qnaBoardId}`, {
       withCredentials: true
     });
     return response.data;
@@ -100,7 +100,7 @@ export const getQnaBoardById = async qnaBoardId => {
 //  QnA 게시글 삭제 요청 (URL 수정)
 export const deleteQnaBoard = async qnaBoardId => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/${qnaBoardId}`, {
+    const response = await api.delete(`/qna/${qnaBoardId}`, {
       withCredentials: true
     });
     return response.data;
@@ -113,8 +113,8 @@ export const deleteQnaBoard = async qnaBoardId => {
 //  QnA 댓글 작성
 export const createQnaComment = async (qnaBoardId, content) => {
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/${qnaBoardId}/comments`,
+    const response = await api.post(
+      `/qna/${qnaBoardId}/comments`,
       {content},
       {withCredentials: true}
     );
@@ -128,7 +128,7 @@ export const createQnaComment = async (qnaBoardId, content) => {
 //  QnA 댓글 목록 조회 (페이징)
 export const getQnaComments = async (qnaBoardId, page = 1, limit = 5) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/${qnaBoardId}/comments`, {
+    const response = await api.get(`/qna/${qnaBoardId}/comments`, {
       params: {page, limit},
       withCredentials: true
     });
@@ -142,7 +142,7 @@ export const getQnaComments = async (qnaBoardId, page = 1, limit = 5) => {
 //  QnA 댓글 삭제 (본인 또는 관리자)
 export const deleteQnaComment = async commentId => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/comments/${commentId}`, {
+    const response = await api.delete(`/qna/comments/${commentId}`, {
       withCredentials: true
     });
     return response.data;
@@ -156,18 +156,7 @@ export const updateQnaBoard = async (qnaBoardId, data, isMultipart) => {
     let requestData = data;
     let headers = isMultipart ? {} : {'Content-Type': 'application/json'};
 
-    //  전송 데이터 디버깅
-    // console.log(' 수정 요청 데이터:', requestData);
-
-    // if (isMultipart) {
-    //   for (let [key, value] of requestData.entries()) {
-    //     console.log(` ${key}:`, value);
-    //   }
-    // } else {
-    //   console.log(' JSON 데이터:', requestData);
-    //
-
-    const response = await axios.put(`${API_BASE_URL}/${qnaBoardId}`, requestData, {
+    const response = await api.put(`/qna/${qnaBoardId}`, requestData, {
       headers,
       withCredentials: true
     });

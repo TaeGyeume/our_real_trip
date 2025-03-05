@@ -10,6 +10,8 @@ import {
 import {getUserProfile} from '../../api/user/user'; //  사용자 정보 조회 API
 import './styles/QnaBoardDetail.css'; // 스타일 파일 (별도로 생성 필요)
 
+const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const QnaBoardDetail = () => {
   const {qnaBoardId} = useParams();
   // console.log(' QnA 게시글 ID:', qnaBoardId);
@@ -154,7 +156,7 @@ const QnaBoardDetail = () => {
       {qnaBoard.images && qnaBoard.images.length > 0 && (
         <div className="qna-images">
           {qnaBoard.images.map((img, index) => (
-            <img key={index} src={`http://localhost:5000${img}`} alt="첨부 이미지" />
+            <img key={index} src={`${SERVER_URL}${img}`} alt="첨부 이미지" />
           ))}
         </div>
       )}
@@ -163,7 +165,7 @@ const QnaBoardDetail = () => {
           {qnaBoard.attachments.map((file, index) => (
             <a
               key={index}
-              href={`http://localhost:5000${file}`}
+              href={`${SERVER_URL}${file}`}
               download
               target="_blank"
               rel="noopener noreferrer">

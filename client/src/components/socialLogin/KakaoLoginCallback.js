@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {useAuthStore} from '../../store/authStore';
 
 const KakaoLoginCallback = () => {
-  const setAuthState = useAuthStore(state => state.setAuthState); // Zustand 상태 업데이트 함수
+  const setAuthState = useAuthStore(state => state.setAuthState); // Zustand 상태 업데이트 함
   const checkAuth = useAuthStore(state => state.checkAuth);
   const navigate = useNavigate();
 

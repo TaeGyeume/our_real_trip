@@ -46,7 +46,10 @@ const TravelItemForm = ({isEdit = false, itemId = null, onItemCreated = () => {}
     images: []
   });
 
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -100,7 +103,7 @@ const TravelItemForm = ({isEdit = false, itemId = null, onItemCreated = () => {}
 
       fetchItem();
     }
-  }, [isEdit, finalItemId, categories]);
+  }, [isEdit, finalItemId, categories, SERVER_URL]);
 
   const handleTopCategoryChange = e => {
     const selectedTopCategory = e.target.value;

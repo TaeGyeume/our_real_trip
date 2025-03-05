@@ -22,11 +22,11 @@ const PackageSchema = new mongoose.Schema(
         flightId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'flight',
-          required: true
+          required: false
         },
         seatsToUse: {
           type: Number,
-          required: true,
+          required: false,
           min: 1
         }
       }
@@ -78,37 +78,51 @@ const PackageSchema = new mongoose.Schema(
   {timestamps: true}
 );
 
-// ✅ 인덱스 설정
+//  인덱스 설정
 PackageSchema.index({name: 'text', description: 'text', category: 'text'});
 
 /**
- * ✅ 패키지 저장 전에 유효성 검증
+ *  패키지 저장 전에 유효성 검증
  */
-PackageSchema.pre('save', function (next) {
-  const totalItems =
-    (this.accommodations ? this.accommodations.length : 0) +
-    (this.flights ? this.flights.length : 0) +
-    (this.tours ? this.tours.length : 0);
-
-  if (totalItems < 2) {
-    return next(new Error('패키지는 최소 2개의 상품을 포함해야 합니다.'));
+//  여기에 `pre('save')` 훅 추가!
+PackageSchema.pre('save', async function (next) {
+  // 1) 숙소(방) 가격 합산
+  let totalRoomPrice = 0;
+  if (this.roomIds && this.roomIds.length > 0) {
+    // roomIds가 실제로 populate되어 있거나, DB에서 찾아와야 함
+    // 예) Room.find({ _id: { $in: this.roomIds } })
+    const rooms = await mongoose.model('Room').find({_id: {$in: this.roomIds}});
+    totalRoomPrice = rooms.reduce((sum, r) => sum + (r.pricePerNight || 0), 0);
   }
 
-  if (!this.startDate || !this.endDate) {
-    return next(new Error('여행 시작일과 종료일을 입력해야 합니다.'));
+  // 2) 항공 가격 합산
+  let totalFlightPrice = 0;
+  if (this.flights && this.flights.length > 0) {
+    for (const f of this.flights) {
+      const flightDoc = await mongoose.model('flight').findById(f.flightId);
+      if (flightDoc) {
+        const seats = f.seatsToUse || 1;
+        totalFlightPrice += (flightDoc.price || 0) * seats;
+      }
+    }
   }
 
-  if (this.endDate < this.startDate) {
-    return next(new Error('여행 종료일은 시작일보다 이후여야 합니다.'));
+  // 3) 투어 가격 합산
+  let totalTourPrice = 0;
+  if (this.tours && this.tours.length > 0) {
+    const tourDocs = await mongoose.model('tourTicket').find({_id: {$in: this.tours}});
+    totalTourPrice = tourDocs.reduce((sum, t) => sum + (t.price || 0), 0);
   }
 
-  // 할인율 적용하여 최종 가격 자동 계산
-  this.finalPrice = Math.round(this.price - (this.price * this.discountRate) / 100);
+  // 4) 총합
+  const basePrice = totalRoomPrice + totalFlightPrice + totalTourPrice;
 
-  // 여행 기간 자동 계산
-  const durationInMs = this.endDate - this.startDate;
-  this.duration = Math.round(durationInMs / (1000 * 60 * 60 * 24)) + 1;
+  // 5) 할인율 적용
+  this.price = basePrice; // <-- basePrice를 'price' 필드에 저장
+  this.finalPrice = Math.round(basePrice - (basePrice * this.discountRate) / 100);
 
+  // 나머지 유효성 체크 (날짜 등)
+  // ...
   next();
 });
 

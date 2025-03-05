@@ -4,7 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import SearchBar from '../../components/accommodations/SearchBar';
 import AdBanner from '../../components/ad/AdBanner';
 import PopularAccommodations from '../../components/accommodations/PopularAccommodations';
-import {Box, Typography} from '@mui/material';
+import {Box} from '@mui/material';
 
 // 오늘 날짜를 YYYY-MM-DD 포맷으로 반환하는 함수
 const getFormattedDate = (daysToAdd = 0) => {

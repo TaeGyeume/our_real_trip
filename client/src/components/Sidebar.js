@@ -62,6 +62,23 @@ const Sidebar = ({activeSection, onSelectCategory}) => {
                 </Nav.Link>
               </Nav.Item>
 
+              <Nav.Item style={{whiteSpace: 'nowrap'}}>
+                <Nav.Link
+                  style={activeSection === 'package' ? activeTabStyle : defaultTabStyle}
+                  eventKey="package"
+                  onClick={() => onSelectCategory('package')}>
+                  📦 패키지
+                </Nav.Link>
+              </Nav.Item>
+
+              <Nav.Item style={{whiteSpace: 'nowrap'}}>
+                <Nav.Link
+                  style={defaultTabStyle} // 기본 탭 스타일 사용
+                  onClick={() => navigate('/flights/list')}>
+                  ✈ 항공편 관리
+                </Nav.Link>
+              </Nav.Item>
+
               {/* 쿠폰 관리 탭 */}
               <Nav.Item style={{whiteSpace: 'nowrap'}}>
                 <Nav.Link
@@ -70,14 +87,6 @@ const Sidebar = ({activeSection, onSelectCategory}) => {
                   }
                   onClick={() => navigate('/product/coupon/list')}>
                   🎫 쿠폰 관리
-                </Nav.Link>
-              </Nav.Item>
-
-              <Nav.Item style={{whiteSpace: 'nowrap'}}>
-                <Nav.Link
-                  style={defaultTabStyle} // 기본 탭 스타일 사용
-                  onClick={() => navigate('/product/package/create')}>
-                  📦 패키지 생성
                 </Nav.Link>
               </Nav.Item>
             </Nav>

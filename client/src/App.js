@@ -29,8 +29,8 @@ import RoundTripDeparture from './pages/flights/RoundTripDeparture';
 import RoundTripReturn from './pages/flights/RoundTripReturn';
 import RoundTripConfirm from './pages/flights/RoundTripConfirm';
 import FlightBookingPage from './pages/booking/FlightBookingPage';
-import FlightsList from './pages/flights/FlightsList';
-import FlightForm from './pages/flights/FlightForm';
+import FlightsList from './pages/product/flights/FlightsList';
+import FlightForm from './pages/product/flights/FlightForm';
 import TravelItemList from './pages/travelItem/TravelItemListPage';
 import TravelItemDetail from './pages/travelItem/TravelItemDetailPage';
 import MyCouponsPage from './pages/coupons/MyCouponsPage';
@@ -74,6 +74,7 @@ import PackageDetail from './components/product/package/PackageDetail';
 import PackageEdit from './components/product/package/PackageEdit';
 import PackageCreate from './components/product/package/PackageCreate';
 import PackageBookingForm from './components/booking/PackageBookingForm';
+import AdminPackageList from './pages/product/packges/PackageList';
 import Modal from 'react-modal';
 // import FlightList from './components/flights/FlightList';
 
@@ -204,6 +205,7 @@ const App = () => {
           </Route>
           {/* 어드민 전용 페이지 */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+            <Route path="/product/packages/list" element={<AdminPackageList />} />
             <Route path="/product/package/create" element={<PackageCreate />} />
             {/* <Route path="/package/edit/:id" element={<PackageEdit />} /> */}
             <Route path="/packages/:id/edit" element={<PackageEdit />} />{' '}

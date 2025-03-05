@@ -17,26 +17,31 @@ const RoundTripDeparture = () => {
 
   const handleSelectDeparture = async flight => {
     setLoading(true);
+    let returnFlights = [];
 
     try {
-      const returnFlights = await searchFlights(
+      const returnDate = location.state?.returnDate; // returnDate 가져오기
+      if (!returnDate) throw new Error('복귀 날짜가 설정되지 않았습니다.');
+
+      returnFlights = await searchFlights(
         flight.arrival.airport,
         flight.departure.airport,
-        location.state?.returnDate,
+        returnDate,
         passengers
       );
-      setTimeout(() => {
-        setLoading(false);
-        navigate('/flights/roundtrip-return', {
-          state: {selectedDeparture: flight, returnFlights, passengers}
-        });
-      }, 500);
+
+      if (!returnFlights.length) throw new Error('복귀 항공편을 찾을 수 없습니다.');
     } catch (error) {
-      setErrorMessage('도착 항공편 검색 중 오류가 발생했습니다.');
-      navigate('/flights/roundtrip-return', {
-        state: {selectedDeparture: flight, returnFlights: [], passengers}
-      });
+      console.error('복귀 항공편 검색 오류:', error);
+      setErrorMessage('복귀 항공편 검색 중 오류가 발생했습니다.');
     }
+
+    setTimeout(() => {
+      setLoading(false);
+      navigate('/flights/roundtrip-return', {
+        state: {selectedDeparture: flight, returnFlights: returnFlights || [], passengers} // returnFlights 전달
+      });
+    }, 500);
   };
 
   return (

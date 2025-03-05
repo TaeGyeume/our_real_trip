@@ -16,7 +16,11 @@ import {
 const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle}) => {
   const navigate = useNavigate();
   const {user, isAuthenticated} = useAuthStore();
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   const [imgError, setImgError] = useState(false);
 
   // 이미지 URL 설정

@@ -1,252 +1,360 @@
 import React, {useEffect, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
+import {
+  Container,
+  Typography,
+  Box,
+  Divider,
+  Card,
+  CardContent,
+  Button,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
+} from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import {styled} from '@mui/material/styles';
 import {getPackageById} from '../../../api/package/packageService';
-import {fetchFlights} from '../../../api/flight/flights'; // 기존 API 호출 사용
-import {Container, Typography, Button, Grid, Card, CardContent, Box} from '@mui/material';
+
+const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+// 상단 배너 이미지 스타일
+const BannerImage = styled('img')({
+  width: '100%',
+  height: '400px',
+  objectFit: 'cover',
+  objectPosition: 'center'
+});
 
 const PackageDetail = () => {
   const {id} = useParams();
   const navigate = useNavigate();
+  const [pkg, setPkg] = useState(null);
+  const [showAllImages, setShowAllImages] = useState(false); // "상품 소개 더보기" 상태
 
-  const [packageData, setPackageData] = useState(null);
-  const [flightsData, setFlightsData] = useState([]);
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [finalPrice, setFinalPrice] = useState(0); // 할인 적용 후 최종 가격
-  const [discountRate, setDiscountRate] = useState(0); // 할인율 상태 추가
+  // 자주 묻는 질문(FAQ) (예시)
+  const [faqList] = useState([
+    '카트비, 캐디피 / 미팅&샌딩비는 누구에게 지불하나요?',
+    '현지에 오셔서 현지실장에게 지불 해주시면 됩니다^^',
+    '다른친구랑 같이 올수있나요?',
+    '단독투어로 조인 없이 움직이기 때문에 가능합니다.',
+    '차량 호텔 골프장만 이용이 가능한가요?',
+    '1일 12시간 기준으로 골프장 이용 후 남은시간 자유롭게 이용하시면 됩니다.\n<12시간 초과시 시간당 300바트의 추가금이 발생합니다>'
+  ]);
 
   useEffect(() => {
-    fetchPackage();
-  }, []);
-
-  const fetchPackage = async () => {
-    try {
-      const data = await getPackageById(id);
-      setPackageData(data);
-
-      // 항공편 데이터 가져오기
-      if (data.flights && data.flights.length > 0) {
-        const flightIds = data.flights.map(flight => flight.flightId); // flightId만 추출
-        const flightPromises = flightIds.map(flightId => fetchFlightById(flightId)); // flightId로 항공편 정보 가져오기
-        const flights = await Promise.all(flightPromises);
-        setFlightsData(flights); // 항공편 데이터 상태 설정
+    (async () => {
+      try {
+        const data = await getPackageById(id);
+        setPkg(data);
+      } catch (err) {
+        console.error('패키지 조회 실패:', err);
       }
-    } catch (error) {
-      console.error('패키지 조회 실패:', error);
-    }
-  };
+    })();
+  }, [id]);
 
-  const fetchFlightById = async flightId => {
-    try {
-      // 모든 항공편을 가져와서 해당 ID를 찾아 반환
-      const flights = await fetchFlights();
-      return flights.find(flight => flight._id === flightId);
-    } catch (error) {
-      console.error('항공편 데이터 불러오기 실패:', error);
-      return null;
-    }
-  };
+  if (!pkg) {
+    return <Typography>로딩 중...</Typography>;
+  }
 
-  // 숙소, 투어, 항공편 가격 계산
-  const calculateTotalPrice = () => {
-    if (!packageData) return 0;
+  // 첫 번째 이미지를 상단 배너로 사용
+  const bannerImage =
+    pkg.images && pkg.images.length > 0
+      ? `${SERVER_URL}/${pkg.images[0]}`
+      : '/default-image.jpg';
 
-    let accommodationPrice = 0;
-    let flightPrice = 0;
-    let tourPrice = 0;
+  // 추가 이미지 (두 번째 이후)
+  const additionalImages = pkg.images && pkg.images.length > 1 ? pkg.images.slice(1) : [];
 
-    // 숙소 가격
-    if (packageData.accommodations) {
-      accommodationPrice = packageData.accommodations.reduce(
-        (acc, accItem) => acc + (accItem.minPrice || 0),
-        0
-      );
-    }
-
-    // 항공편 가격 (flightsData에서 가격 사용)
-    if (flightsData && flightsData.length > 0) {
-      flightPrice = flightsData.reduce((acc, flight) => acc + (flight.price || 0), 0);
-    }
-
-    // 투어 가격
-    if (packageData.tours) {
-      tourPrice = packageData.tours.reduce((acc, tour) => acc + (tour.price || 0), 0);
-    }
-
-    // 최종 가격 계산
-    const calculatedTotalPrice = accommodationPrice + flightPrice + tourPrice;
-    setTotalPrice(calculatedTotalPrice);
-
-    // 할인율이 있을 경우 적용
-    if (packageData.discountRate) {
-      const discount = (calculatedTotalPrice * packageData.discountRate) / 100;
-      setDiscountRate(packageData.discountRate); // 할인율 상태 업데이트
-      setFinalPrice(calculatedTotalPrice - discount); // 할인 적용된 가격
-    } else {
-      setFinalPrice(calculatedTotalPrice); // 할인 없으면 그냥 totalPrice
-    }
-  };
-
-  useEffect(() => {
-    calculateTotalPrice(); // 가격 계산
-  }, [packageData, flightsData]);
-
-  if (!packageData) return <Typography>로딩 중...</Typography>;
+  // 결제 혜택
+  const {discountRate = 0, price = 0, finalPrice = 0} = pkg;
 
   return (
-    <Container>
-      <Typography variant="h4" sx={{mt: 3}}>
-        {packageData.name}
+    <Container maxWidth="md" sx={{py: 4}}>
+      {/* 상단: 패키지 제목 / 설명 */}
+      <Typography variant="h4" sx={{fontWeight: 'bold', mb: 1}}>
+        {pkg.name}
       </Typography>
-      <Typography variant="body1" sx={{mt: 2}}>
-        {packageData.description}
-      </Typography>
-
-      {/* 원래 가격 (취소선 표시) */}
-      <Box sx={{mt: 2, display: 'flex', alignItems: 'center'}}>
-        <Typography
-          variant="h6"
-          color="text.secondary"
-          sx={{textDecoration: 'line-through', mr: 2}}>
-          원래 가격: {totalPrice.toLocaleString()} 원
+      {pkg.description && (
+        <Typography variant="subtitle1" color="text.secondary" sx={{mb: 2}}>
+          {pkg.description}
         </Typography>
-        {discountRate > 0 && (
-          <Typography variant="h6" color="primary">
-            할인율: {discountRate}% 적용
+      )}
+
+      {/* 배너 이미지 */}
+      <Box sx={{mb: 3}}>
+        <BannerImage src={bannerImage} alt="패키지 배너" />
+      </Box>
+
+      {/* 결제 혜택 */}
+      <Box sx={{mb: 2}}>
+        <Typography variant="body2" color="text.secondary">
+          결제 혜택
+        </Typography>
+        {discountRate > 0 ? (
+          <Box>
+            <Typography variant="h6" sx={{textDecoration: 'line-through', color: 'gray'}}>
+              {price.toLocaleString()}원
+            </Typography>
+            <Typography variant="h5" sx={{fontWeight: 'bold', color: 'red'}}>
+              {finalPrice.toLocaleString()}원
+            </Typography>
+            <Typography variant="caption" sx={{color: 'blue'}}>
+              (할인율 {discountRate}%)
+            </Typography>
+          </Box>
+        ) : (
+          <Typography variant="h5" sx={{fontWeight: 'bold', color: 'red'}}>
+            {finalPrice.toLocaleString()}원
           </Typography>
         )}
       </Box>
 
-      {/* 할인 적용 후 최종 가격 */}
-      <Typography variant="h6" sx={{mt: 1}}>
-        최종 가격 (할인 적용):{' '}
-        <span style={{fontWeight: 'bold'}}>{finalPrice.toLocaleString()} 원</span>
+      <Divider sx={{my: 3}} />
+
+      {/* "상품 소개 더보기" 버튼 -> 추가 이미지 */}
+      {additionalImages.length > 0 && (
+        <Box sx={{mb: 3}}>
+          {!showAllImages ? (
+            <Button
+              type="button"
+              onClick={() => setShowAllImages(true)}
+              sx={{
+                border: '1px solid #ccc',
+                backgroundColor: '#fff',
+                color: '#333',
+                mb: 1
+              }}>
+              상품 소개 더보기
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => setShowAllImages(false)}
+              sx={{
+                border: '1px solid #f00',
+                backgroundColor: '#fff',
+                color: 'red',
+                mb: 1
+              }}>
+              상품 소개 접기
+            </Button>
+          )}
+
+          {showAllImages && (
+            <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+              {additionalImages.map((img, index) => (
+                <img
+                  key={index}
+                  src={`${SERVER_URL}/${img}`}
+                  alt={`추가 이미지 ${index}`}
+                  style={{
+                    width: '100%',
+                    height: '300px',
+                    objectFit: 'cover',
+                    objectPosition: 'center'
+                  }}
+                />
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
+
+      <Divider sx={{my: 3}} />
+
+      {/* 포함 / 불포함 사항 */}
+      <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
+        포함 · 불포함 사항
       </Typography>
-
-      {/* 상품 이미지 목록 */}
-      <Grid container spacing={2} sx={{mt: 2}}>
-        {packageData.images && packageData.images.length > 0 ? (
-          packageData.images.map((img, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <img
-                src={`${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'}${img}`}
-                alt={`패키지 ${packageData.name}`}
-                style={{
-                  width: '100%',
-                  height: '200px',
-                  objectFit: 'cover',
-                  objectPosition: 'center'
-                }}
-              />
-            </Grid>
-          ))
-        ) : (
-          <Grid item xs={12}>
-            <img
-              src="/default-image.jpg"
-              alt="기본 이미지"
-              style={{
-                width: '100%',
-                height: '200px',
-                objectFit: 'cover'
-              }}
-            />
-          </Grid>
-        )}
-      </Grid>
-
       {/* 포함 사항 */}
-      <Typography variant="h5" sx={{mt: 3}}>
-        포함 사항
-      </Typography>
-      <Card sx={{mt: 2}}>
-        <CardContent>
-          <Typography variant="body1">
-            {/* 숙소 */}
-            숙소:{' '}
-            {packageData.accommodations
-              ? packageData.accommodations.map(acc => acc.name).join(', ')
-              : '없음'}
-            <br />
-            가격:{' '}
-            {packageData.accommodations
-              ? packageData.accommodations
-                  .map(acc =>
-                    acc.minPrice ? acc.minPrice.toLocaleString() : '가격 없음'
-                  )
-                  .join(', ')
-              : '가격 없음'}
-            <br />
-            설명:{' '}
-            {packageData.accommodations
-              ? packageData.accommodations.map(acc => acc.description).join(', ')
-              : '설명 없음'}
-            <br />
-            <br />
-            {/* 투어 */}
-            투어:{' '}
-            {packageData.tours
-              ? packageData.tours.map(tour => tour.title).join(', ')
-              : '없음'}
-            <br />
-            가격:{' '}
-            {packageData.tours
-              ? packageData.tours
-                  .map(tour => (tour.price ? tour.price.toLocaleString() : '가격 없음'))
-                  .join(', ')
-              : '가격 없음'}
-            <br />
-            설명:{' '}
-            {packageData.tours
-              ? packageData.tours.map(tour => tour.description).join(', ')
-              : '설명 없음'}
-            <br />
-            <br />
-            {/* 항공편 */}
-            항공편:{' '}
-            {flightsData && flightsData.length > 0
-              ? flightsData.map(flight => flight.flightNumber).join(', ')
-              : '없음'}
-            <br />
-            가격:{' '}
-            {flightsData && flightsData.length > 0
-              ? flightsData
-                  .map(flight =>
-                    flight.price ? flight.price.toLocaleString() : '가격 없음'
-                  )
-                  .join(', ')
-              : '가격 없음'}
-            <br />
-            설명:{' '}
-            {flightsData && flightsData.length > 0
-              ? flightsData.map(flight => flight.airline).join(', ')
-              : '설명 없음'}
-            <br />
-            <br />
-            {/* 왕복 항공편 */}
-            {flightsData && flightsData.length > 0 && flightsData[0].returnFlight && (
-              <Typography variant="body1" sx={{mt: 2}}>
-                오는 항공편: {flightsData[0].returnFlight.flightNumber}
-                <br />
-                가격:{' '}
-                {flightsData[0].returnFlight.price
-                  ? flightsData[0].returnFlight.price.toLocaleString()
-                  : '가격 없음'}
-                <br />
-                설명: {flightsData[0].returnFlight.airline}
-              </Typography>
-            )}
+      <Box sx={{mb: 3}}>
+        <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
+          포함되어 있어요
+        </Typography>
+        {pkg.includedItems && pkg.includedItems.length > 0 ? (
+          <List sx={{ml: 2}}>
+            {pkg.includedItems.map((item, idx) => (
+              <ListItem key={idx} disablePadding sx={{py: 0.5}}>
+                <ListItemIcon sx={{minWidth: '30px'}}>
+                  <CheckCircleOutlineIcon fontSize="small" color="primary" />
+                </ListItemIcon>
+                <ListItemText primary={item} />
+              </ListItem>
+            ))}
+          </List>
+        ) : (
+          <Typography variant="body2" sx={{ml: 2}}>
+            없음
           </Typography>
-        </CardContent>
-      </Card>
+        )}
+      </Box>
+      {/* 불포함 사항 */}
+      <Box sx={{mb: 3}}>
+        <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
+          불포함되어 있어요
+        </Typography>
+        {pkg.excludedItems && pkg.excludedItems.length > 0 ? (
+          <List sx={{ml: 2}}>
+            {pkg.excludedItems.map((item, idx) => (
+              <ListItem key={idx} disablePadding sx={{py: 0.5}}>
+                <ListItemIcon sx={{minWidth: '30px'}}>
+                  <CheckCircleOutlineIcon fontSize="small" color="disabled" />
+                </ListItemIcon>
+                <ListItemText primary={item} />
+              </ListItem>
+            ))}
+          </List>
+        ) : (
+          <Typography variant="body2" sx={{ml: 2}}>
+            없음
+          </Typography>
+        )}
+      </Box>
 
-      {/* 예약 버튼 */}
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{mt: 3}}
-        onClick={() => navigate(`/package/booking/${id}`)}>
-        예약하기
-      </Button>
+      <Divider sx={{my: 3}} />
+
+      {/* 항공 & 숙소 정보 */}
+      <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
+        항공 & 숙소 정보
+      </Typography>
+      {/* 항공 정보 */}
+      {pkg.flights && pkg.flights.length > 0 && (
+        <Box sx={{mb: 2}}>
+          <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+            항공 정보
+          </Typography>
+          {pkg.flights.map((flightObj, idx) => {
+            const {flightId, seatsToUse} = flightObj;
+            if (!flightId) return null;
+            return (
+              <Box key={idx} sx={{ml: 2, mt: 1}}>
+                <Typography variant="body2">
+                  항공사: {flightId.airline} / 편명: {flightId.flightNumber}
+                </Typography>
+                <Typography variant="body2">
+                  항공 가격: {flightId.price?.toLocaleString()}원 / 좌석 수: {seatsToUse}
+                </Typography>
+                {flightId.departureDate && (
+                  <Typography variant="body2">
+                    출발일: {flightId.departureDate}
+                  </Typography>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+
+      {/* 숙소 정보 */}
+      {pkg.accommodations && pkg.accommodations.length > 0 && (
+        <Box sx={{mb: 2}}>
+          <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+            숙소 정보
+          </Typography>
+          {pkg.accommodations.map(acc => (
+            <Card key={acc._id} sx={{mb: 2}}>
+              <CardContent>
+                <Typography variant="body1" sx={{fontWeight: 'bold'}}>
+                  {acc.name}
+                </Typography>
+                {acc.rooms && acc.rooms.length > 0 ? (
+                  acc.rooms.map(room => (
+                    <Typography key={room._id} variant="body2" sx={{ml: 2}}>
+                      - {room.name || '방 이름 없음'}:{' '}
+                      {room.pricePerNight?.toLocaleString()}원/박
+                    </Typography>
+                  ))
+                ) : (
+                  <Typography variant="body2" sx={{ml: 2}}>
+                    객실 정보 없음
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      )}
+
+      {/* 투어 정보 (있다면) */}
+      {pkg.tours && pkg.tours.length > 0 && (
+        <Box sx={{mb: 2}}>
+          <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+            투어/티켓 정보
+          </Typography>
+          {pkg.tours.map((tour, idx) => (
+            <Typography key={idx} variant="body2" sx={{ml: 2, mt: 1}}>
+              {tour.title || '투어 제목 없음'} /{' '}
+              {tour.price ? `${tour.price.toLocaleString()}원` : '가격 정보 없음'}
+            </Typography>
+          ))}
+        </Box>
+      )}
+
+      <Divider sx={{my: 3}} />
+
+      {/* 필수 확인 사항 */}
+      <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
+        필수 확인 사항
+      </Typography>
+      {pkg.essentialInfo && pkg.essentialInfo.length > 0 ? (
+        <Box sx={{ml: 2}}>
+          {pkg.essentialInfo.map((info, idx) => (
+            <Typography key={idx} variant="body2" sx={{mb: 1}}>
+              {info}
+            </Typography>
+          ))}
+        </Box>
+      ) : (
+        <Typography variant="body2" sx={{ml: 2}}>
+          필수 확인 사항이 없습니다.
+        </Typography>
+      )}
+
+      <Divider sx={{my: 3}} />
+
+      {/* 취소/환불 규정 */}
+      <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
+        취소/환불 규정
+      </Typography>
+      {pkg.refundPolicy && pkg.refundPolicy.length > 0 ? (
+        <Box sx={{ml: 2}}>
+          {pkg.refundPolicy.map((rule, idx) => (
+            <Typography key={idx} variant="body2" sx={{mb: 1}}>
+              {rule}
+            </Typography>
+          ))}
+        </Box>
+      ) : (
+        <Typography variant="body2" sx={{ml: 2}}>
+          별도의 취소/환불 규정이 없습니다.
+        </Typography>
+      )}
+
+      <Divider sx={{my: 3}} />
+
+      {/* 자주 묻는 질문 (FAQ) */}
+      <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
+        자주 묻는 질문
+      </Typography>
+      <Box sx={{ml: 2}}>
+        {faqList.map((faq, idx) => (
+          <Typography key={idx} variant="body2" sx={{mb: 1, whiteSpace: 'pre-line'}}>
+            {faq}
+          </Typography>
+        ))}
+      </Box>
+
+      {/* 예약하기 버튼 */}
+      <Box sx={{mt: 4, display: 'flex', justifyContent: 'center'}}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate(`/package/booking/${id}`)}>
+          예약하기
+        </Button>
+      </Box>
     </Container>
   );
 };

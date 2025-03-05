@@ -4,7 +4,10 @@ let io;
 const initSocket = server => {
   io = new Server(server, {
     cors: {
-      origin: `http://localhost:${process.env.CLIENT_PORT || 3000}`,
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? 'https://your-deployed-site.com' // 배포 환경
+          : `http://localhost:${process.env.CLIENT_PORT || 3000}`, // 개발 환경
       methods: ['GET', 'POST']
     },
     path: '/socket.io' // 경로 명시적으로 지정

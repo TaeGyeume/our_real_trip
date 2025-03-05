@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {authAPI} from '../../api/auth';
 import {useAuthStore} from '../../store/authStore';
@@ -9,7 +9,9 @@ import {
   Typography,
   CircularProgress,
   Paper,
-  Link
+  Link,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import SocialLoginButtons from '../../components/SocialLoginButtons';
 
@@ -17,11 +19,27 @@ const Login = () => {
   const navigate = useNavigate();
   const {fetchUserProfile} = useAuthStore();
   const [formData, setFormData] = useState({userid: '', password: ''});
+  const [rememberUserId, setRememberUserId] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const savedUserId = localStorage.getItem('savedUserId');
+    if (savedUserId) {
+      setFormData(prev => ({...prev, userid: savedUserId}));
+      setRememberUserId(true); // 체크박스도 활성화
+    }
+  }, []);
+
   const handleChange = e => {
     setFormData({...formData, [e.target.name]: e.target.value});
+  };
+
+  const handleCheckboxChange = e => {
+    setRememberUserId(e.target.checked);
+    if (!e.target.checked) {
+      localStorage.removeItem('savedUserId'); // 체크 해제 시 저장된 아이디 삭제
+    }
   };
 
   const handleSubmit = async e => {
@@ -30,10 +48,26 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await authAPI.loginUser(formData);
+      const response = await authAPI.loginUser(formData);
+
+      // 로그인 응답에서 성공 여부 확인
+      if (!response || response.status !== 200 || !response.data || !response.data.user) {
+        setError('아이디 또는 비밀번호가 잘못되었습니다.');
+        setLoading(false);
+        return; // 로그인 실패 시 fetchUserProfile() 실행하지 않음
+      }
+
+      // 아이디 저장이 체크된 경우 localStorage에 저장
+      if (rememberUserId) {
+        localStorage.setItem('savedUserId', formData.userid);
+      }
+
+      // 로그인 성공 후에만 프로필 가져오기 실행
       await fetchUserProfile();
-      navigate('/main');
+      navigate('/main'); // 로그인 성공 후 메인 페이지로 이동
     } catch (error) {
+      setLoading(false); // 로딩 상태 해제
+
       if (error.response?.status === 401) {
         setError('아이디 또는 비밀번호가 잘못되었습니다.');
       } else if (error.response?.status === 500) {
@@ -134,6 +168,24 @@ const Login = () => {
               '& .MuiInputLabel-root': {color: '#000'}
             }}
           />
+
+          {/* 아이디 저장 체크박스 */}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={rememberUserId}
+                onChange={handleCheckboxChange}
+                sx={{color: '#000'}}
+              />
+            }
+            label={
+              <Typography variant="body2" sx={{color: '#000'}}>
+                아이디 저장
+              </Typography>
+            }
+            sx={{mt: 1, textAlign: 'left', width: '100%'}}
+          />
+
           <Button
             fullWidth
             variant="contained"

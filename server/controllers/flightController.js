@@ -71,3 +71,17 @@ exports.deleteFlight = async (req, res) => {
     res.status(500).json({message: '항공편 삭제 중 오류 발생', error: error.message});
   }
 };
+
+exports.getFlightById = async (req, res) => {
+  try {
+    const {id} = req.params;
+    const flight = await flightsService.getFlightById(id);
+    if (!flight) {
+      return res.status(404).json({message: '해당 항공편이 존재하지 않습니다.'});
+    }
+    res.status(200).json(flight);
+  } catch (error) {
+    console.error('특정 항공편 조회 오류:', error); // 여기서 찍히는 메시지 확인
+    res.status(500).json({message: error.message});
+  }
+};

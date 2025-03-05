@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useParams, useSearchParams} from 'react-router-dom';
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {getRoomById} from '../../api/room/roomService';
 import {createBooking, verifyPayment} from '../../api/booking/bookingService';
 import {authAPI} from '../../api/auth/index';
@@ -8,9 +8,10 @@ import {cancelBooking} from '../../api/booking/bookingService';
 import CouponSelector from './CouponSelector';
 import MileageInput from '../mileage/MileageInput';
 import './styles/TourTicketBookingForm.css';
-import {Alert, Snackbar, Button, TextField} from '@mui/material';
+import {Alert, Snackbar, Button, TextField, Typography, Stack} from '@mui/material';
 
 const BookingForm = () => {
+  const navigate = useNavigate();
   const {roomId} = useParams();
   const [searchParams] = useSearchParams();
   const [room, setRoom] = useState(null);
@@ -19,6 +20,7 @@ const BookingForm = () => {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [usedMileage, setUsedMileage] = useState(0);
+  const [imageError, setImageError] = useState(false);
   const [reservationInfo, setReservationInfo] = useState({
     name: '',
     email: '',
@@ -72,12 +74,15 @@ const BookingForm = () => {
     fetchRoom();
   }, [roomId]);
 
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
 
   // room이 null이면 빈 배열을 반환하여 안전하게 처리
   let imageUrl = room?.images?.[0] || '/default-image.jpg';
 
-  if (imageUrl?.startsWith('/uploads/')) {
+  if (!imageError && imageUrl?.startsWith('/uploads/')) {
     imageUrl = `${SERVER_URL}${imageUrl}`;
   }
 
@@ -180,7 +185,11 @@ const BookingForm = () => {
               });
 
               if (verifyResponse.message === '결제 검증 성공') {
-                alert('예약 및 결제가 완료되었습니다.');
+                setOpenAlert(true);
+
+                setTimeout(() => {
+                  navigate('/');
+                }, 2000);
               } else {
                 alert(`결제 검증 실패: ${verifyResponse.message}`);
               }
@@ -210,46 +219,61 @@ const BookingForm = () => {
         <div className="booking-content">
           <div className="booking-details">
             <div className="ticket-info">
-              <div className="ticket-header">
+              <Stack direction="row" alignItems="center" spacing={2}>
+                {/* 객실 이미지 */}
                 <img
                   src={imageUrl}
                   alt="객실 이미지"
-                  onError={e => (e.target.src = '/default-image.jpg')}
-                  className="ticket-thumbnail"
+                  onError={e => {
+                    if (!imageError) {
+                      setImageError(true);
+                      e.target.src = '/default-image.jpg';
+                    }
+                  }}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 8,
+                    objectFit: 'cover'
+                  }}
                 />
 
-                <div className="ticket-text">{room.name}</div>
-                {formData.rooms.map((roomData, index) => (
-                  <div key={index} className="room-group">
-                    <h4>🏨 객실 {index + 1}</h4>
-                    <label>📅 체크인 날짜</label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={roomData.startDate}
-                      onChange={e => handleRoomChange(index, 'startDate', e.target.value)}
-                    />
+                {/* 객실 정보 */}
+                <Stack spacing={0.5}>
+                  <Typography variant="h6" fontWeight="bold">
+                    {room.name}
+                  </Typography>
+                </Stack>
+              </Stack>
 
-                    <label>📅 체크아웃 날짜</label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={roomData.endDate}
-                      onChange={e => handleRoomChange(index, 'endDate', e.target.value)}
-                    />
+              {/* 체크인 / 체크아웃 정보 */}
+              <Stack direction="row" justifyContent="space-between" sx={{mt: 2}}>
+                <Typography variant="body1" fontWeight="bold">
+                  체크인
+                </Typography>
+                <Typography variant="body1">
+                  {new Date(defaultStartDate).toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    weekday: 'short'
+                  })}
+                </Typography>
+              </Stack>
 
-                    {/* <label>🏨 예약할 객실 개수</label>
-                    <input
-                      type="number"
-                      name="count"
-                      value={roomData.count}
-                      min="1"
-                      max={room.availableCount}
-                      onChange={e => handleRoomChange(index, 'count', e.target.value)}
-                    /> */}
-                  </div>
-                ))}
-              </div>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body1" fontWeight="bold">
+                  체크아웃
+                </Typography>
+                <Typography variant="body1">
+                  {new Date(defaultEndDate).toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    weekday: 'short'
+                  })}
+                </Typography>
+              </Stack>
             </div>
 
             <hr className="divider" />
@@ -346,15 +370,14 @@ const BookingForm = () => {
                 쿠폰 <span>{discountAmount.toLocaleString()}원</span>
               </p>
               <p>
-                마일리지 <span>{discountAmount.toLocaleString()}원</span>
+                마일리지 <span>{usedMileage.toLocaleString()}원</span>
               </p>
               <div>
                 <strong>
                   총 결제 금액:{' '}
-                  {(
-                    room.pricePerNight * formData.rooms[0].count -
-                    discountAmount -
-                    usedMileage
+                  {Math.max(
+                    totalPrice - discountAmount - usedMileage,
+                    0
                   ).toLocaleString()}
                   원
                 </strong>
@@ -384,7 +407,8 @@ const BookingForm = () => {
             <button onClick={handlePayment} className="payment-btn">
               {(
                 room.pricePerNight * formData.rooms[0].count -
-                discountAmount
+                discountAmount -
+                usedMileage
               ).toLocaleString()}
               원 결제하기
             </button>

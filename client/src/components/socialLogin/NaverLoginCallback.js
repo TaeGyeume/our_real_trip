@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {useAuthStore} from '../../store/authStore';
 
 const NaverLoginCallback = () => {
-  const setAuthState = useAuthStore(state => state.setAuthState); // 상태 업데이트 함수 추가
+  const setAuthState = useAuthStore(state => state.setAuthState); // 상태 업데이트 함수 추
   const checkAuth = useAuthStore(state => state.checkAuth);
   const navigate = useNavigate();
 

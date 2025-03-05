@@ -47,6 +47,15 @@ const TourTicketList = () => {
 
   return (
     <div className="tour-ticket-container">
+      {/* <TourTicketFilter
+        priceRange={priceRange}
+        setPriceRange={setPriceRange}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        locationFilter={locationFilter}
+        setLocationFilter={setLocationFilter}
+      /> */}
+
       <div className="tour-ticket-grid">
         {filteredTickets.length > 0 ? (
           filteredTickets.map(ticket => (

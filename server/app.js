@@ -44,8 +44,8 @@ connectDB();
 
 const allowedOrigins = [
   `http://localhost:${process.env.CLIENT_PORT || 3000}`, // 개발환경
-  'http://52.90.103.200' // 운영환경 (EC2 IP 직접 접근)
-  // 'https://your-domain.com' // 운영환경 (도메인)
+  // 'http://54.81.196.208', // 운영환경 (EC2 IP 직접 접근)
+  'https://ourrealtrip.shop' // 운영환경 (도메인)
 ];
 
 const corsOptions = {
@@ -74,6 +74,7 @@ app.use(
 
 // 미들웨어 설정
 app.use(cors(corsOptions));
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({extended: true}));
@@ -81,13 +82,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(passport.initialize()); // Passport 초기화 추가
 
 // 라우트 설정
-app.use('/', routes);
 app.use('/api/packages', packageRoutes); //  패키지 API
 app.use('/api/favorites', favoriteRoutes); // '/api/favorites' 경로로 라우터 연결
 app.use('/api/locations', locationRoutes);
 app.use('/api/accommodations', accommodationRoutes);
 app.use('/api/rooms', roomRoutes);
-app.use('/api', routes);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', socialAuthRoutes); // 소셜 로그인 라우트 추가
 app.use('/api/flights', flightRoutes);
@@ -100,13 +99,20 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/product', productRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/tourTicket', userTourTicketRoutes);
-app.use('/booking', bookingRoutes);
+app.use('/api/booking', bookingRoutes);
 app.use('/api/qna', qnaRoutes);
-app.use('/reviews', reviewRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api', routes);
+app.use('/', routes);
 
 //테스트용
 app.post('/api/admin', authMiddleware, authorizeRoles('admin'), (req, res) => {
   res.json({message: '관리자 전용 페이지'});
+});
+
+app.use((req, res, next) => {
+  console.log(`[REQUEST] ${req.method} ${req.originalUrl}`);
+  next();
 });
 
 // 에러 핸들러

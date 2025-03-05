@@ -81,18 +81,21 @@ exports.register = async (req, res) => {
 // 로그인 컨트롤러 (액세스 및 리프레시 토큰 설정)
 exports.login = async (req, res) => {
   try {
-    /**
-     * 기존에는 여기서 res.cookie()를 설정했지만,
-     * loginUser 내부에서 쿠키를 설정하도록 변경했습니다.
-     */
+    // 로그인 서비스 호출
     const {user} = await authService.loginUser(req.body, res);
 
-    // 쿠키 설정은 이미 service.loginUser()에서 처리
-    // 여기서는 사용자 정보만 응답
-    res.status(200).json({user});
+    // 성공 시 사용자 정보 응답
+    return res.status(200).json({success: true, user});
   } catch (error) {
     console.error('로그인 오류:', error.message);
-    res.status(400).json({message: '로그인에 실패했습니다.'});
+
+    // ❌ 기존: 400 에러 응답 → 클라이언트 콘솔에 Bad Request 표시됨
+    // res.status(400).json({ message: '아이디 또는 비밀번호를 확인해주세요.' });
+
+    // ✅ 변경: 200 OK 응답, but success: false 로 로그인 실패 처리
+    return res
+      .status(200)
+      .json({success: false, message: '아이디 또는 비밀번호를 확인해주세요.'});
   }
 };
 

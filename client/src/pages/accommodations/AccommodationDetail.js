@@ -68,7 +68,10 @@ const AccommodationDetail = () => {
   if (!accommodationData) return <Typography>데이터가 없습니다.</Typography>;
 
   const {accommodation, availableRooms} = accommodationData;
-  const SERVER_URL = 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
 
   // 검색 조건 변경 시 URL 업데이트 및 다시 검색
   const handleSearchUpdate = () => {

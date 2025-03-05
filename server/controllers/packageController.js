@@ -4,6 +4,8 @@ const Flight = require('../models/Flight'); // Flight 모델 추가
 const Accommodation = require('../models/Accommodation');
 const TourTicket = require('../models/TourTicket');
 const Room = require('../models/Room');
+const fs = require('fs');
+const Package = require('../models/Package'); // 패키지 모델 불러오기
 
 /**
  * 패키지 생성에 필요한 데이터 불러오기 (숙소, 투어/티켓, 항공)
@@ -11,13 +13,24 @@ const Room = require('../models/Room');
 exports.getPackageCreateData = async (req, res) => {
   try {
     // 숙소, 투어/티켓, 항공 데이터 불러오기
-    const accommodations = await Accommodation.find({});
+    const accommodations = await Accommodation.find({}).populate({
+      path: 'rooms',
+      model: 'Room',
+      select: 'name pricePerNight description'
+    });
+
+    // populate 후 rooms 중 null인 값 제거
+    const filteredAccommodations = accommodations.map(acc => ({
+      ...acc._doc,
+      rooms: acc.rooms.filter(room => room !== null)
+    }));
+
     const tourTickets = await TourTicket.find({});
     const flights = await Flight.find({});
 
     // 데이터가 제대로 불러와졌다면 응답으로 반환
     return res.status(200).json({
-      accommodations,
+      accommodations: filteredAccommodations,
       tourTickets,
       flights
     });
@@ -32,14 +45,50 @@ exports.getPackageCreateData = async (req, res) => {
 /**
  *  패키지 상품 생성 (관리자만 가능)
  */
+
+exports.getPackageCreateData = async (req, res) => {
+  try {
+    // 숙소, 투어/티켓, 항공 데이터 불러오기
+    const accommodations = await Accommodation.find({}).populate({
+      path: 'rooms',
+      model: 'Room',
+      select: 'name pricePerNight description'
+    });
+
+    // populate 후 rooms 중 null인 값 제거
+    const filteredAccommodations = accommodations.map(acc => ({
+      ...acc._doc,
+      rooms: acc.rooms.filter(room => room !== null)
+    }));
+
+    const tourTickets = await TourTicket.find({});
+    const flights = await Flight.find({});
+
+    return res.status(200).json({
+      accommodations: filteredAccommodations,
+      tourTickets,
+      flights
+    });
+  } catch (error) {
+    console.error('[ERROR] 패키지 생성 데이터 불러오기 실패:', error);
+    return res
+      .status(500)
+      .json({message: '패키지 생성 데이터 불러오기 실패', error: error.message});
+  }
+};
+
+/**
+ * 패키지 상품 생성 (관리자만 가능)
+ */
 exports.createPackage = async (req, res) => {
   try {
+    // 관리자 권한 체크
     if (!req.user || !req.user.roles || !req.user.roles.includes('admin')) {
       return res.status(403).json({message: '관리자만 패키지를 생성할 수 있습니다.'});
     }
 
-    // 객실 관련 필드(roomIds, startDates, endDates)를 추가로 추출합니다.
-    const {
+    // 1) 요청 바디에서 필요한 필드들 추출
+    let {
       name,
       description,
       discountRate,
@@ -48,14 +97,86 @@ exports.createPackage = async (req, res) => {
       accommodations,
       tours,
       flights,
-      roomIds, // 추가
-      startDates, // 추가
-      endDates, // 추가
+      // 기존에 roomIds가 있었다면, 그대로 두셔도 되고 무시하셔도 됩니다
+      roomIds,
+      startDates,
+      endDates,
+      rooms, // <-- "rooms" 필드(JSON) 예: '{"숙소ID":["방ID1","방ID2"]}'
       category,
       createdBy
     } = req.body;
 
-    // 필수 필드 검증 (룸 관련 필드는 필요에 따라 검증 여부 결정)
+    // 2) JSON 파싱: accommodations, tours, flights (문자열이면 파싱)
+    if (typeof accommodations === 'string') {
+      try {
+        accommodations = JSON.parse(accommodations);
+      } catch (err) {
+        accommodations = [accommodations];
+      }
+    }
+    if (typeof tours === 'string') {
+      try {
+        tours = JSON.parse(tours);
+      } catch (err) {
+        tours = [tours];
+      }
+    }
+    if (typeof flights === 'string') {
+      try {
+        flights = JSON.parse(flights);
+      } catch (err) {
+        flights = [];
+      }
+    }
+
+    // 2.5) rooms 필드(JSON) → roomIds 배열로 변환
+    // 예: rooms = '{"67b16479...":["67c29d38...","67c29d8f..."], "67b607a8...":["..."]}'
+    // parsedRooms = { '67b16479...': ['67c29d38...', '67c29d8f...'], ... }
+    let parsedRooms = {};
+    if (typeof rooms === 'string') {
+      try {
+        parsedRooms = JSON.parse(rooms);
+      } catch (err) {
+        console.error('rooms 필드 파싱 중 오류:', err);
+        parsedRooms = {};
+      }
+    } else if (typeof rooms === 'object' && rooms !== null) {
+      parsedRooms = rooms;
+    }
+    // roomIdsArray = 모든 숙소 방 ID를 하나로 모은 배열
+    const roomIdsArray = Object.values(parsedRooms).flat();
+    // (기존 roomIds가 있다면 무시하거나 합쳐서 써도 됩니다)
+
+    // 2.6) startDates / endDates도 문자열이면 JSON.parse
+    // 예: '["2025-03-05","2025-03-06"]' → 실제 배열 ["2025-03-05","2025-03-06"]
+    if (typeof startDates === 'string') {
+      try {
+        startDates = JSON.parse(startDates);
+      } catch (err) {
+        console.error('startDates 파싱 오류:', err);
+        startDates = [];
+      }
+    }
+    if (typeof endDates === 'string') {
+      try {
+        endDates = JSON.parse(endDates);
+      } catch (err) {
+        console.error('endDates 파싱 오류:', err);
+        endDates = [];
+      }
+    }
+
+    // 3) 최소 2개 상품 포함 검증
+    const hasAccommodations = Array.isArray(accommodations) && accommodations.length > 0;
+    const hasTours = Array.isArray(tours) && tours.length > 0;
+    const hasFlights = Array.isArray(flights) && flights.length > 0;
+    if (!(hasAccommodations + hasTours + hasFlights >= 2)) {
+      return res
+        .status(400)
+        .json({message: '패키지는 최소 2개의 상품을 포함해야 합니다.'});
+    }
+
+    // 필수 필드 체크
     if (
       !name ||
       !description ||
@@ -64,47 +185,59 @@ exports.createPackage = async (req, res) => {
       !accommodations ||
       !tours ||
       !flights
-      // 필요하다면 roomIds, startDates, endDates도 필수 체크할 수 있습니다.
     ) {
       return res.status(400).json({message: '필수 필드가 누락되었습니다.'});
     }
 
-    console.log('🔍 [DEBUG] 요청 데이터:', req.body);
+    // discountRate가 문자열이면 숫자로 변환
+    if (typeof discountRate === 'string') {
+      discountRate = parseInt(discountRate, 10);
+      if (isNaN(discountRate)) discountRate = 0;
+    }
 
-    // flights 배열 변환
+    console.log(' [DEBUG] 요청 데이터:', req.body);
+
+    // 4) flights 배열 변환 (ObjectId 변환)
     const flightDetails = Array.isArray(flights)
       ? flights.map(flight => {
-          if (!flight.flightId || !flight.seatsToUse) {
-            throw new Error(`항공 정보가 올바르지 않습니다: ${JSON.stringify(flight)}`);
+          if (
+            typeof flight.flightId === 'string' &&
+            mongoose.Types.ObjectId.isValid(flight.flightId)
+          ) {
+            return {
+              flightId: new mongoose.Types.ObjectId(flight.flightId),
+              seatsToUse: flight.seatsToUse
+            };
+          } else if (flight.flightId instanceof mongoose.Types.ObjectId) {
+            return flight;
+          } else {
+            console.error(`🚨 [ERROR] 유효하지 않은 Flight ID: ${flight.flightId}`);
+            throw new Error(`🚨 유효하지 않은 Flight ID: ${flight.flightId}`);
           }
-          return {
-            flightId: new mongoose.Types.ObjectId(flight.flightId),
-            seatsToUse: flight.seatsToUse
-          };
         })
       : [];
 
-    console.log('🔍 [DEBUG] flights after conversion:', flightDetails);
+    console.log(' [DEBUG] flights after conversion:', flightDetails);
 
-    // accommodations & tours 변환
+    // 5) accommodations & tours 변환 (ObjectId)
     const accommodationIds = accommodations.map(acc => new mongoose.Types.ObjectId(acc));
     const tourIds = tours.map(tour => new mongoose.Types.ObjectId(tour));
 
-    const createdById = new mongoose.Types.ObjectId(createdBy);
-
-    // 숙소 가격 계산 및 존재 여부 검증
-    if (Array.isArray(accommodations) && accommodations.length > 0) {
-      console.log('🔍 [DEBUG] 숙소 ID 목록:', accommodations);
-
-      const accommodationData = await Accommodation.find({_id: {$in: accommodations}});
-      console.log('🔍 [DEBUG] 숙소 조회 결과:', accommodationData);
-
-      if (!accommodationData || accommodationData.length !== accommodations.length) {
-        throw new Error('숙소 정보를 찾을 수 없습니다.');
-      }
+    const createdById = mongoose.Types.ObjectId.isValid(createdBy)
+      ? new mongoose.Types.ObjectId(createdBy)
+      : req.user?._id;
+    if (!createdById) {
+      console.error(`🚨 [ERROR] 유효하지 않은 createdBy ID: ${createdBy}`);
+      return res.status(400).json({message: '유효하지 않은 createdBy ID입니다.'});
     }
 
-    // 컨트롤러에서 roomIds, startDates, endDates도 그대로 전달
+    // 6) 이미지 파일 경로 처리
+    let imagePaths = [];
+    if (req.files && req.files.length > 0) {
+      imagePaths = req.files.map(file => file.path);
+    }
+
+    // 7) 최종 packageData 구성
     const packageData = {
       name,
       description,
@@ -114,20 +247,21 @@ exports.createPackage = async (req, res) => {
       accommodations: accommodationIds,
       tours: tourIds,
       flights: flightDetails,
-      roomIds, // 그대로 전달 (서비스에서 ObjectId 및 Date 변환 처리)
-      startDates, // 그대로 전달
-      endDates, // 그대로 전달
+      // 우리가 방 정보(roomIds)를 roomIdsArray로 대체
+      roomIds: roomIdsArray,
+      startDates,
+      endDates,
       category,
-      createdBy: createdById
+      createdBy: createdById,
+      images: imagePaths
     };
 
-    console.log('✅ [DEBUG] 패키지 데이터 생성 완료:', packageData);
+    console.log(' [DEBUG] 패키지 데이터 생성 완료:', packageData);
 
-    // 패키지 생성 서비스 호출 (price 자동 계산 등)
+    // 8) 서비스 호출
     const createdPackage = await packageService.createPackage(packageData);
 
-    console.log('✅ [SUCCESS] 패키지 생성 완료:', createdPackage);
-
+    console.log(' [SUCCESS] 패키지 생성 완료:', createdPackage);
     return res.status(201).json(createdPackage);
   } catch (error) {
     console.error('[ERROR] 패키지 생성 실패:', error);
@@ -168,19 +302,98 @@ exports.getAllPackages = async (req, res) => {
 /**
  *  특정 패키지 상품 조회
  */
+// 패키지 상세 조회 (예시)
 exports.getPackageById = async (req, res) => {
   try {
     const {id} = req.params;
-    const packageData = await packageService.getPackageById(id);
+
+    // 패키지 정보 조회 및 필요한 데이터 populate
+    const packageData = await Package.findById(id)
+      .populate({
+        path: 'accommodations',
+        populate: {
+          path: 'rooms',
+          select: 'roomType pricePerNight name'
+        }
+      })
+      .populate({
+        path: 'flights.flightId', // 항공편 상세 정보 가져오기
+        select: 'flightNumber airline price departureDate'
+      })
+      .populate('tours', 'title price images'); // 투어 정보
 
     if (!packageData) {
       return res.status(404).json({message: '패키지를 찾을 수 없습니다.'});
     }
 
-    return res.status(200).json(packageData);
+    //  1) 객실(Room) 가격 계산 (숙박 일수 포함)
+    let totalRoomPrice = 0;
+    if (
+      packageData.roomIds.length > 0 &&
+      packageData.startDates.length > 0 &&
+      packageData.endDates.length > 0
+    ) {
+      for (let i = 0; i < packageData.roomIds.length; i++) {
+        const roomId = packageData.roomIds[i];
+        const startDate = new Date(packageData.startDates[i]);
+        const endDate = new Date(packageData.endDates[i]);
+
+        // 숙박 일수 계산 (최소 1박 보장)
+        const nights = Math.max(
+          1,
+          Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
+        );
+
+        // 해당 객실 정보 가져오기
+        const room = await Room.findById(roomId);
+        if (room) {
+          totalRoomPrice += (room.pricePerNight || 0) * nights;
+        }
+      }
+    }
+
+    //  2) 항공 가격 계산 (좌석 수 포함)
+    let totalFlightPrice = packageData.flights.reduce((sum, flight) => {
+      return sum + (flight.flightId?.price || 0) * (flight.seatsToUse || 1);
+    }, 0);
+
+    //  3) 투어 가격 계산 (quantity 고려)
+    let totalTourPrice = packageData.tours.reduce((sum, tour) => {
+      const qty = tour.quantity || 1; // 만약 quantity가 없다면 기본 1개
+      return sum + (tour.price || 0) * qty;
+    }, 0);
+
+    //  4) 기본 가격 (할인 전)
+    const basePrice = totalRoomPrice + totalFlightPrice + totalTourPrice;
+
+    //  5) 할인 적용
+    const discountRate = packageData.discountRate || 0;
+    const packageDiscount = Math.round((basePrice * discountRate) / 100);
+    const finalPrice = Math.max(basePrice - packageDiscount, 0);
+
+    // console.log(`
+    // 🔹 [DEBUG] 객실 가격: ${totalRoomPrice}
+    // 🔹 [DEBUG] 항공 가격: ${totalFlightPrice}
+    // 🔹 [DEBUG] 투어 가격: ${totalTourPrice}
+    // 🔹 [DEBUG] basePrice (총 가격): ${basePrice}
+    // 🔹 [DEBUG] 패키지 할인 (${discountRate}%): -${packageDiscount}
+    // 🔹 [DEBUG] 최종 결제 금액 (finalPrice): ${finalPrice}
+    // `);
+
+    // 최종 응답 데이터
+    res.json({
+      ...packageData.toObject(),
+      totalRoomPrice,
+      totalFlightPrice,
+      totalTourPrice,
+      basePrice,
+      discountRate,
+      packageDiscount,
+      finalPrice
+    });
   } catch (error) {
-    console.error('[ERROR] 패키지 조회 실패:', error);
-    return res.status(500).json({message: '패키지 조회 실패', error: error.message});
+    console.error('패키지 상세 조회 오류:', error);
+    res.status(500).json({message: '서버 오류'});
   }
 };
 
@@ -189,21 +402,103 @@ exports.getPackageById = async (req, res) => {
  */
 exports.updatePackage = async (req, res) => {
   try {
-    // 관리자 권한 확인
     if (!req.user || !req.user.roles || !req.user.roles.includes('admin')) {
       return res.status(403).json({message: '관리자만 패키지를 수정할 수 있습니다.'});
     }
 
     const {id} = req.params;
-
-    // 🔍 [DEBUG] 요청 바디 확인
     console.log('🔍 [DEBUG] 요청 데이터:', req.body);
 
-    // req.body가 제대로 들어오는지 확인
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({message: '업데이트할 데이터가 없습니다.'});
     }
 
+    // 1) JSON 필드 파싱: accommodations, tours, flights, rooms, existingImages
+    let {accommodations, tours, flights, rooms, existingImages} = req.body;
+
+    // accommodations: 문자열이면 파싱, 실패 시 단일 값으로 배열 처리
+    if (typeof accommodations === 'string') {
+      try {
+        accommodations = JSON.parse(accommodations);
+      } catch (err) {
+        accommodations = [accommodations];
+      }
+      req.body.accommodations = accommodations;
+    }
+
+    // tours
+    if (typeof tours === 'string') {
+      try {
+        tours = JSON.parse(tours);
+      } catch (err) {
+        tours = [tours];
+      }
+      req.body.tours = tours;
+    }
+
+    // flights
+    if (typeof flights === 'string') {
+      try {
+        flights = JSON.parse(flights);
+      } catch (err) {
+        flights = [];
+      }
+      req.body.flights = flights;
+    }
+
+    // rooms (객체)
+    if (typeof rooms === 'string') {
+      try {
+        rooms = JSON.parse(rooms);
+      } catch (err) {
+        rooms = {};
+      }
+      req.body.rooms = rooms;
+    }
+
+    // existingImages: 값이 없으면 빈 배열, 문자열이면 파싱, 아니면 배열로 처리
+    if (!existingImages) {
+      req.body.existingImages = [];
+    } else if (typeof existingImages === 'string') {
+      try {
+        req.body.existingImages = JSON.parse(existingImages);
+      } catch (err) {
+        req.body.existingImages = [existingImages];
+      }
+    }
+    // 보장: req.body.existingImages가 배열인지 확인
+    if (!Array.isArray(req.body.existingImages)) {
+      req.body.existingImages = [req.body.existingImages];
+    }
+
+    // 2) 새 이미지 파일이 업로드된 경우 처리
+    if (req.files && req.files.length > 0) {
+      const newImagePaths = req.files.map(file => file.path);
+
+      // 기존 패키지 조회 후, 기존 이미지 중 제거할 것 있으면 삭제
+      const currentPackage = await Package.findById(id);
+      if (currentPackage && currentPackage.images && currentPackage.images.length > 0) {
+        // 기존 이미지 중, req.body.existingImages에 없는 것 삭제
+        currentPackage.images.forEach(oldPath => {
+          if (!req.body.existingImages.includes(oldPath)) {
+            fs.unlink(oldPath, err => {
+              if (err) {
+                console.error('이미지 삭제 실패:', oldPath, err);
+              } else {
+                console.log('이미지 삭제 성공:', oldPath);
+              }
+            });
+          }
+        });
+      }
+      // 최종 이미지: 기존 유지할 이미지 + 새로 업로드된 이미지
+      req.body.images = [...req.body.existingImages, ...newImagePaths];
+    } else {
+      // 새 파일 없으면, 기존 이미지 유지
+      req.body.images = req.body.existingImages || [];
+    }
+
+    // 3) 서비스 함수 호출
     const updatedPackage = await packageService.updatePackage(id, req.body);
 
     if (!updatedPackage) {
@@ -216,17 +511,38 @@ exports.updatePackage = async (req, res) => {
     return res.status(500).json({message: '패키지 수정 실패', error: error.message});
   }
 };
+
 /*
  * 패키지 상품 삭제 (관리자만 가능)
  */
 exports.deletePackage = async (req, res) => {
   try {
-    // 관리자 권한 확인
     if (!req.user || !req.user.roles || !req.user.roles.includes('admin')) {
       return res.status(403).json({message: '관리자만 패키지를 삭제할 수 있습니다.'});
     }
 
     const {id} = req.params;
+
+    // 먼저 해당 패키지를 조회하여 이미지 파일 경로들을 가져옵니다.
+    const packageToDelete = await Package.findById(id);
+    if (!packageToDelete) {
+      return res.status(404).json({message: '패키지를 찾을 수 없습니다.'});
+    }
+
+    // 패키지에 등록된 이미지 파일 삭제
+    if (packageToDelete.images && packageToDelete.images.length > 0) {
+      packageToDelete.images.forEach(imagePath => {
+        fs.unlink(imagePath, err => {
+          if (err) {
+            console.error('이미지 삭제 실패:', imagePath, err);
+          } else {
+            console.log('이미지 삭제 성공:', imagePath);
+          }
+        });
+      });
+    }
+
+    // 서비스 또는 직접 DB에서 패키지 삭제
     const deletedPackage = await packageService.deletePackage(id);
 
     if (!deletedPackage) {

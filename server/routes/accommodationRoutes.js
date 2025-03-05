@@ -45,4 +45,7 @@ router.delete(
 // 숙소 삭제 API (DELETE /api/accommodations/:accommodationId)
 router.delete('/:accommodationId', accommodationController.deleteAccommodation);
 
+// 숙소 평점 업데이트 엔드포인트
+router.patch('/:id/update-rating', accommodationController.updateRating);
+
 module.exports = router;
