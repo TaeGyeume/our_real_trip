@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import MuiCard from '@mui/material/Card';
@@ -12,21 +13,15 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import {styled} from '@mui/material/styles';
 import ForgotPassword from './ForgotPassword';
-import {
-  GoogleIcon,
-  // FacebookIcon,
-  SitemarkIcon,
-  KakaoIcon,
-  NaverIcon
-} from './CustomIcons';
-import {useNavigate} from 'react-router-dom';
+import FindUserId from './FindUserId'; // 아이디 찾기 모달 컴포넌트
+import {GoogleIcon, SitemarkIcon, KakaoIcon, NaverIcon} from './CustomIcons';
 import {authAPI} from '../../../../api/auth';
 import {useAuthStore} from '../../../../store/authStore';
 
 // 네이버 로그인 핸들러
 const handleNaverLogin = () => {
   const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-  window.location.href = `${SERVER_URL}/auth/naver`; // Naver 로그인 URL로 이동
+  window.location.href = `${SERVER_URL}/auth/naver`;
 };
 
 // 구글 로그인 핸들러
@@ -61,29 +56,49 @@ const Card = styled(MuiCard)(({theme}) => ({
 
 export default function SignInCard() {
   const [useridError, setUseridError] = React.useState(false);
-  const [useridErrorMessage, setUseridErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+  const [errorMessage, setErrorMessage] = React.useState('');
   const [formData, setFormData] = React.useState({userid: '', password: ''});
   const [rememberUserId, setRememberUserId] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
+  const [openForgot, setOpenForgot] = React.useState(false);
+  const [openFindUserId, setOpenFindUserId] = React.useState(false);
 
   const navigate = useNavigate();
   const {fetchUserProfile} = useAuthStore();
+  const location = useLocation();
 
-  const handleClickOpen = () => {
-    setOpen(true);
+  // 소셜 로그인에서 중복 에러 전달 시 처리
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('error') === 'duplicate') {
+      setUseridError(true);
+      setErrorMessage('이미 가입된 사용자입니다.');
+    }
+  }, [location]);
+
+  // 비밀번호 찾기 모달 열기
+  const handleForgotOpen = () => {
+    setOpenForgot(true);
+  };
+  const handleForgotClose = () => {
+    setOpenForgot(false);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  // 아이디 찾기 모달 열기
+  const handleFindUserIdOpen = () => {
+    setOpenFindUserId(true);
+  };
+  const handleFindUserIdClose = () => {
+    setOpenFindUserId(false);
   };
 
+  // 입력값 변경 핸들러
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
 
+  // "아이디 저장" 체크박스 핸들러
   const handleCheckboxChange = (
     event: React.SyntheticEvent<Element, Event>,
     checked: boolean
@@ -94,31 +109,25 @@ export default function SignInCard() {
     }
   };
 
+  // 아이디/비밀번호 유효성 검사
   const validateInputs = () => {
-    const {userid, password} = formData;
     let isValid = true;
 
-    if (!userid) {
-      setUseridError(true);
-      setUseridErrorMessage('아이디를 입력해주세요.');
+    if (!formData.userid || !formData.password) {
+      setUseridError(!formData.userid);
+      setPasswordError(!formData.password);
+      setErrorMessage('아이디 또는 비밀번호를 입력해주세요.');
       isValid = false;
     } else {
       setUseridError(false);
-      setUseridErrorMessage('');
-    }
-
-    if (!password) {
-      setPasswordError(true);
-      setPasswordErrorMessage('비밀번호를 입력해주세요.');
-      isValid = false;
-    } else {
       setPasswordError(false);
-      setPasswordErrorMessage('');
+      setErrorMessage('');
     }
 
     return isValid;
   };
 
+  // 폼 제출 (로그인)
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -136,11 +145,13 @@ export default function SignInCard() {
         } else {
           setUseridError(true);
           setPasswordError(true);
+          setErrorMessage('아이디 또는 비밀번호를 확인해주세요.');
         }
       } catch (error) {
         setLoading(false);
         setUseridError(true);
         setPasswordError(true);
+        setErrorMessage('아이디 또는 비밀번호를 확인해주세요.');
       } finally {
         setLoading(false);
       }
@@ -160,6 +171,18 @@ export default function SignInCard() {
         sx={{width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)'}}>
         로그인
       </Typography>
+
+      {/* 상단 에러 메시지 */}
+      {errorMessage && (
+        <Typography
+          color="error"
+          textAlign="center"
+          sx={{fontSize: '0.875rem', fontWeight: 'bold'}}>
+          {errorMessage}
+        </Typography>
+      )}
+
+      {/* 로그인 폼 */}
       <Box
         component="form"
         onSubmit={handleSubmit}
@@ -169,60 +192,67 @@ export default function SignInCard() {
           <FormLabel htmlFor="userid">아이디</FormLabel>
           <TextField
             error={useridError}
-            helperText={useridErrorMessage}
             id="userid"
             type="text"
             name="userid"
-            placeholder="아이디를 입력하세요"
-            autoComplete="userid"
+            autoComplete="off"
             autoFocus
             required
             fullWidth
             variant="outlined"
-            color={useridError ? 'error' : 'primary'}
             value={formData.userid}
             onChange={handleChange}
           />
         </FormControl>
-        <FormControl>
-          <Box sx={{display: 'flex', justifyContent: 'space-between'}}>
-            <FormLabel htmlFor="password">비밀번호</FormLabel>
 
-            <Link
-              component="button"
-              type="button"
-              onClick={handleClickOpen}
-              variant="body2"
-              sx={{alignSelf: 'baseline'}}>
-              비밀번호 찾기
-            </Link>
+        <FormControl>
+          <Box
+            sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <FormLabel htmlFor="password">비밀번호</FormLabel>
+            {/* 아이디 찾기 & 비밀번호 찾기 링크 (모달 방식) */}
+            <Box>
+              <Link
+                component="button"
+                variant="body2"
+                sx={{marginRight: 2, textDecoration: 'underline'}}
+                onClick={handleFindUserIdOpen}>
+                아이디 찾기
+              </Link>
+              <Link
+                component="button"
+                variant="body2"
+                sx={{textDecoration: 'underline'}}
+                onClick={handleForgotOpen}>
+                비밀번호 찾기
+              </Link>
+            </Box>
           </Box>
           <TextField
             error={passwordError}
-            helperText={passwordErrorMessage}
             name="password"
-            placeholder="••••••"
             type="password"
             id="password"
             autoComplete="current-password"
-            autoFocus
             required
             fullWidth
             variant="outlined"
-            color={passwordError ? 'error' : 'primary'}
             value={formData.password}
             onChange={handleChange}
           />
         </FormControl>
+
         <FormControlLabel
           control={<Checkbox value="remember" color="primary" />}
           label="Remember me"
           onChange={handleCheckboxChange}
         />
-        <ForgotPassword open={open} handleClose={handleClose} />
+
+        <ForgotPassword open={openForgot} handleClose={handleForgotClose} />
+
         <Button type="submit" fullWidth variant="contained" disabled={loading}>
           {loading ? 'Loading...' : '로그인'}
         </Button>
+
         <Typography sx={{textAlign: 'center'}}>
           Don&apos;t have an account?{' '}
           <span>
@@ -232,7 +262,9 @@ export default function SignInCard() {
           </span>
         </Typography>
       </Box>
+
       <Divider>or</Divider>
+
       <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
         <Button
           onClick={handleGoogleLogin}
@@ -241,21 +273,13 @@ export default function SignInCard() {
           startIcon={<GoogleIcon />}>
           Sign in with Google
         </Button>
-        {/* <Button
-          fullWidth
-          variant="outlined"
-          onClick={() => alert('Sign in with Facebook')}
-          startIcon={<FacebookIcon />}>
-          Sign in with Facebook
-        </Button> */}
         <Button
-          onClick={handleNaverLogin} // 버튼 클릭 시 Naver 로그인 URL로 이동
+          onClick={handleNaverLogin}
           fullWidth
           variant="outlined"
           startIcon={<NaverIcon />}>
           Sign in with Naver
         </Button>
-
         <Button
           fullWidth
           variant="outlined"
@@ -264,6 +288,9 @@ export default function SignInCard() {
           Sign in with KakaoTack
         </Button>
       </Box>
+
+      {/* 아이디 찾기 모달 */}
+      <FindUserId open={openFindUserId} handleClose={handleFindUserIdClose} />
     </Card>
   );
 }

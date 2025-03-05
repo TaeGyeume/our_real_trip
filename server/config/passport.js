@@ -34,22 +34,22 @@ const socialLoginCallback = async (
 
     const email = profile.emails?.[0]?.value || '';
 
-    // ✅ 동일한 이메일을 가진 기존 사용자 찾기
+    //  동일한 이메일을 가진 기존 사용자 찾기
     let user = await User.findOne({email});
 
     if (user) {
-      // ✅ 같은 provider라면 그대로 로그인
+      //  같은 provider라면 그대로 로그인
       if (user.provider === provider) {
-        console.log(`✅ 기존 ${provider} 사용자 로그인`);
+        console.log(` 기존 ${provider} 사용자 로그인`);
         return done(null, user);
       }
 
-      // 🚨 다른 provider로 가입된 이메일이라면 로그인 불가 처리
-      console.log(`⚠️ 이미 다른 소셜 계정(${user.provider})으로 가입된 이메일입니다.`);
+      //  다른 provider로 가입된 이메일이라면 로그인 불가 처리
+      console.log(` 이미 다른 소셜 계정(${user.provider})으로 가입된 이메일입니다.`);
       return done(null, false, {message: '이미 가입된 회원입니다.'});
     }
 
-    // ✅ 새로운 사용자 생성
+    //  새로운 사용자 생성
     user = new User({
       userid: generateUniqueUserId(),
       provider,
@@ -60,11 +60,11 @@ const socialLoginCallback = async (
     });
 
     await user.save();
-    console.log(`🎉 새 ${provider} 사용자 생성 완료!`);
+    console.log(` 새 ${provider} 사용자 생성 완료!`);
 
     return done(null, user);
   } catch (err) {
-    console.error(`❌ ${provider} 로그인 중 오류 발생:`, err);
+    console.error(` ${provider} 로그인 중 오류 발생:`, err);
     return done(err, false);
   }
 };
@@ -126,21 +126,21 @@ passport.use(
 
         const email = profile.emails?.[0]?.value || '';
 
-        // 1️⃣ **이메일 중복 확인**
+        // 1️ **이메일 중복 확인**
         let existingUser = await User.findOne({email});
 
         if (existingUser) {
           if (existingUser.provider === 'google') {
-            console.log(`✅ 기존 Google 사용자 로그인`);
+            // console.log(` 기존 Google 사용자 로그인`);
             return done(null, existingUser);
           }
           console.log(
-            `⚠️ 이미 다른 소셜 계정(${existingUser.provider})으로 가입된 이메일입니다.`
+            ` 이미 다른 소셜 계정(${existingUser.provider})으로 가입된 이메일입니다.`
           );
           return done(null, false, {message: '이미 가입된 회원입니다.'});
         }
 
-        // 2️⃣ **새 사용자 생성**
+        // 2️ **새 사용자 생성**
         const newUser = new User({
           userid: generateUniqueUserId(),
           provider: 'google',
@@ -151,11 +151,11 @@ passport.use(
         });
 
         await newUser.save();
-        console.log(`🎉 새 Google 사용자 생성 완료!`);
+        console.log(` 새 Google 사용자 생성 완료!`);
 
         return done(null, newUser);
       } catch (err) {
-        console.error(`❌ Google 로그인 중 오류 발생:`, err);
+        console.error(` Google 로그인 중 오류 발생:`, err);
         return done(err, false);
       }
     }
