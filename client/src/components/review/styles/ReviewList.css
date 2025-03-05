@@ -2,17 +2,20 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  font-family: 'BM Dohyeon', sans-serif;
 }
 
 .review-card {
-  position: relative;
-  border: 1px solid #ddd;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 15px 0;
+  border-bottom: 1px solid #c9c5c5;
+}
+
+.review-card:last-child {
+  border-bottom: none;
 }
 
 .review-header {
@@ -31,8 +34,6 @@
 
 .review-username {
   font-weight: bold;
-  font-size: 18px;
-  margin-bottom: 5px;
 }
 
 .review-rating-date {
@@ -60,6 +61,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: 'BM Dohyeon', sans-serif;
 }
 
 .review-images {
@@ -79,22 +81,22 @@
 }
 
 .review-text {
-  font-size: 16px;
-  font-weight: 400;
-  margin-top: 0;
+  font-size: 14px;
+  color: #777;
   text-align: left;
-  line-height: 1.5;
+}
+
+.review-rating {
+  margin-bottom: 5px;
 }
 
 .like-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #ff4d4f;
-  font-size: 18px;
   display: flex;
   align-items: center;
   gap: 5px;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 .kebab-menu {
@@ -103,7 +105,7 @@
 }
 
 .kebab-icon {
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .dropdown-menu {
@@ -198,35 +200,21 @@
 
 .comment-box textarea {
   width: 100%;
-  height: 60px;
+  min-height: 100px;
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   resize: none;
   margin-bottom: 8px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .comment-box button {
   align-self: flex-end;
   padding: 6px 12px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
   cursor: pointer;
-}
-
-.comment-box button:hover {
-  background-color: #0056b3;
-}
-
-.comment-list {
-  margin-top: 10px;
-  border-top: 1px solid #eee;
-  padding-top: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 }
 
 .comment-item {
@@ -263,4 +251,240 @@
   align-items: center;
   gap: 2px;
   margin: 5px 0;
+}
+
+.load-more-btn {
+  background: rgb(255, 255, 255);
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  pointer-events: auto;
+  color: #444;
+  width: 150px;
+  min-width: unset;
+  height: 38px;
+  text-align: center;
+  font-family: 'BM Dohyeon', sans-serif;
+}
+
+.comment-container {
+  display: flex;
+  flex-direction: column; /* 한 줄은 "관리자 + 버튼", 한 줄은 "댓글 내용" */
+  align-items: flex-start;
+  width: 100%;
+  gap: 4px; /* 줄 사이 여백 */
+}
+
+.comment-header {
+  display: flex;
+  align-items: center; /* 상하 정렬 */
+  width: 100%; /* 부모 요소 너비 맞추기 */
+  justify-content: space-between;
+  min-height: 30px;
+}
+
+.comment-user {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 사용자명과 내용 사이 여백 */
+  flex-grow: 1;
+  min-width: 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.comment-user strong {
+  white-space: nowrap;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: 5px;
+  min-width: 80px;
+}
+
+.comment-actions button {
+  padding: 4px 8px; /* 버튼 크기 조절 */
+  font-size: 14px;
+  min-width: 50px; /* 버튼 크기 일정하게 */
+  margin: 0;
+}
+
+.comment-list {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.comment-content {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-height: 24px;
+  align-items: center;
+}
+
+.edit-review textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none;
+  margin-bottom: 8px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.custom-file-upload {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.file-label {
+  background: white; /* 배경 흰색 */
+  color: dodgerblue; /* 글자색 파란색 */
+  border: 1px solid dodgerblue; /* 테두리 파란색 */
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: bold;
+  text-align: center;
+}
+
+.file-label:hover {
+  background: dodgerblue;
+  color: white;
+}
+
+.button-group {
+  margin-left: auto;
+  align-items: center;
+}
+
+.edit-images {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.edit-image {
+  position: relative; /* 부모 요소로 설정 */
+  width: 100px; /* 이미지 크기 고정 */
+  height: 100px; /* 이미지 크기 고정 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 이미지 스타일 */
+.edit-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* 삭제 버튼 컨테이너 */
+.delete-btn-container {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 삭제 버튼 */
+.delete-btn {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: rgba(255, 0, 0, 0.8);
+}
+
+/* 모달 배경 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* 모달창 */
+.modal-content {
+  background: rgba(77, 76, 76, 0.85);
+  padding: 10px;
+  border-radius: 1px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  width: 80%;
+  max-width: 600px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.modal-content img {
+  width: 100%;
+  height: auto;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+/* 닫기 버튼 */
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* 이미지 크기 조정 */
+.modal-image {
+  max-width: 100%;
+  max-height: 80vh; /* 화면 높이 기준 크기 제한 */
+  object-fit: contain; /* 원본 비율 유지하면서 크기 조정 */
 }
