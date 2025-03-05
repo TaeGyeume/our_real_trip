@@ -134,6 +134,7 @@ const RegisterCard = () => {
             id="email"
             name="email"
             type="email"
+            placeholder="이메일을 입력하세요"
             required
             fullWidth
             variant="outlined"
@@ -148,6 +149,7 @@ const RegisterCard = () => {
           <TextField
             id="phone"
             name="phone"
+            placeholder="전화번호를 입력하세요"
             required
             fullWidth
             variant="outlined"
@@ -163,6 +165,7 @@ const RegisterCard = () => {
             id="password"
             name="password"
             type="password"
+            placeholder="비밀번호를 입력하세요"
             required
             fullWidth
             variant="outlined"
@@ -177,6 +180,7 @@ const RegisterCard = () => {
           <TextField
             id="address"
             name="address"
+            placeholder="주소를 입력하세요"
             value={formData.address}
             fullWidth
             variant="outlined"
