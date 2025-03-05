@@ -12,8 +12,9 @@ import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import {styled} from '@mui/material/styles';
-import ForgotPassword from './ForgotPassword';
-import FindUserId from './FindUserId'; // 아이디 찾기 모달 컴포넌트
+
+import ForgotPassword from './ForgotPassword'; // 비밀번호 찾기 모달
+import FindUserId from './FindUserId'; // 아이디 찾기 모달
 import {GoogleIcon, SitemarkIcon, KakaoIcon, NaverIcon} from './CustomIcons';
 import {authAPI} from '../../../../api/auth';
 import {useAuthStore} from '../../../../store/authStore';
@@ -56,19 +57,24 @@ const Card = styled(MuiCard)(({theme}) => ({
 
 export default function SignInCard() {
   const [useridError, setUseridError] = React.useState(false);
+  const [useridErrorMessage, setUseridErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
-  const [errorMessage, setErrorMessage] = React.useState('');
+  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [formData, setFormData] = React.useState({userid: '', password: ''});
   const [rememberUserId, setRememberUserId] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+
+  // 비밀번호 찾기 모달 상태
   const [openForgot, setOpenForgot] = React.useState(false);
+  // 아이디 찾기 모달 상태
   const [openFindUserId, setOpenFindUserId] = React.useState(false);
 
   const navigate = useNavigate();
   const {fetchUserProfile} = useAuthStore();
   const location = useLocation();
 
-  // 소셜 로그인에서 중복 에러 전달 시 처리
+  // 소셜 로그인에서 중복 에러 처리
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('error') === 'duplicate') {
@@ -77,16 +83,20 @@ export default function SignInCard() {
     }
   }, [location]);
 
-  // 비밀번호 찾기 모달 열기
-  const handleForgotOpen = () => {
+  // 비밀번호 찾기 모달 열기/닫기
+  const handleForgotOpen = (e?: React.MouseEvent) => {
+    // 폼 submit 방지
+    if (e) e.preventDefault();
     setOpenForgot(true);
   };
   const handleForgotClose = () => {
     setOpenForgot(false);
   };
 
-  // 아이디 찾기 모달 열기
-  const handleFindUserIdOpen = () => {
+  // 아이디 찾기 모달 열기/닫기
+  const handleFindUserIdOpen = (e?: React.MouseEvent) => {
+    // 폼 submit 방지
+    if (e) e.preventDefault();
     setOpenFindUserId(true);
   };
   const handleFindUserIdClose = () => {
@@ -98,7 +108,7 @@ export default function SignInCard() {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
 
-  // "아이디 저장" 체크박스 핸들러
+  // 아이디 저장 체크박스
   const handleCheckboxChange = (
     event: React.SyntheticEvent<Element, Event>,
     checked: boolean
@@ -113,6 +123,7 @@ export default function SignInCard() {
   const validateInputs = () => {
     let isValid = true;
 
+    // 비어 있으면 에러
     if (!formData.userid || !formData.password) {
       setUseridError(!formData.userid);
       setPasswordError(!formData.password);
@@ -123,7 +134,6 @@ export default function SignInCard() {
       setPasswordError(false);
       setErrorMessage('');
     }
-
     return isValid;
   };
 
@@ -137,17 +147,20 @@ export default function SignInCard() {
         const response = await authAPI.loginUser(formData);
 
         if (response.status === 200 && response.data?.user) {
+          // 로그인 성공
           if (rememberUserId) {
             localStorage.setItem('savedUserId', formData.userid);
           }
           await fetchUserProfile();
           navigate('/main');
         } else {
+          // 로그인 실패 (아이디/비밀번호 불일치)
           setUseridError(true);
           setPasswordError(true);
           setErrorMessage('아이디 또는 비밀번호를 확인해주세요.');
         }
       } catch (error) {
+        // 서버 에러 또는 로그인 실패
         setLoading(false);
         setUseridError(true);
         setPasswordError(true);
@@ -162,9 +175,12 @@ export default function SignInCard() {
 
   return (
     <Card variant="outlined">
+      {/* 모바일에서만 보이는 로고 */}
       <Box sx={{display: {xs: 'flex', md: 'none'}}}>
         <SitemarkIcon />
       </Box>
+
+      {/* 상단 타이틀 */}
       <Typography
         component="h1"
         variant="h4"
@@ -172,7 +188,7 @@ export default function SignInCard() {
         로그인
       </Typography>
 
-      {/* 상단 에러 메시지 */}
+      {/* 에러 메시지 */}
       {errorMessage && (
         <Typography
           color="error"
@@ -207,9 +223,13 @@ export default function SignInCard() {
 
         <FormControl>
           <Box
-            sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
             <FormLabel htmlFor="password">비밀번호</FormLabel>
-            {/* 아이디 찾기 & 비밀번호 찾기 링크 (모달 방식) */}
+            {/* 아이디 찾기 & 비밀번호 찾기 */}
             <Box>
               <Link
                 component="button"
@@ -241,18 +261,22 @@ export default function SignInCard() {
           />
         </FormControl>
 
+        {/* 아이디 저장 체크박스 */}
         <FormControlLabel
           control={<Checkbox value="remember" color="primary" />}
           label="Remember me"
           onChange={handleCheckboxChange}
         />
 
+        {/* 비밀번호 찾기 모달 */}
         <ForgotPassword open={openForgot} handleClose={handleForgotClose} />
 
+        {/* 로그인 버튼 */}
         <Button type="submit" fullWidth variant="contained" disabled={loading}>
           {loading ? 'Loading...' : '로그인'}
         </Button>
 
+        {/* 회원가입 링크 */}
         <Typography sx={{textAlign: 'center'}}>
           Don&apos;t have an account?{' '}
           <span>
@@ -265,6 +289,7 @@ export default function SignInCard() {
 
       <Divider>or</Divider>
 
+      {/* 소셜 로그인 버튼들 */}
       <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
         <Button
           onClick={handleGoogleLogin}
