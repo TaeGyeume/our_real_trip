@@ -43,16 +43,20 @@ const TourTicketDetail = () => {
     }
   };
 
-  // 기본 이미지 설정 (이미지 에러 발생 시 변경)
-  let imageUrl = '/default-image.jpg';
+  let imageUrls = ['/default-image.jpg']; // 기본 이미지 설정
 
+  // 이미지 경로 처리 (모든 이미지 처리)
   if (ticket && Array.isArray(ticket.images) && ticket.images.length > 0) {
-    imageUrl = ticket.images[0];
-
-    if (imageUrl.startsWith('/uploads/')) {
-      imageUrl = `${SERVER_URL}${imageUrl}`;
-    }
+    imageUrls = ticket.images.map(image => {
+      if (image.startsWith('/uploads/')) {
+        // 서버 경로로 이미지 URL을 변환
+        return `${SERVER_URL}${image}`;
+      }
+      return image; // 이미 절대 URL인 경우 그대로 사용
+    });
   }
+
+  console.log(imageUrls);
 
   useEffect(() => {
     // 로그인된 사용자 정보 가져오기
@@ -195,7 +199,7 @@ const TourTicketDetail = () => {
             <div className="image-wrapper">
               {/* <img src={`http://localhost:5000${ticket.images[0]}`} alt={ticket.title} /> */}
               {/* 서버 적용 시, 주석 해제 */}
-              <img src={`${imageUrl}`} alt={ticket.title} />
+              <img src={`${imageUrls[0]}`} alt={ticket.title} />
               {!showDetails && (
                 <div className="image-overlay">
                   <button className="toggle-button" onClick={() => setShowDetails(true)}>
@@ -207,13 +211,14 @@ const TourTicketDetail = () => {
             </div>
 
             {showDetails &&
-              ticket.images.slice(1).map((image, index) => (
+              // ticket.images.slice(1).map((image, index) => (
+              imageUrls.slice(1).map((image, index) => (
                 <div className="image-wrapper" key={index}>
                   {/* <img
                     src={`http://localhost:5000${image}`}
                     alt={`${ticket.title} 이미지 ${index + 2}`}
                   /> */}
-                  <img src={`${imageUrl}`} alt={`${ticket.title} 이미지 ${index + 2}`} />
+                  <img src={image} alt={`${ticket.title} 이미지 ${index + 2}`} />
                 </div>
               ))}
           </div>
