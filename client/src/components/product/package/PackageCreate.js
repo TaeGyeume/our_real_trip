@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
   Button,
-  Checkbox,
   Typography,
   Container,
   TextField,
@@ -19,14 +18,14 @@ import {
   Card,
   CardContent,
   CardMedia,
-  IconButton
+  IconButton,
+  Stack,
+  Chip
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import {useNavigate} from 'react-router-dom';
 import authAPI from '../../../api/auth/auth';
-
-// API
 import {createPackage, getCreatePackageData} from '../../../api/package/packageService';
 
 // 항공사 로고 예시
@@ -42,19 +41,15 @@ const AIRLINE_LOGOS = {
 
 /** 항공편 카드 */
 function FlightCard({flight, isSelected, onToggleFlight, onSeatChange}) {
-  // 항공사 로고
   const logoSrc = AIRLINE_LOGOS[flight.airline] || '/images/logos/default.png';
-
   return (
     <Card sx={{display: 'flex', alignItems: 'center', mb: 2, p: 1}}>
-      {/* 항공사 로고 */}
       <CardMedia
         component="img"
         sx={{width: 60, height: 60, objectFit: 'contain', mr: 2}}
         image={logoSrc}
         alt={flight.airline}
       />
-
       <CardContent sx={{flex: 1}}>
         <Typography variant="h6" gutterBottom>
           {flight.flightNumber} - {flight.airline}
@@ -64,8 +59,6 @@ function FlightCard({flight, isSelected, onToggleFlight, onSeatChange}) {
           {flight.price?.toLocaleString() ?? 0}원 / 잔여석: {flight.seatsAvailable ?? 0}석
         </Typography>
       </CardContent>
-
-      {/* 이미 선택된 항공이면 좌석 수 입력 노출 */}
       {isSelected && (
         <TextField
           label="좌석 수"
@@ -76,7 +69,6 @@ function FlightCard({flight, isSelected, onToggleFlight, onSeatChange}) {
           onChange={e => onSeatChange(flight._id, e.target.value)}
         />
       )}
-
       <Button
         variant={isSelected ? 'contained' : 'outlined'}
         onClick={() => onToggleFlight(flight)}>
@@ -95,42 +87,39 @@ export default function PackageCreate() {
   const [flights, setFlights] = useState([]);
 
   // 2) 선택 상태
-  //    - 숙소 & 방: { [accId]: [roomId1, roomId2, ...] }
+  // 숙소 & 방: { [accId]: [roomId1, roomId2, ...] }
   const [selectedRooms, setSelectedRooms] = useState({});
-  //    - 투어/티켓: 배열( [tourId1, tourId2, ...] )
+  // 각 객실에 대해 예약 날짜 입력: { [roomId]: { start, end } }
+  const [selectedRoomDates, setSelectedRoomDates] = useState({});
+  // 투어/티켓: 배열( [tourId1, tourId2, ...] )
   const [selectedTourTickets, setSelectedTourTickets] = useState([]);
-  //    - 항공: [ { flightId, seatsToUse }, ... ]
+  // 항공: [ { flightId, seatsToUse }, ... ]
   const [selectedFlights, setSelectedFlights] = useState([]);
-
-  // 별도로 숙소 id 목록을 저장하기보다, 'Object.keys(selectedRooms)' 등으로 숙소 id를 알 수 있음
-  // (필요하다면 selectedAccommodations 등으로 중복 저장 가능)
 
   // 3) 패키지 기본 정보
   const [packageName, setPackageName] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
   const [discountRate, setDiscountRate] = useState(0);
 
-  //  이미지 업로드용 (미리보기 & 제거 가능)
+  // 4) 이미지 업로드
   const [packageImages, setPackageImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 모달 열림/닫힘 상태
+  // 5) 모달 열림/닫힘 상태
   const [openAccommodationModal, setOpenAccommodationModal] = useState(false);
   const [openRoomModal, setOpenRoomModal] = useState(false);
   const [openTourModal, setOpenTourModal] = useState(false);
   const [openFlightModal, setOpenFlightModal] = useState(false);
 
-  // 현재 선택 중인 숙소(방 모달용)
+  // 6) 현재 선택 중인 숙소(방 모달용)
   const [currentAccommodation, setCurrentAccommodation] = useState(null);
 
-  // 항공 검색/페이징
+  // 7) 항공 검색/페이징
   const [flightSearchQuery, setFlightSearchQuery] = useState('');
   const [flightPage, setFlightPage] = useState(1);
   const flightsPerPage = 5;
 
-  /**
-   * A) 데이터 로드
-   */
+  // 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -145,73 +134,67 @@ export default function PackageCreate() {
     fetchData();
   }, []);
 
-  /**
-   * B) 이미지 업로드 핸들러
-   */
+  // 이미지 업로드 핸들러
   const handleImageChange = e => {
-    // 새로 선택한 파일들을 state에 추가
     setPackageImages(prev => [...prev, ...Array.from(e.target.files)]);
   };
 
-  // 미리보기 제거
   const handleRemoveImage = index => {
     setPackageImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  /**
-   * C) 모달 열기/닫기
-   */
+  // 모달 열기/닫기 핸들러
   const handleOpenAccommodationModal = () => setOpenAccommodationModal(true);
   const handleCloseAccommodationModal = () => setOpenAccommodationModal(false);
-
   const handleOpenRoomModal = acc => {
     setCurrentAccommodation(acc);
     setOpenRoomModal(true);
   };
   const handleCloseRoomModal = () => setOpenRoomModal(false);
-
   const handleOpenTourModal = () => setOpenTourModal(true);
   const handleCloseTourModal = () => setOpenTourModal(false);
-
   const handleOpenFlightModal = () => setOpenFlightModal(true);
   const handleCloseFlightModal = () => setOpenFlightModal(false);
 
-  /**
-   * D) 숙소 & 방 선택 로직
-   */
-  // 방 토글: 이미 있으면 해제, 없으면 추가
+  // 숙소 & 방 선택 로직
   const toggleRoomSelection = (accId, roomId) => {
     setSelectedRooms(prev => {
       const oldRooms = prev[accId] || [];
       const isSelected = oldRooms.includes(roomId);
       let newRooms;
       if (isSelected) {
-        // 이미 선택된 방 -> 해제
         newRooms = oldRooms.filter(r => r !== roomId);
+        // 선택 해제 시 해당 객실의 예약 날짜도 제거
+        setSelectedRoomDates(prevDates => {
+          const newDates = {...prevDates};
+          delete newDates[roomId];
+          return newDates;
+        });
       } else {
-        // 미선택 방 -> 추가
         newRooms = [...oldRooms, roomId];
       }
-      return {
-        ...prev,
-        [accId]: newRooms
-      };
+      return {...prev, [accId]: newRooms};
     });
   };
 
-  // 숙소 전체 해제
   const handleRemoveAccommodation = accId => {
     setSelectedRooms(prev => {
       const newObj = {...prev};
+      if (newObj[accId]) {
+        newObj[accId].forEach(roomId => {
+          setSelectedRoomDates(prevDates => {
+            const newDates = {...prevDates};
+            delete newDates[roomId];
+            return newDates;
+          });
+        });
+      }
       delete newObj[accId];
       return newObj;
     });
   };
 
-  /**
-   * E) 투어/티켓 선택 로직
-   */
-  // 투어 토글
+  // 투어/티켓 선택 로직
   const toggleTourTicketSelection = tourId => {
     setSelectedTourTickets(prev => {
       const isSelected = prev.includes(tourId);
@@ -223,24 +206,18 @@ export default function PackageCreate() {
     });
   };
 
-  /**
-   * F) 항공 선택 & 좌석 수 변경
-   */
-  // 항공 토글
+  // 항공 선택 및 좌석 수 변경
   const toggleFlightSelection = flight => {
     setSelectedFlights(prev => {
       const exists = prev.find(f => f.flightId === flight._id);
       if (exists) {
-        // 이미 선택 -> 해제
         return prev.filter(f => f.flightId !== flight._id);
       } else {
-        // 새 선택
         return [...prev, {flightId: flight._id, seatsToUse: 1}];
       }
     });
   };
 
-  // 항공 좌석 수 변경
   const handleFlightSeatChange = (flightId, value) => {
     setSelectedFlights(prev =>
       prev.map(f => (f.flightId === flightId ? {...f, seatsToUse: Number(value)} : f))
@@ -255,7 +232,7 @@ export default function PackageCreate() {
       f.airline.toLowerCase().includes(query)
     );
   });
-  const totalPages = Math.ceil(filteredFlights.length / flightsPerPage);
+  const totalPagesFlights = Math.ceil(filteredFlights.length / flightsPerPage);
   const paginatedFlights = filteredFlights.slice(
     (flightPage - 1) * flightsPerPage,
     flightPage * flightsPerPage
@@ -264,13 +241,21 @@ export default function PackageCreate() {
   const findSelectedFlight = flightId =>
     selectedFlights.find(f => f.flightId === flightId);
 
-  /**
-   * G) 패키지 생성
-   */
+  // 객실 예약 날짜 변경 핸들러
+  const handleRoomDateChange = (roomId, field, value) => {
+    setSelectedRoomDates(prev => ({
+      ...prev,
+      [roomId]: {
+        ...prev[roomId],
+        [field]: value
+      }
+    }));
+  };
+
+  // 패키지 생성 제출 핸들러
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // 로그인 사용자
       const userProfile = await authAPI.getUserProfile();
       if (!userProfile || !userProfile._id) {
         console.error('[ERROR] 로그인 정보를 가져올 수 없습니다.');
@@ -278,7 +263,19 @@ export default function PackageCreate() {
         return;
       }
 
-      // FormData 준비
+      // Build roomIds, startDates, endDates from selectedRooms and selectedRoomDates
+      const allRoomIds = [];
+      const allStartDates = [];
+      const allEndDates = [];
+      Object.keys(selectedRooms).forEach(accId => {
+        selectedRooms[accId].forEach(roomId => {
+          allRoomIds.push(roomId);
+          const dateInfo = selectedRoomDates[roomId] || {start: '', end: ''};
+          allStartDates.push(dateInfo.start);
+          allEndDates.push(dateInfo.end);
+        });
+      });
+
       const formData = new FormData();
       formData.append('name', packageName);
       formData.append('description', packageDescription);
@@ -288,15 +285,19 @@ export default function PackageCreate() {
       formData.append('category', 'Tour Package');
       formData.append('createdBy', userProfile._id);
 
-      // 숙소 & 방: accommodations -> Object.keys(selectedRooms)
-      //           rooms -> selectedRooms (dict)
+      // 숙소 선택: 선택된 숙소 ID (Object.keys(selectedRooms))
       formData.append('accommodations', JSON.stringify(Object.keys(selectedRooms)));
+      // "rooms" 필드: 원래 선택된 객실 정보를 그대로 전달 (프론트에서는 JSON 형식으로 보냄)
       formData.append('rooms', JSON.stringify(selectedRooms));
+      // 추가: 객실 예약 날짜 배열
+      formData.append('roomIds', JSON.stringify(allRoomIds));
+      formData.append('startDates', JSON.stringify(allStartDates));
+      formData.append('endDates', JSON.stringify(allEndDates));
 
-      // 투어
+      // 투어/티켓 선택
       formData.append('tours', JSON.stringify(selectedTourTickets));
 
-      // 항공
+      // 항공 선택
       formData.append('flights', JSON.stringify(selectedFlights));
 
       // 이미지 파일들
@@ -304,7 +305,6 @@ export default function PackageCreate() {
         formData.append('images', file);
       });
 
-      // API 호출
       await createPackage(formData);
       navigate('/packages');
     } catch (error) {
@@ -314,10 +314,7 @@ export default function PackageCreate() {
     }
   };
 
-  /**
-   * H) 렌더링: 선택된 상품들
-   */
-  // 숙소 id 배열
+  // 렌더링: 선택된 상품들
   const selectedAccommodations = Object.keys(selectedRooms);
 
   return (
@@ -357,7 +354,7 @@ export default function PackageCreate() {
               <IconButton
                 size="small"
                 color="error"
-                onClick={() => handleRemoveImage(idx)}
+                onClick={() => setPackageImages(prev => prev.filter((_, i) => i !== idx))}
                 sx={{position: 'absolute', top: 0, right: 0}}>
                 <CloseIcon />
               </IconButton>
@@ -408,7 +405,7 @@ export default function PackageCreate() {
         숙소 및 방 선택
       </Button>
 
-      {/* 숙소 목록 */}
+      {/* 선택된 숙소 */}
       <Typography variant="h6" sx={{mt: 2}}>
         선택된 숙소
       </Typography>
@@ -421,12 +418,10 @@ export default function PackageCreate() {
           {selectedAccommodations.map(accId => {
             const found = accommodations.find(a => a._id === accId);
             if (!found) return <Typography key={accId}>{accId}</Typography>;
-
             const imgUrl = found.images?.[0] || '';
             const price = found.minPrice
               ? `${found.minPrice.toLocaleString()}원`
               : '가격 정보 없음';
-
             return (
               <Box key={accId} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
                 <Avatar
@@ -450,38 +445,61 @@ export default function PackageCreate() {
         </Box>
       )}
 
-      {/* 방 목록 */}
+      {/* 선택된 방 */}
       <Typography variant="h6" sx={{mt: 2}}>
-        선택된 방
+        선택된 방 (예약 날짜 입력)
       </Typography>
       {selectedAccommodations.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          방도 없습니다.
+          방이 없습니다.
         </Typography>
       ) : (
         <Box sx={{mt: 1}}>
           {selectedAccommodations.map(accId => {
             const foundAcc = accommodations.find(a => a._id === accId);
-            const roomIds = selectedRooms[accId] || [];
+            const roomIdsForAcc = selectedRooms[accId] || [];
             if (!foundAcc) return null;
-
             return (
               <Box key={accId} sx={{mb: 1}}>
                 <Typography sx={{fontWeight: 'bold', mb: 0.5}}>
                   {foundAcc.name}
                 </Typography>
-                {roomIds.map(roomId => {
+                {roomIdsForAcc.map(roomId => {
                   const foundRoom = foundAcc.rooms.find(r => r._id === roomId);
                   if (!foundRoom) return null;
                   const roomPrice = foundRoom.pricePerNight
                     ? `${foundRoom.pricePerNight.toLocaleString()}원`
                     : '가격 정보 없음';
-
+                  const roomDate = selectedRoomDates[roomId] || {start: '', end: ''};
                   return (
-                    <Box key={roomId} sx={{display: 'flex', alignItems: 'center', ml: 2}}>
+                    <Box
+                      key={roomId}
+                      sx={{display: 'flex', alignItems: 'center', ml: 2, mb: 1}}>
                       <Typography>
                         - {foundRoom.name} ({roomPrice})
                       </Typography>
+                      <TextField
+                        label="체크인"
+                        type="date"
+                        size="small"
+                        value={roomDate.start}
+                        onChange={e =>
+                          handleRoomDateChange(roomId, 'start', e.target.value)
+                        }
+                        InputLabelProps={{shrink: true}}
+                        sx={{ml: 2}}
+                      />
+                      <TextField
+                        label="체크아웃"
+                        type="date"
+                        size="small"
+                        value={roomDate.end}
+                        onChange={e =>
+                          handleRoomDateChange(roomId, 'end', e.target.value)
+                        }
+                        InputLabelProps={{shrink: true}}
+                        sx={{ml: 2}}
+                      />
                     </Box>
                   );
                 })}
@@ -509,7 +527,6 @@ export default function PackageCreate() {
           {selectedTourTickets.map(tourId => {
             const foundTour = tourTickets.find(t => t._id === tourId);
             if (!foundTour) return <Typography key={tourId}>{tourId}</Typography>;
-
             const imgUrl = foundTour.images?.[0] || '';
             const price = foundTour.price
               ? `${foundTour.price.toLocaleString()}원`
@@ -593,7 +610,6 @@ export default function PackageCreate() {
               {accommodations.map(acc => (
                 <ListItem disablePadding key={acc._id}>
                   <ListItemButton onClick={() => handleOpenRoomModal(acc)}>
-                    {/* 숙소 이미지 */}
                     <ListItemAvatar>
                       <Avatar
                         src={acc.images?.[0] || ''}
@@ -602,8 +618,6 @@ export default function PackageCreate() {
                         sx={{width: 60, height: 60, mr: 1}}
                       />
                     </ListItemAvatar>
-
-                    {/* 숙소 정보 (이름 / 가격) */}
                     <ListItemText
                       primaryTypographyProps={{component: 'span'}}
                       secondaryTypographyProps={{component: 'span'}}
@@ -626,7 +640,7 @@ export default function PackageCreate() {
         </DialogActions>
       </Dialog>
 
-      {/* 방 선택 모달: flight와 유사하게 "선택/해제" 버튼 보여주기 */}
+      {/* 방 선택 모달 */}
       <Dialog open={openRoomModal} onClose={handleCloseRoomModal} fullWidth>
         <DialogTitle>
           {currentAccommodation ? `${currentAccommodation.name} - 방 선택` : '방 선택'}
@@ -635,15 +649,12 @@ export default function PackageCreate() {
           {currentAccommodation?.rooms && currentAccommodation.rooms.length > 0 ? (
             <List>
               {currentAccommodation.rooms.map(room => {
-                // 이미 선택된 숙소/방인지 확인
                 const accId = currentAccommodation._id;
                 const selectedRoomIds = selectedRooms[accId] || [];
                 const isSelected = selectedRoomIds.includes(room._id);
-
                 const roomPrice = room.pricePerNight
                   ? `${room.pricePerNight.toLocaleString()}원`
                   : '가격 정보 없음';
-
                 return (
                   <ListItem key={room._id} disablePadding>
                     <ListItemButton
@@ -675,7 +686,7 @@ export default function PackageCreate() {
         </DialogActions>
       </Dialog>
 
-      {/* 투어/티켓 선택 모달: flight와 유사하게 "선택/해제" 버튼 */}
+      {/* 투어 선택 모달 */}
       <Dialog open={openTourModal} onClose={handleCloseTourModal} fullWidth>
         <DialogTitle>투어/티켓 선택</DialogTitle>
         <DialogContent>
@@ -686,7 +697,6 @@ export default function PackageCreate() {
                 const priceText = ticket.price
                   ? `${ticket.price.toLocaleString()}원`
                   : '가격 정보 없음';
-
                 return (
                   <ListItem key={ticket._id} disablePadding>
                     <ListItemButton
@@ -704,13 +714,11 @@ export default function PackageCreate() {
                           sx={{width: 60, height: 60, mr: 1}}
                         />
                       </ListItemAvatar>
-
                       <ListItemText
                         primary={ticket.title}
                         secondary={priceText}
                         sx={{mr: 2}}
                       />
-
                       <Button
                         variant={isSelected ? 'contained' : 'outlined'}
                         size="small">
@@ -734,7 +742,6 @@ export default function PackageCreate() {
       <Dialog open={openFlightModal} onClose={handleCloseFlightModal} fullWidth>
         <DialogTitle>항공 선택</DialogTitle>
         <DialogContent>
-          {/* 항공 검색 */}
           <TextField
             label="항공 검색"
             fullWidth
@@ -746,8 +753,6 @@ export default function PackageCreate() {
             InputProps={{endAdornment: <SearchIcon />}}
             sx={{mb: 2}}
           />
-
-          {/* 항공 카드 목록 */}
           {flights.length > 0 ? (
             <>
               {paginatedFlights.map(flight => {
@@ -762,8 +767,6 @@ export default function PackageCreate() {
                   />
                 );
               })}
-
-              {/* 페이징 */}
               <Box sx={{display: 'flex', justifyContent: 'center', mt: 2}}>
                 <Button
                   disabled={flightPage === 1}
@@ -771,10 +774,10 @@ export default function PackageCreate() {
                   Prev
                 </Button>
                 <Typography sx={{mx: 2}} component="span">
-                  {flightPage} / {totalPages}
+                  {flightPage} / {totalPagesFlights}
                 </Typography>
                 <Button
-                  disabled={flightPage === totalPages}
+                  disabled={flightPage === totalPagesFlights}
                   onClick={() => setFlightPage(prev => prev + 1)}>
                   Next
                 </Button>

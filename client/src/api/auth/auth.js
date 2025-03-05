@@ -71,7 +71,7 @@ export const authAPI = {
       return response.data;
     } catch (error) {
       if (error.response?.status === 400) {
-        return null; // 🚀 400 에러가 발생해도 콘솔에 표시되지 않도록 무시
+        return null; //  400 에러가 발생해도 콘솔에 표시되지 않도록 무시
       }
 
       if (error.response?.status === 401) {

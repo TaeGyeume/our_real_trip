@@ -74,6 +74,7 @@ import PackageDetail from './components/product/package/PackageDetail';
 import PackageEdit from './components/product/package/PackageEdit';
 import PackageCreate from './components/product/package/PackageCreate';
 import PackageBookingForm from './components/booking/PackageBookingForm';
+import AdminPackageList from './pages/product/packges/PackageList';
 import Modal from 'react-modal';
 // import FlightList from './components/flights/FlightList';
 
@@ -204,6 +205,7 @@ const App = () => {
           </Route>
           {/* 어드민 전용 페이지 */}
           <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+            <Route path="/product/packages/list" element={<AdminPackageList />} />
             <Route path="/product/package/create" element={<PackageCreate />} />
             {/* <Route path="/package/edit/:id" element={<PackageEdit />} /> */}
             <Route path="/packages/:id/edit" element={<PackageEdit />} />{' '}
