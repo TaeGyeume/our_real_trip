@@ -279,11 +279,12 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
       return {status: 400, message: '결제 금액 불일치'};
     }
 
+    const user = await User.findById(userId);
     if (totalUsedMileage > 0) {
       await userMileageService.useMileage(
         userId,
         totalUsedMileage,
-        `예약 결제 확정 (${totalUsedMileage.toLocaleString()}P 사용)`
+        `예약 확정 (${totalUsedMileage.toLocaleString()}P 사용)`
       );
     }
 
@@ -397,7 +398,7 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
         await userMileageService.addMileageWithHistory(
           userId,
           earnedMileage,
-          `예약 결제 적립 (${booking.totalPrice.toLocaleString()}원 기준)`
+          `예약 적립 (${booking.totalPrice.toLocaleString()}원 기준)`
         );
         const newPayment = new Payment({
           bookingId: booking._id,
@@ -427,18 +428,18 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
   } catch (error) {
     console.error('결제 검증 오류:', error);
     const bookings = await Booking.find({merchant_uid});
-    await Promise.all(
-      bookings.map(async booking => {
-        if (booking.usedMileage > 0 && booking.paymentStatus !== 'CANCELED') {
-          await userMileageService.addMileageWithHistory(
-            booking.userId,
-            booking.usedMileage,
-            `결제 실패로 마일리지 환불 (${booking.usedMileage.toLocaleString()}P)`
-          );
-          console.log(`[서버] 마일리지 복구 완료: ${booking.usedMileage}P`);
-        }
-      })
-    );
+    // await Promise.all(
+    //   bookings.map(async booking => {
+    //     if (booking.usedMileage > 0 && booking.paymentStatus !== 'CANCELED') {
+    //       await userMileageService.addMileageWithHistory(
+    //         booking.userId,
+    //         booking.usedMileage,
+    //         `결제 실패로 마일리지 환불 (${booking.usedMileage.toLocaleString()}P)`
+    //       );
+    //       console.log(`[서버] 마일리지 복구 완료: ${booking.usedMileage}P`);
+    //     }
+    //   })
+    // );
     const booking = await Booking.findOne({merchant_uid});
     if (booking && booking.userCouponId) {
       console.warn(
@@ -642,7 +643,7 @@ exports.cancelBooking = async bookingIds => {
           await userMileageService.useMileage(
             userId,
             deductedMileage,
-            `예약 취소로 적립 마일리지 회수 (${user.membershipLevel}, ${totalPrice.toLocaleString()}원 기준)`
+            `예약 취소로 적립 회수 (${totalPrice.toLocaleString()}원 기준)`
           );
           console.log(`[서버] 마일리지 차감 완료: ${deductedMileage}P`);
         } catch (error) {
@@ -680,7 +681,7 @@ exports.cancelBooking = async bookingIds => {
                 await userMileageService.addMileageWithHistory(
                   userId,
                   usedMileage,
-                  `예약 취소로 마일리지 복구 (${usedMileage.toLocaleString()}P)`
+                  `예약 취소로 복구 (${usedMileage.toLocaleString()}P)`
                 );
               } else {
                 console.log(
