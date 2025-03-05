@@ -9,6 +9,7 @@ const TravelItemListPage = () => {
   const [topCategories, setTopCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [items, setItems] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,12 +61,18 @@ const TravelItemListPage = () => {
 
   const handleCategoryClick = categoryId => {
     setSelectedCategory(categoryId);
+    setSelectedSubCategory(null);
     const filteredSubCategories = categories.filter(
       cat => cat.parentCategory?._id === categoryId && cat.subCategories.length > 0
     );
 
     setSubCategories(filteredSubCategories);
     fetchItemsByCategory(categoryId);
+  };
+
+  const handleSubCategoryClick = subCategoryId => {
+    setSelectedSubCategory(subCategoryId); // 선택한 서브카테고리 유지
+    fetchItemsByCategory(subCategoryId);
   };
 
   const handleFavoriteToggle = itemId => {
@@ -126,9 +133,9 @@ const TravelItemListPage = () => {
           {subCategories.map(subCategory => (
             <Button
               key={subCategory._id}
-              variant={selectedCategory === subCategory._id ? 'contained' : 'outlined'}
+              variant={selectedSubCategory === subCategory._id ? 'contained' : 'outlined'} // 선택된 서브카테고리는 `contained` 유지
               color="secondary"
-              onClick={() => handleCategoryClick(subCategory._id)}>
+              onClick={() => handleSubCategoryClick(subCategory._id)}>
               {subCategory.name}
             </Button>
           ))}
