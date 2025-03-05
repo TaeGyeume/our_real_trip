@@ -251,9 +251,9 @@ export default function SignInCard() {
         <Button
           fullWidth
           variant="outlined"
-          onClick={() => alert('Sign in with Naver')}
+          onClick={() => alert('Sign in with KakaoTack')}
           startIcon={<NaverIcon />}>
-          Sign in with Naver
+          Sign in with KakaoTack
         </Button>
       </Box>
     </Card>
