@@ -1,7 +1,7 @@
 import React from 'react';
 import {Routes, Route} from 'react-router-dom';
-import TourTicketList from '../../components/tourTicket/TourTicketList';
-import TourTicketDetail from '../../components/tourTicket/TourTicketDetail';
+import UserList from '../../components/tourTicket/UserList';
+import UserDetail from '../../components/tourTicket/UserDetail';
 import AdBanner from '../../components/ad/AdBanner';
 
 const bannerData = [
@@ -22,16 +22,8 @@ const bannerData = [
 const UserTourTicketPage = () => {
   return (
     <Routes>
-      <Route
-        path="/list"
-        element={
-          <div>
-            <AdBanner banners={bannerData} />
-            <TourTicketList />
-          </div>
-        }
-      />
-      <Route path="/list/:id" element={<TourTicketDetail />} />
+      <Route path="/list" element={<UserList />} />
+      <Route path="/list/:id" element={<UserDetail />} />
     </Routes>
   );
 };

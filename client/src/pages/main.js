@@ -1,5 +1,5 @@
 import React from 'react';
-import TourTicketList from '../components/tourTicket/TourTicketList';
+import UserList from '../components/tourTicket/UserList';
 import PopularProductsSlider from '../components/views/PopularProductsSlider';
 import ConsoleLogo from '../components/common/ConsoleLogo';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -63,7 +63,7 @@ const Main = () => {
         {/* 메인 컨텐츠 */}
         <div className="main-content">
           <h3>지역 필수 티켓</h3>
-          <TourTicketList />
+          <UserList />
         </div>
         <div>
           <PopularProductsSlider />

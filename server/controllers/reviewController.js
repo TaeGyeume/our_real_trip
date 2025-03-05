@@ -23,6 +23,10 @@ exports.createReview = async (req, res) => {
         .json({message: '이미 해당 주문 건에 대한 리뷰를 작성하셨습니다!'});
     }
 
+    const imagePaths = req.files
+      ? req.files.map(file => `/uploads/${file.filename}`)
+      : [];
+
     // 새로운 리뷰 생성
     const newReview = await reviewService.createReview({
       userId,
@@ -30,8 +34,10 @@ exports.createReview = async (req, res) => {
       bookingId,
       rating,
       content,
-      images
+      images: imagePaths
     });
+    await newReview.save();
+
     res.status(201).json(newReview);
   } catch (error) {
     console.error('리뷰 등록 오류:', error);
@@ -80,10 +86,16 @@ exports.updateReview = async (req, res) => {
   const {content} = req.body;
   const imageFiles = req.files;
 
+  const removedImages = req.body.removedImages
+    ? Array.isArray(req.body.removedImages)
+      ? req.body.removedImages
+      : [req.body.removedImages]
+    : [];
+
   try {
     const updatedReview = await reviewService.updateReview(
       reviewId,
-      {content},
+      {content, removedImages},
       imageFiles
     );
 
@@ -153,25 +165,29 @@ exports.updateComment = async (req, res) => {
   }
 };
 
-// 좋아요 추가
-exports.likeReview = async (req, res) => {
-  const {reviewId} = req.params;
-  const userId = req.user.id;
-
+exports.toggleLike = async (req, res) => {
   try {
-    const review = await Review.findById(reviewId);
-    if (!review) return res.status(404).json({message: '리뷰를 찾을 수 없습니다.'});
-
-    if (review.likedBy.includes(userId)) {
-      review.likes -= 1;
-      review.likedBy = review.likedBy.filter(id => id.toString() !== userId);
-    } else {
-      review.likes += 1;
-      review.likedBy.push(userId);
+    if (!req.body || !req.body.userId) {
+      return res.status(400).json({message: '유저 ID가 없습니다.'});
     }
-    await review.save();
-    res.json({likes: review.likes});
-  } catch (err) {
-    res.status(500).json({message: '좋아요 처리 중 오류 발생'});
+
+    const userId = req.body.userId;
+
+    const updatedReview = await reviewService.toggleLike(req.params.reviewId, userId);
+
+    res.status(200).json(updatedReview);
+  } catch (error) {
+    res.status(500).json({message: '서버 내부 오류'});
+  }
+};
+
+exports.getBestReviews = async (req, res) => {
+  try {
+    const {productId} = req.params;
+    const reviews = await reviewService.getBestReviews(productId);
+
+    res.json({reviews});
+  } catch (error) {
+    res.status(500).json({message: '베스트 리뷰 불러오기 실패', error: error.message});
   }
 };

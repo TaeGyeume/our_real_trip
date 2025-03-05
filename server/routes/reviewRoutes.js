@@ -20,4 +20,14 @@ router.delete(
   reviewController.deleteComment
 );
 
+router.patch(
+  '/:reviewId/comments/:commentId',
+  authMiddleware,
+  reviewController.updateComment
+);
+
+router.patch('/:reviewId/like', authMiddleware, reviewController.toggleLike);
+
+router.get('/:productId/best', reviewController.getBestReviews);
+
 module.exports = router;

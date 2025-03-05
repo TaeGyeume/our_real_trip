@@ -2,19 +2,14 @@ import React, {useEffect, useState} from 'react';
 import {getTourTickets} from '../../api/tourTicket/tourTicketService';
 import {getUserFavorites} from '../../api/user/favoriteService'; //  즐겨찾기 목록 가져오기 추가
 import {useNavigate} from 'react-router-dom';
-import './styles/TourTicketList.css';
-// import TourTicketFilter from '../tourTicket/TourTicketFilter';
-import FavoriteButton from '../../components/user/FavoriteButton';
+import './styles/UserList.css';
+import FavoriteButton from '../user/FavoriteButton';
 
 const TourTicketList = () => {
   const [tickets, setTickets] = useState([]);
-  // const [priceRange, setPriceRange] = useState([0, 10000000]);
-  // const [searchQuery, setSearchQuery] = useState('');
-  // const [locationFilter, setLocationFilter] = useState('');
   const [favorites, setFavorites] = useState([]); //  즐겨찾기 목록 상태 추가
 
   const navigate = useNavigate();
-  // const location = useLocation();
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -87,8 +82,6 @@ const TourTicketList = () => {
               </div>
               <div className="ticket-info">
                 <h3 className="ticket-title">{ticket.title}</h3>
-                {/* <p className="ticket-description">✏️ {ticket.description}</p> */}
-                {/* <p className="ticket-location">지역: {ticket.location}</p> */}
                 <p className="ticket-price">{ticket.price.toLocaleString()}원</p>
               </div>
             </div>

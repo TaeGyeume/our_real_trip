@@ -20,23 +20,98 @@ const MyBookingList = ({status}) => {
   const {user} = useAuthStore();
   const userId = user?._id;
 
+  // useEffect(() => {
+  //   const fetchBookings = async () => {
+  //     try {
+  //       const data = await getMyBookings();
+
+  //       if (!data || data.length === 0) {
+  //         setError('예약 내역이 없습니다.');
+  //         return;
+  //       }
+
+  //       const reviewsStatus = {};
+  //       const uniqueProductIds = new Set();
+
+  //       data.forEach(booking => {
+  //         booking.productIds.forEach(product => {
+  //           const productId = product._id || product;
+  //           uniqueProductIds.add(productId.toString());
+  //         });
+  //       });
+
+  //       await Promise.all(
+  //         Array.from(uniqueProductIds).map(async productId => {
+  //           const response = await getReviews(productId.toString()).catch(err => {
+  //             console.error(`리뷰 조회 실패 (Product ID: ${productId}):`, err);
+  //             return []; // 에러 발생 시 빈 배열 반환
+  //           });
+
+  //           const reviews = Array.isArray(response) ? response : response.reviews || [];
+
+  //           if (!Array.isArray(reviews)) {
+  //             console.error(`리뷰 데이터가 배열이 아닙니다.`, reviews);
+  //             return; // 배열이 아니면 해당 productId 스킵
+  //           }
+
+  //           data.forEach(booking => {
+  //             const merchant_uid = booking.merchant_uid;
+
+  //             const hasReview = reviews.some(
+  //               r =>
+  //                 String(r.userId?._id || r.userId) === String(userId) &&
+  //                 r.bookingId?.toString() === booking._id?.toString()
+  //             );
+
+  //             if (!reviewsStatus[productId]) {
+  //               reviewsStatus[productId] = {};
+  //             }
+
+  //             reviewsStatus[productId][merchant_uid] = hasReview;
+  //           });
+  //         })
+  //       );
+
+  //       setReviewStatus(prev => ({...prev, ...reviewsStatus}));
+  //       setBookings(data);
+  //     } catch (err) {
+  //       console.error('예약 내역 불러오기 실패:', err);
+  //       setError('예약 내역 불러오기 실패');
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchBookings();
+  // }, [setReviewStatus, userId]);
+
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         const data = await getMyBookings();
 
-        if (!data || data.length === 0) {
-          setError('예약 내역이 없습니다.');
+        if (!Array.isArray(data)) {
+          setError('잘못된 데이터 형식입니다.');
           return;
         }
 
         const reviewsStatus = {};
         const uniqueProductIds = new Set();
 
-        data.forEach(booking => {
+        // `productIds`가 없는 예약 필터링
+        const validBookings = data.filter(
+          booking =>
+            booking.productIds &&
+            Array.isArray(booking.productIds) &&
+            booking.productIds.length > 0
+        );
+
+        validBookings.forEach(booking => {
           booking.productIds.forEach(product => {
-            const productId = product._id || product;
-            uniqueProductIds.add(productId.toString());
+            const productId = product?._id || product || ''; // 안전한 값 설정
+            if (productId) {
+              uniqueProductIds.add(productId.toString());
+            }
           });
         });
 
@@ -54,7 +129,7 @@ const MyBookingList = ({status}) => {
               return; // 배열이 아니면 해당 productId 스킵
             }
 
-            data.forEach(booking => {
+            validBookings.forEach(booking => {
               const merchant_uid = booking.merchant_uid;
 
               const hasReview = reviews.some(
@@ -73,7 +148,8 @@ const MyBookingList = ({status}) => {
         );
 
         setReviewStatus(prev => ({...prev, ...reviewsStatus}));
-        setBookings(data);
+
+        setBookings(validBookings);
       } catch (err) {
         console.error('예약 내역 불러오기 실패:', err);
         setError('예약 내역 불러오기 실패');

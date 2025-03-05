@@ -1,7 +1,5 @@
 const Review = require('../models/Review');
 const User = require('../models/User');
-const fs = require('fs');
-const path = require('path');
 const mongoose = require('mongoose');
 const accommodationService = require('../services/accommodationService');
 
@@ -60,20 +58,6 @@ exports.checkExistingReview = async (userId, productId, bookingId) => {
   }
 };
 
-exports.toggleLike = async (reviewId, userId) => {
-  const review = await Review.findById(reviewId);
-  if (!review) throw new Error('리뷰를 찾을 수 없습니다.');
-
-  const index = review.likes.indexOf(userId);
-  if (index === -1) {
-    review.likes.push(userId);
-  } else {
-    review.likes.splice(index, 1);
-  }
-  await review.save();
-  return review;
-};
-
 exports.updateReview = async (reviewId, updateData, imageFiles) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(reviewId)) {
@@ -87,6 +71,16 @@ exports.updateReview = async (reviewId, updateData, imageFiles) => {
 
     if (updateData.content) {
       review.content = updateData.content;
+    }
+
+    // 삭제할 이미지 처리 (JSON 변환 없이 배열로 처리)
+    if (updateData.removedImages && updateData.removedImages.length > 0) {
+      console.log('[서버] 삭제할 이미지 목록:', updateData.removedImages);
+
+      // 리뷰에서 해당 이미지 제거
+      review.images = review.images.filter(
+        img => !updateData.removedImages.includes(img)
+      );
     }
 
     if (imageFiles && imageFiles.length > 0) {
@@ -252,4 +246,43 @@ exports.updateComment = async (reviewId, commentId, userId, newContent) => {
     console.error('[서버] 댓글 수정 실패:', error.message);
     throw error;
   }
+};
+
+exports.toggleLike = async (reviewId, userId) => {
+  if (!userId) throw new Error('유저 ID가 없습니다.');
+
+  const review = await Review.findById(reviewId);
+  if (!review) throw new Error('리뷰를 찾을 수 없습니다.');
+
+  if (!Array.isArray(review.likedBy)) {
+    review.likedBy = [];
+  }
+
+  const isLiked = review.likedBy.includes(userId);
+
+  if (isLiked) {
+    review.likes -= 1;
+    review.likedBy = review.likedBy.filter(id => id.toString() !== userId.toString());
+  } else {
+    review.likes += 1;
+    review.likedBy.push(userId);
+  }
+
+  await review.save();
+
+  const updatedReview = await Review.findById(reviewId).populate('userId');
+
+  if (!updatedReview) {
+    throw new Error('리뷰 업데이트 후 데이터를 찾을 수 없습니다.');
+  }
+
+  return updatedReview;
+};
+
+exports.getBestReviews = async productId => {
+  const reviews = await Review.find({productId})
+    .populate('userId', 'username')
+    .sort({likes: -1, createdAt: -1});
+
+  return reviews;
 };
