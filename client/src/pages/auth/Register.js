@@ -1,183 +1,256 @@
-import React, {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {authAPI} from '../../api/auth'; // 예시 API
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useLocation} from 'react-router-dom';
+import {authAPI} from '../../api/auth';
+import {useAuthStore} from '../../store/authStore';
 import {
-  Container,
-  Typography,
   TextField,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
+  Box,
+  Typography,
+  CircularProgress,
+  Paper,
+  Link,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
-import DaumPostcode from 'react-daum-postcode'; // 주소 검색 라이브러리
+import SocialLoginButtons from '../../components/SocialLoginButtons'; // 소셜 로그인 버튼
+import CssBaseline from '@mui/material/CssBaseline';
+import Stack from '@mui/material/Stack';
+import AppTheme from './style/theme/AppTheme';
+import ColorModeSelect from './style/theme/ColorModeSelect';
+import Content from './style/components/Content';
+import RegisterCard from './style/components/RegisterCard';
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    userid: '',
-    username: '',
-    email: '',
-    phone: '',
-    password: '',
-    address: '',
-    provider: 'local',
-    membershipLevel: '길초보',
-    roles: ['user']
-  });
-
+  const location = useLocation();
+  const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
+  const {fetchUserProfile} = useAuthStore();
+  const [formData, setFormData] = useState({userid: '', password: ''});
+  const [rememberUserId, setRememberUserId] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 주소 검색 Dialog 열림 상태
-  const [openDialog, setOpenDialog] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('error') === 'duplicate') {
+      setErrorMessage('이미 가입된 회원입니다. 기존 계정으로 로그인해주세요.');
+    }
+  }, [location]);
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    const savedUserId = localStorage.getItem('savedUserId');
+    if (savedUserId) {
+      setFormData(prev => ({...prev, userid: savedUserId}));
+      setRememberUserId(true); // 체크박스도 활성화
+    }
+  }, []);
 
-  // 폼 입력값 변경
   const handleChange = e => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    setFormData({...formData, [e.target.name]: e.target.value});
   };
 
-  // 회원가입 폼 제출
+  const handleCheckboxChange = e => {
+    setRememberUserId(e.target.checked);
+    if (!e.target.checked) {
+      localStorage.removeItem('savedUserId'); // 체크 해제 시 저장된 아이디 삭제
+    }
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
     setError('');
-    setSuccess('');
     setLoading(true);
 
     try {
-      await authAPI.registerUser(formData);
-      setSuccess('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
-      setTimeout(() => navigate('/login'), 2000);
-    } catch (err) {
-      setError(err.response?.data?.message || '회원가입에 실패했습니다.');
+      const response = await authAPI.loginUser(formData);
+
+      // 로그인 응답에서 성공 여부 확인
+      if (!response || response.status !== 200 || !response.data || !response.data.user) {
+        setError('아이디 또는 비밀번호가 잘못되었습니다.');
+        setLoading(false);
+        return; // 로그인 실패 시 fetchUserProfile() 실행하지 않음
+      }
+
+      // 아이디 저장이 체크된 경우 localStorage에 저장
+      if (rememberUserId) {
+        localStorage.setItem('savedUserId', formData.userid);
+      }
+
+      // 로그인 성공 후에만 프로필 가져오기 실행
+      await fetchUserProfile();
+      navigate('/main'); // 로그인 성공 후 메인 페이지로 이동
+    } catch (error) {
+      setLoading(false); // 로딩 상태 해제
+
+      if (error.response?.status === 401) {
+        setError('아이디 또는 비밀번호가 잘못되었습니다.');
+      } else if (error.response?.status === 500) {
+        setError('서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      } else {
+        setError(error.response?.data?.message || '아이디 또는 비밀번호를 확인해주세요.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // DaumPostcode 컴포넌트의 onComplete 콜백
-  const handleAddressComplete = data => {
-    // 선택된 주소: data.address
-    setFormData(prev => ({...prev, address: data.address}));
-    setOpenDialog(false); // 다이얼로그 닫기
-  };
-
   return (
-    <Container maxWidth="sm" sx={{mt: 5}}>
-      <Typography variant="h4" gutterBottom textAlign="center">
-        회원가입
-      </Typography>
+    <AppTheme>
+      <CssBaseline enableColorScheme />
+      <ColorModeSelect sx={{position: 'fixed', top: '1rem', right: '1rem'}} />
+      <Stack
+        direction="column"
+        component="main"
+        sx={[
+          {
+            justifyContent: 'center',
+            height: 'calc((1 - var(--template-frame-height, 0)) * 100%)',
+            marginTop: 'max(40px - var(--template-frame-height, 0px), 0px)',
+            minHeight: '100%'
+          },
+          theme => ({
+            '&::before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              zIndex: -1,
+              inset: 0,
+              backgroundImage:
+                'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
+              backgroundRepeat: 'no-repeat',
+              ...theme.applyStyles('dark', {
+                backgroundImage:
+                  'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))'
+              })
+            }
+          })
+        ]}>
+        <Stack
+          direction={{xs: 'column-reverse', md: 'row'}}
+          sx={{
+            justifyContent: 'center',
+            gap: {xs: 6, sm: 12},
+            p: 2,
+            mx: 'auto'
+          }}>
+          <Stack
+            direction={{xs: 'column-reverse', md: 'row'}}
+            sx={{
+              justifyContent: 'center',
+              gap: {xs: 6, sm: 12},
+              p: {xs: 2, sm: 4},
+              m: 'auto'
+            }}>
+            <Content />
+            <RegisterCard>
+              <Typography variant="h5" sx={{color: '#000', fontWeight: 'bold', mb: 2}}>
+                로그인
+              </Typography>
 
-      {/* 에러/성공 메시지 */}
-      {error && (
-        <Typography variant="body1" color="error" sx={{mb: 2}}>
-          {error}
-        </Typography>
-      )}
-      {success && (
-        <Typography variant="body1" color="primary" sx={{mb: 2}}>
-          {success}
-        </Typography>
-      )}
+              {error && (
+                <Typography variant="body2" color="error" sx={{mb: 2}}>
+                  {error}
+                </Typography>
+              )}
 
-      {/* 회원가입 폼 */}
-      <form onSubmit={handleSubmit}>
-        {/* 아이디 */}
-        <TextField
-          label="아이디"
-          name="userid"
-          fullWidth
-          margin="normal"
-          required
-          value={formData.userid}
-          onChange={handleChange}
-        />
-        {/* 이름 */}
-        <TextField
-          label="이름"
-          name="username"
-          fullWidth
-          margin="normal"
-          required
-          value={formData.username}
-          onChange={handleChange}
-        />
-        {/* 이메일 */}
-        <TextField
-          label="이메일"
-          name="email"
-          fullWidth
-          margin="normal"
-          required
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-        />
-        {/* 전화번호 */}
-        <TextField
-          label="전화번호"
-          name="phone"
-          fullWidth
-          margin="normal"
-          required
-          value={formData.phone}
-          onChange={handleChange}
-        />
-        {/* 비밀번호 */}
-        <TextField
-          label="비밀번호"
-          name="password"
-          type="password"
-          fullWidth
-          margin="normal"
-          required
-          value={formData.password}
-          onChange={handleChange}
-        />
+              <form onSubmit={handleSubmit} style={{width: '100%'}}>
+                <TextField
+                  fullWidth
+                  label="아이디"
+                  name="userid"
+                  variant="outlined"
+                  margin="normal"
+                  value={formData.userid}
+                  onChange={handleChange}
+                  required
+                  InputProps={{
+                    style: {color: '#000'}
+                  }}
+                  sx={{
+                    input: {color: '#000'},
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {borderColor: 'rgba(0, 0, 0, 0.5)'},
+                      '&:hover fieldset': {borderColor: 'rgba(0, 0, 0, 0.8)'}
+                    },
+                    '& .MuiInputLabel-root': {color: '#000'}
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="비밀번호"
+                  name="password"
+                  type="password"
+                  variant="outlined"
+                  margin="normal"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  InputProps={{
+                    style: {color: '#000'}
+                  }}
+                  sx={{
+                    input: {color: '#000'},
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {borderColor: 'rgba(0, 0, 0, 0.5)'},
+                      '&:hover fieldset': {borderColor: 'rgba(0, 0, 0, 0.8)'}
+                    },
+                    '& .MuiInputLabel-root': {color: '#000'}
+                  }}
+                />
 
-        {/* 주소 + 주소검색 버튼 */}
-        <TextField
-          label="주소"
-          name="address"
-          fullWidth
-          margin="normal"
-          value={formData.address}
-          onChange={handleChange}
-        />
-        <Button variant="outlined" onClick={() => setOpenDialog(true)} sx={{mb: 2}}>
-          주소 찾기
-        </Button>
+                {/* 아이디 저장 체크박스 */}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={rememberUserId}
+                      onChange={handleCheckboxChange}
+                      sx={{color: '#000'}}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={{color: '#000'}}>
+                      아이디 저장
+                    </Typography>
+                  }
+                  sx={{mt: 1, textAlign: 'left', width: '100%'}}
+                />
 
-        {/* 가입하기 버튼 */}
-        <Button type="submit" variant="contained" fullWidth disabled={loading}>
-          {loading ? '가입 처리 중...' : '가입하기'}
-        </Button>
-      </form>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    mt: 2,
+                    bgcolor: 'black',
+                    color: 'white',
+                    borderRadius: '50px',
+                    '&:hover': {bgcolor: 'gray'}
+                  }}
+                  type="submit"
+                  disabled={loading}>
+                  {loading ? <CircularProgress size={24} color="inherit" /> : '로그인'}
+                </Button>
+              </form>
 
-      {/* 주소 검색 다이얼로그 */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth>
-        <DialogTitle>주소 검색</DialogTitle>
-        <DialogContent>
-          {/* react-daum-postcode 컴포넌트 */}
-          <DaumPostcode
-            onComplete={handleAddressComplete}
-            autoClose={false}
-            width="100%"
-            height="500px"
-            style={{border: '1px solid #ccc'}}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>취소</Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+              <Box sx={{mt: 3}}>
+                <Link href="/find-userid" underline="hover" sx={{color: '#000'}}>
+                  아이디 찾기
+                </Link>
+                <span style={{color: '#000'}}> | </span>
+                <Link href="/forgot-password" underline="hover" sx={{color: '#000'}}>
+                  비밀번호 찾기
+                </Link>
+                <Box sx={{mt: 2}}>
+                  <Link href="/register" underline="hover" sx={{color: '#000'}}>
+                    회원가입
+                  </Link>
+                </Box>
+              </Box>
+            </RegisterCard>
+          </Stack>
+        </Stack>
+      </Stack>
+    </AppTheme>
   );
 };
 
