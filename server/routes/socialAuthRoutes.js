@@ -24,38 +24,48 @@ const generateTokens = user => {
 //  Google 로그인 라우터
 // =======================
 
-// Google 로그인 시작
+//  Google 로그인 시작 (GET /api/auth/google)
 router.get('/google', passport.authenticate('google', {scope: ['profile', 'email']}));
 
-// Google 콜백 처리
-router.get(
-  '/google/callback',
-  passport.authenticate('google', {session: false}),
-  (req, res) => {
-    const tokens = generateTokens(req.user);
+// Google 로그인 시작
+router.get('/google/callback', (req, res, next) => {
+  passport.authenticate('google', {session: false}, (err, user, info) => {
+    if (err) {
+      console.error(' Google 로그인 중 오류 발생:', err);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=server`);
+    }
 
-    // 액세스 토큰 저장
+    if (!user) {
+      console.warn(' Google 로그인 실패:', info?.message);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=duplicate`); // 중복 이메일이면 로그인 페이지로 리디렉트
+    }
+
+    const tokens = generateTokens(user);
+
+    //  **액세스 토큰 저장**
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
 
-    // 리프레시 토큰 저장
+    //  **리프레시 토큰 저장**
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 크로스 사이트 쿠키 허용
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     });
 
-    // 클라이언트로 리디렉션
+    console.log(' Google 로그인 성공:', user.email);
+
+    //  **클라이언트로 리디렉션**
     res.redirect(`${process.env.CLIENT_URL}/google/callback`);
-  }
-);
+  })(req, res, next);
+});
 
 // =======================
 // 페이스북 로그인 라우터
@@ -69,6 +79,9 @@ router.get(
   '/facebook/callback',
   passport.authenticate('facebook', {session: false}),
   (req, res) => {
+    if (!req.user) {
+      return res.redirect('/login?error=duplicate'); // 중복 이메일이면 /login 페이지로 리디렉트
+    }
     const tokens = generateTokens(req.user);
 
     // 액세스 토큰을 httpOnly 쿠키로 저장
@@ -106,6 +119,9 @@ router.get(
   '/naver/callback',
   passport.authenticate('naver', {session: false}),
   (req, res) => {
+    if (!req.user) {
+      return res.redirect('/login?error=duplicate'); // 중복 이메일이면 /login 페이지로 리디렉트
+    }
     const tokens = generateTokens(req.user);
 
     // 액세스 토큰 저장
@@ -143,6 +159,9 @@ router.get(
   '/kakao/callback',
   passport.authenticate('kakao', {session: false}),
   (req, res) => {
+    if (!req.user) {
+      return res.redirect('/login?error=duplicate'); // 중복 이메일이면 /login 페이지로 리디렉트
+    }
     const tokens = generateTokens(req.user);
 
     res.cookie('accessToken', tokens.accessToken, {

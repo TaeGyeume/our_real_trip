@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useLocation} from 'react-router-dom';
 import {authAPI} from '../../api/auth';
 import {useAuthStore} from '../../store/authStore';
 import {
@@ -16,12 +16,21 @@ import {
 import SocialLoginButtons from '../../components/SocialLoginButtons';
 
 const Login = () => {
+  const location = useLocation();
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
   const {fetchUserProfile} = useAuthStore();
   const [formData, setFormData] = useState({userid: '', password: ''});
   const [rememberUserId, setRememberUserId] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('error') === 'duplicate') {
+      setErrorMessage('이미 가입된 회원입니다. 기존 계정으로 로그인해주세요.');
+    }
+  }, [location]);
 
   useEffect(() => {
     const savedUserId = localStorage.getItem('savedUserId');

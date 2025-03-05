@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useLocation} from 'react-router-dom';
 import {getPackages, deletePackage} from '../../../api/package/packageService';
 import {
   Container,
@@ -10,13 +10,16 @@ import {
   Grid,
   Box,
   Button,
-  Pagination
+  Pagination,
+  Tooltip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// ✅ 이미지 경로 정리 함수
 const normalizeImagePath = path => {
   let newPath = path.replace(/\\/g, '/');
   if (!newPath.startsWith('/')) {
@@ -25,8 +28,9 @@ const normalizeImagePath = path => {
   return newPath;
 };
 
-const AdminPackageList = () => {
+const PackageList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,6 +59,10 @@ const AdminPackageList = () => {
     }
   };
 
+  const handleCreatePackage = () => {
+    navigate('/product/package/create');
+  };
+
   const handleDetail = id => {
     navigate(`/package/${id}`);
   };
@@ -75,9 +83,9 @@ const AdminPackageList = () => {
   };
 
   return (
-    <Box sx={{py: 2}}>
+    <Box sx={{py: 4}}>
       <Container maxWidth="lg">
-        {/* 상단 패키지 생성 버튼 */}
+        {/* 패키지 목록 제목 + 패키지 생성 버튼 */}
         <Box
           sx={{
             display: 'flex',
@@ -85,11 +93,23 @@ const AdminPackageList = () => {
             alignItems: 'center',
             mb: 2
           }}>
-          <Typography variant="h5" sx={{fontWeight: 'bold'}}>
+          <Typography variant="h4" fontWeight="bold">
             📦 패키지 목록
           </Typography>
+
+          {/* ✅ 현재 경로가 '/product/packages/list'일 때만 '패키지 생성' 버튼 표시 */}
+          {location.pathname === '/product/packages/list' && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={handleCreatePackage}>
+              패키지 생성
+            </Button>
+          )}
         </Box>
 
+        {/* 패키지 리스트 */}
         {loading ? (
           <Typography variant="h6">로딩 중...</Typography>
         ) : error ? (
@@ -97,7 +117,7 @@ const AdminPackageList = () => {
             {error}
           </Typography>
         ) : (
-          <Grid container spacing={2} justifyContent="flex-start">
+          <Grid container spacing={3}>
             {packages.map(pkg => {
               const mainImage =
                 pkg.images && pkg.images.length > 0
@@ -108,12 +128,9 @@ const AdminPackageList = () => {
                 <Grid item xs={12} sm={6} md={4} key={pkg._id}>
                   <Card
                     sx={{
-                      width: '100%',
                       borderRadius: 3,
                       boxShadow: 3,
-                      mb: 2,
                       transition: '0.3s',
-                      cursor: 'pointer',
                       '&:hover': {boxShadow: 6}
                     }}>
                     <CardMedia
@@ -124,38 +141,17 @@ const AdminPackageList = () => {
                       onClick={() => handleDetail(pkg._id)}
                     />
                     <CardContent>
-                      <Typography variant="h6" fontWeight="bold" sx={{mb: 1}}>
+                      <Typography variant="h6" fontWeight="bold">
                         {pkg.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
+                      <Typography variant="body2" color="text.secondary">
                         {pkg.description.length > 80
                           ? pkg.description.substring(0, 80) + '...'
                           : pkg.description}
                       </Typography>
-                      {pkg.discountRate > 0 ? (
-                        <>
-                          <Typography
-                            variant="body2"
-                            sx={{textDecoration: 'line-through', color: 'gray'}}>
-                            {pkg.price.toLocaleString()}원
-                          </Typography>
-                          <Typography
-                            variant="h6"
-                            sx={{fontWeight: 'bold', color: 'red'}}>
-                            {pkg.finalPrice.toLocaleString()}원
-                          </Typography>
-                          <Typography variant="caption" sx={{color: 'blue'}}>
-                            ({pkg.discountRate}% 할인)
-                          </Typography>
-                        </>
-                      ) : (
-                        <Typography variant="h6" sx={{fontWeight: 'bold'}}>
-                          {pkg.finalPrice.toLocaleString()}원
-                        </Typography>
-                      )}
                     </CardContent>
 
-                    {/* 수정 & 삭제 버튼 (관리자 페이지에만 표시) */}
+                    {/* ✅ 수정 & 삭제 버튼 유지 */}
                     <Box
                       sx={{
                         display: 'flex',
@@ -166,24 +162,17 @@ const AdminPackageList = () => {
                       <Button
                         variant="contained"
                         size="small"
-                        sx={{bgcolor: '#f57c00', '&:hover': {bgcolor: '#ef6c00'}}}
+                        color="warning"
                         startIcon={<EditIcon />}
-                        onClick={e => {
-                          e.stopPropagation();
-                          handleEdit(pkg._id);
-                        }}>
+                        onClick={() => handleEdit(pkg._id)}>
                         수정
                       </Button>
-
                       <Button
                         variant="contained"
                         size="small"
-                        sx={{bgcolor: '#d32f2f', '&:hover': {bgcolor: '#c62828'}}}
+                        color="error"
                         startIcon={<DeleteIcon />}
-                        onClick={e => {
-                          e.stopPropagation();
-                          handleDelete(pkg._id);
-                        }}>
+                        onClick={() => handleDelete(pkg._id)}>
                         삭제
                       </Button>
                     </Box>
@@ -208,4 +197,4 @@ const AdminPackageList = () => {
   );
 };
 
-export default AdminPackageList;
+export default PackageList;

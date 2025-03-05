@@ -30,49 +30,44 @@ const socialLoginCallback = async (
   provider
 ) => {
   try {
-    let user = await User.findOne({provider, socialId: profile.id});
+    console.log(`🔹 ${provider} 로그인 요청 - Profile:`, profile);
 
-    if (!user) {
-      user = new User({
-        userid: generateUniqueUserId(),
-        provider,
-        socialId: profile.id,
-        email: profile.emails?.[0]?.value || '',
-        username: profile.displayName || `${provider} User`,
-        roles: ['user'] //  기본적으로 일반 사용자로 설정 (배열로 변경)
-      });
-      await user.save();
+    const email = profile.emails?.[0]?.value || '';
+
+    // ✅ 동일한 이메일을 가진 기존 사용자 찾기
+    let user = await User.findOne({email});
+
+    if (user) {
+      // ✅ 같은 provider라면 그대로 로그인
+      if (user.provider === provider) {
+        console.log(`✅ 기존 ${provider} 사용자 로그인`);
+        return done(null, user);
+      }
+
+      // 🚨 다른 provider로 가입된 이메일이라면 로그인 불가 처리
+      console.log(`⚠️ 이미 다른 소셜 계정(${user.provider})으로 가입된 이메일입니다.`);
+      return done(null, false, {message: '이미 가입된 회원입니다.'});
     }
 
-    user = user.toObject();
+    // ✅ 새로운 사용자 생성
+    user = new User({
+      userid: generateUniqueUserId(),
+      provider,
+      socialId: profile.id,
+      email,
+      username: profile.displayName || `${provider} User`,
+      roles: ['user']
+    });
 
-    //  roles 필드가 없을 경우 기본값 설정
-    if (!user.roles) {
-      user.roles = ['user']; // 기본적으로 user 역할 추가
-    }
+    await user.save();
+    console.log(`🎉 새 ${provider} 사용자 생성 완료!`);
 
-    delete user.password; //  보안상 비밀번호 필드 삭제
-
-    const token = generateToken(user);
-    const refreshToken = generateRefreshToken(user);
-    return done(null, {user, token, refreshToken}); //  JWT & Refresh Token 반환
+    return done(null, user);
   } catch (err) {
-    return done(err, null);
+    console.error(`❌ ${provider} 로그인 중 오류 발생:`, err);
+    return done(err, false);
   }
 };
-
-//  소셜 로그인 전략 등록
-// passport.use(
-//   new GoogleStrategy(
-//     {
-//       clientID: process.env.GOOGLE_CLIENT_ID,
-//       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-//       callbackURL: process.env.GOOGLE_CALLBACK_URL
-//     },
-//     (accessToken, refreshToken, profile, done) =>
-//       socialLoginCallback(accessToken, refreshToken, profile, done, 'google')
-//   )
-// );
 
 passport.use(
   new FacebookStrategy(
@@ -127,22 +122,41 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({provider: 'google', socialId: profile.id});
-        if (!user) {
-          // 새 사용자 생성
-          user = new User({
-            userid: generateUniqueUserId(),
-            provider: 'google',
-            socialId: profile.id,
-            email: profile.emails?.[0]?.value || '',
-            username: profile.displayName || 'Google User'
-          });
-          await user.save();
+        console.log(`🔹 Google OAuth 프로필:`, profile);
+
+        const email = profile.emails?.[0]?.value || '';
+
+        // 1️⃣ **이메일 중복 확인**
+        let existingUser = await User.findOne({email});
+
+        if (existingUser) {
+          if (existingUser.provider === 'google') {
+            console.log(`✅ 기존 Google 사용자 로그인`);
+            return done(null, existingUser);
+          }
+          console.log(
+            `⚠️ 이미 다른 소셜 계정(${existingUser.provider})으로 가입된 이메일입니다.`
+          );
+          return done(null, false, {message: '이미 가입된 회원입니다.'});
         }
 
-        return done(null, user); // 사용자 반환
+        // 2️⃣ **새 사용자 생성**
+        const newUser = new User({
+          userid: generateUniqueUserId(),
+          provider: 'google',
+          socialId: profile.id,
+          email,
+          username: profile.displayName || 'Google User',
+          roles: ['user']
+        });
+
+        await newUser.save();
+        console.log(`🎉 새 Google 사용자 생성 완료!`);
+
+        return done(null, newUser);
       } catch (err) {
-        return done(err, null); // 에러 처리
+        console.error(`❌ Google 로그인 중 오류 발생:`, err);
+        return done(err, false);
       }
     }
   )
