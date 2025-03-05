@@ -42,7 +42,9 @@ const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
       usedMileage,
       userId: user._id,
       reservationInfo: {name: user.username, email: user.email, phone: user.phone},
-      merchant_uid
+      merchant_uid,
+      startDates: selectedFlights[0].departure.date,
+      endDates: selectedFlights[selectedFlights.length - 1].arrival.date
     };
 
     try {
