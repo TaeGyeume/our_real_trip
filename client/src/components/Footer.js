@@ -87,7 +87,7 @@ const Footer = () => {
               지원
             </Typography>
             <Typography variant="body2">
-              <a href="/main" style={{textDecoration: 'none', color: 'inherit'}}>
+              <a href="/qna" style={{textDecoration: 'none', color: 'inherit'}}>
                 공지사항/FAQ
               </a>
             </Typography>

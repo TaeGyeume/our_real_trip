@@ -13,7 +13,6 @@ import {
   FormControlLabel,
   Checkbox
 } from '@mui/material';
-import SocialLoginButtons from '../../components/SocialLoginButtons'; // 소셜 로그인 버튼
 import CssBaseline from '@mui/material/CssBaseline';
 import Stack from '@mui/material/Stack';
 import AppTheme from './style/theme/AppTheme';
@@ -143,110 +142,7 @@ const Register = () => {
               m: 'auto'
             }}>
             <Content />
-            <RegisterCard>
-              <Typography variant="h5" sx={{color: '#000', fontWeight: 'bold', mb: 2}}>
-                로그인
-              </Typography>
-
-              {error && (
-                <Typography variant="body2" color="error" sx={{mb: 2}}>
-                  {error}
-                </Typography>
-              )}
-
-              <form onSubmit={handleSubmit} style={{width: '100%'}}>
-                <TextField
-                  fullWidth
-                  label="아이디"
-                  name="userid"
-                  variant="outlined"
-                  margin="normal"
-                  value={formData.userid}
-                  onChange={handleChange}
-                  required
-                  InputProps={{
-                    style: {color: '#000'}
-                  }}
-                  sx={{
-                    input: {color: '#000'},
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {borderColor: 'rgba(0, 0, 0, 0.5)'},
-                      '&:hover fieldset': {borderColor: 'rgba(0, 0, 0, 0.8)'}
-                    },
-                    '& .MuiInputLabel-root': {color: '#000'}
-                  }}
-                />
-                <TextField
-                  fullWidth
-                  label="비밀번호"
-                  name="password"
-                  type="password"
-                  variant="outlined"
-                  margin="normal"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  InputProps={{
-                    style: {color: '#000'}
-                  }}
-                  sx={{
-                    input: {color: '#000'},
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {borderColor: 'rgba(0, 0, 0, 0.5)'},
-                      '&:hover fieldset': {borderColor: 'rgba(0, 0, 0, 0.8)'}
-                    },
-                    '& .MuiInputLabel-root': {color: '#000'}
-                  }}
-                />
-
-                {/* 아이디 저장 체크박스 */}
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={rememberUserId}
-                      onChange={handleCheckboxChange}
-                      sx={{color: '#000'}}
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" sx={{color: '#000'}}>
-                      아이디 저장
-                    </Typography>
-                  }
-                  sx={{mt: 1, textAlign: 'left', width: '100%'}}
-                />
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  sx={{
-                    mt: 2,
-                    bgcolor: 'black',
-                    color: 'white',
-                    borderRadius: '50px',
-                    '&:hover': {bgcolor: 'gray'}
-                  }}
-                  type="submit"
-                  disabled={loading}>
-                  {loading ? <CircularProgress size={24} color="inherit" /> : '로그인'}
-                </Button>
-              </form>
-
-              <Box sx={{mt: 3}}>
-                <Link href="/find-userid" underline="hover" sx={{color: '#000'}}>
-                  아이디 찾기
-                </Link>
-                <span style={{color: '#000'}}> | </span>
-                <Link href="/forgot-password" underline="hover" sx={{color: '#000'}}>
-                  비밀번호 찾기
-                </Link>
-                <Box sx={{mt: 2}}>
-                  <Link href="/register" underline="hover" sx={{color: '#000'}}>
-                    회원가입
-                  </Link>
-                </Box>
-              </Box>
-            </RegisterCard>
+            <RegisterCard></RegisterCard>
           </Stack>
         </Stack>
       </Stack>

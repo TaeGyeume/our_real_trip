@@ -45,6 +45,13 @@ const RegisterCard = () => {
     roles: ['user']
   });
 
+  // 중복 체크 메시지 상태 (아이디, 이메일, 전화번호)
+  const [checkMessage, setCheckMessage] = useState({
+    userid: '',
+    email: '',
+    phone: ''
+  });
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,11 +59,34 @@ const RegisterCard = () => {
 
   const navigate = useNavigate();
 
+  // 입력값 변경 시 해당 필드의 중복 체크 메시지 초기화
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+    if (['userid', 'email', 'phone'].includes(e.target.name)) {
+      setCheckMessage(prev => ({...prev, [e.target.name]: ''}));
+    }
+  };
+
+  // onBlur 시 중복 체크
+  const handleBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const {name, value} = e.target;
+    if (!['userid', 'email', 'phone'].includes(name)) return;
+    if (!value.trim()) {
+      setCheckMessage(prev => ({...prev, [name]: ''}));
+      return;
+    }
+    try {
+      const response = await authAPI.checkDuplicate({[name]: value});
+      setCheckMessage(prev => ({...prev, [name]: response.message || ''}));
+    } catch (err: any) {
+      setCheckMessage(prev => ({
+        ...prev,
+        [name]: err.response?.data?.message || err.message || '중복 확인에 실패했습니다.'
+      }));
+    }
   };
 
   // 회원가입 폼 제출
@@ -65,6 +95,17 @@ const RegisterCard = () => {
     setError('');
     setSuccess('');
     setLoading(true);
+
+    // 중복 체크 완료 여부 검증 (API가 "사용 가능" 메시지를 반환한다고 가정)
+    const isUserIdOk = checkMessage.userid && checkMessage.userid.includes('사용 가능');
+    const isEmailOk = checkMessage.email && checkMessage.email.includes('사용 가능');
+    const isPhoneOk = checkMessage.phone && checkMessage.phone.includes('사용 가능');
+
+    if (!isUserIdOk || !isEmailOk || !isPhoneOk) {
+      setError('회원가입 정보를 입력해주세요.');
+      setLoading(false);
+      return;
+    }
 
     try {
       await authAPI.registerUser(formData);
@@ -77,7 +118,7 @@ const RegisterCard = () => {
     }
   };
 
-  // DaumPostcode 컴포넌트의 onComplete 콜백
+  // DaumPostcode의 onComplete 콜백
   const handleAddressComplete = (data: {address: string}) => {
     setFormData(prev => ({...prev, address: data.address}));
     setOpenDialog(false);
@@ -109,7 +150,13 @@ const RegisterCard = () => {
             variant="outlined"
             value={formData.userid}
             onChange={handleChange}
+            onBlur={handleBlur}
           />
+          {checkMessage.userid && (
+            <Typography variant="body2" color="error" sx={{mt: 0.5}}>
+              {checkMessage.userid}
+            </Typography>
+          )}
         </FormControl>
 
         {/* 이름 */}
@@ -140,7 +187,13 @@ const RegisterCard = () => {
             variant="outlined"
             value={formData.email}
             onChange={handleChange}
+            onBlur={handleBlur}
           />
+          {checkMessage.email && (
+            <Typography variant="body2" color="error" sx={{mt: 0.5}}>
+              {checkMessage.email}
+            </Typography>
+          )}
         </FormControl>
 
         {/* 전화번호 */}
@@ -155,7 +208,13 @@ const RegisterCard = () => {
             variant="outlined"
             value={formData.phone}
             onChange={handleChange}
+            onBlur={handleBlur}
           />
+          {checkMessage.phone && (
+            <Typography variant="body2" color="error" sx={{mt: 0.5}}>
+              {checkMessage.phone}
+            </Typography>
+          )}
         </FormControl>
 
         {/* 비밀번호 */}
