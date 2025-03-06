@@ -33,7 +33,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import HistoryIcon from '@mui/icons-material/History';
 import PersonIcon from '@mui/icons-material/Person';
 
-// (선택) 커스텀 테마
+//  커스텀 테마
 import profileTheme from './styles/ProfileTheme';
 
 const Profile = () => {
@@ -337,7 +337,7 @@ const Profile = () => {
                   {/* Full Name */}
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      label="이름름"
+                      label="이름"
                       name="username"
                       size="small"
                       value={userData.username}
@@ -349,7 +349,7 @@ const Profile = () => {
                   {/* Email Address */}
                   <Grid item xs={12} sm={6}>
                     <TextField
-                      label="이메일일"
+                      label="이메일"
                       name="email"
                       size="small"
                       value={userData.email}
@@ -509,9 +509,7 @@ const Profile = () => {
                     height: 100,
                     mb: 2,
                     bgcolor: 'grey.400'
-                  }}>
-                  {userData.username ? userData.username[0] : 'N'}
-                </Avatar>
+                  }}></Avatar>
                 <Typography variant="h6" sx={{fontWeight: 'bold'}}>
                   {userData.username || 'No Name'}
                 </Typography>
