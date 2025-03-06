@@ -31,7 +31,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import HistoryIcon from '@mui/icons-material/History';
-import PersonIcon from '@mui/icons-material/Person';
+// import PersonIcon from '@mui/icons-material/Person';
 
 //  커스텀 테마
 import profileTheme from './styles/ProfileTheme';
