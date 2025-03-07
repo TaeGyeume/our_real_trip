@@ -16,7 +16,7 @@ import {
   FaBolt,
   FaQuestionCircle
 } from 'react-icons/fa';
-import {Alert, Snackbar, Button, TextField} from '@mui/material';
+import {Alert, Snackbar, Button, TextField, Typography} from '@mui/material';
 
 const TourTicketDetail = () => {
   const {id} = useParams();
@@ -32,11 +32,31 @@ const TourTicketDetail = () => {
 
   const reviewSectionRef = useRef(null);
 
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   const scrollToReviews = () => {
     if (reviewSectionRef.current) {
       reviewSectionRef.current.scrollIntoView({behavior: 'smooth', block: 'start'});
     }
   };
+
+  let imageUrls = ['/default-image.jpg']; // 기본 이미지 설정
+
+  // 이미지 경로 처리 (모든 이미지 처리)
+  if (ticket && Array.isArray(ticket.images) && ticket.images.length > 0) {
+    imageUrls = ticket.images.map(image => {
+      if (image.startsWith('/uploads/')) {
+        // 서버 경로로 이미지 URL을 변환
+        return `${SERVER_URL}${image}`;
+      }
+      return image; // 이미 절대 URL인 경우 그대로 사용
+    });
+  }
+
+  console.log(imageUrls);
 
   useEffect(() => {
     // 로그인된 사용자 정보 가져오기
@@ -112,11 +132,11 @@ const TourTicketDetail = () => {
     : false;
 
   return (
-    <div className="tour-ticket-container">
+    <div className="user-detail-tour-ticket-container">
       {/* 왼쪽 div 배치 */}
-      <div className="tour-ticket-detail">
-        <div className="ticket-header">
-          <div className="ticket-location">
+      <div className="user-detail-tour-ticket-detail">
+        <div className="user-detail-ticket-header">
+          <div className="user-detail-ticket-location">
             <span>대한민국&nbsp;</span>
             <FaChevronRight />
             &nbsp;
@@ -124,9 +144,9 @@ const TourTicketDetail = () => {
             <span>{ticket.location}</span>
           </div>
 
-          <h1 className="ticket-title">{ticket.title}</h1>
+          <h1 className="user-detail-ticket-title">{ticket.title}</h1>
 
-          <div className="review-summary">
+          <div className="user-detail-review-summary">
             <FaShareAlt
               style={{
                 top: '10px',
@@ -152,13 +172,13 @@ const TourTicketDetail = () => {
               ratingInfo={ratingInfo}
               showOnlySummary={true}
             />
-            <FaChevronRight className="more-icon" onClick={scrollToReviews} />
+            <FaChevronRight className="user-detail-more-icon" onClick={scrollToReviews} />
           </div>
         </div>
 
-        <hr className="sun" />
+        <hr className="user-detail-sun" />
 
-        <div className="credit">
+        <div className="user-detail-credit">
           <p>
             <FaCheckCircle color="green" />
             &nbsp; <b>즉시확정</b> 구매 즉시 예약 확정 (일부 상품 이용일 추가 예약 필요)
@@ -169,18 +189,26 @@ const TourTicketDetail = () => {
           </p>
         </div>
 
-        <hr className="sun" />
+        <hr className="user-detail-sun" />
 
         <br />
-        <div className="ticket-description">{ticket.description}</div>
 
-        <div className="details-section">
-          <div className="image-list">
-            <div className="image-wrapper">
-              <img src={`http://localhost:5000${ticket.images[0]}`} alt={ticket.title} />
+        <Typography variant="body1" className="user-detail-ticket-description">
+          {ticket.description.split('\n').map((line, index) => (
+            <React.Fragment key={index}>
+              {line}
+              <br />
+            </React.Fragment>
+          ))}
+        </Typography>
+
+        <div className="user-detail-details-section">
+          <div className="user-detail-image-list">
+            <div className="user-detail-image-wrapper">
+              <img src={`${imageUrls[0]}`} alt={ticket.title} />
               {!showDetails && (
-                <div className="image-overlay">
-                  <button className="toggle-button" onClick={() => setShowDetails(true)}>
+                <div className="user-detail-image-overlay">
+                  <button className="user-detail-toggle-button" onClick={() => setShowDetails(true)}>
                     상품 설명 더 보기 &nbsp;
                     <FaChevronDown />
                   </button>
@@ -189,18 +217,15 @@ const TourTicketDetail = () => {
             </div>
 
             {showDetails &&
-              ticket.images.slice(1).map((image, index) => (
-                <div className="image-wrapper" key={index}>
-                  <img
-                    src={`http://localhost:5000${image}`}
-                    alt={`${ticket.title} 이미지 ${index + 2}`}
-                  />
+              imageUrls.slice(1).map((image, index) => (
+                <div className="user-detail-image-wrapper" key={index}>
+                  <img src={image} alt={`${ticket.title} 이미지 ${index + 2}`} />
                 </div>
               ))}
           </div>
         </div>
 
-        <hr className="sun" />
+        <hr className="user-detail-sun" />
 
         <div>
           <h2
@@ -233,10 +258,10 @@ const TourTicketDetail = () => {
       </div>
 
       {/* 오른쪽 div 배치 */}
-      <div className="empty-space">
+      <div className="user-detail-empty-space">
         <br />
-        <div className="right-space">
-          <div className="price-info">
+        <div className="user-detail-right-space">
+          <div className="user-detail-price-info">
             <p
               style={{
                 fontFamily: `"Apple SD Gothic", "Malgun Gothic", sans-serif`,
@@ -245,20 +270,20 @@ const TourTicketDetail = () => {
               }}>
               일반가
             </p>
-            <p className="original-price">{ticket.price.toLocaleString()}원</p>
+            <p className="user-detail-original-price">{ticket.price.toLocaleString()}원</p>
           </div>
 
           {hasReview ? (
-            <button className="completed-btn" disabled>
+            <button className="user-detail-completed-btn" disabled>
               리뷰 작성 완료
             </button>
           ) : (
-            <button className="reserve-button" onClick={handleReserve}>
+            <button className="user-detail-reserve-button" onClick={handleReserve}>
               ⚡ 예약하기
             </button>
           )}
 
-          <p className="instant-confirmation">
+          <p className="user-detail-instant-confirmation">
             <FaBolt /> 구매 후 즉시 확정됩니다. <FaQuestionCircle />
           </p>
         </div>
