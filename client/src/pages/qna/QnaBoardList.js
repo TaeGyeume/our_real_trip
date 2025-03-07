@@ -349,7 +349,9 @@ const QnaBoardList = () => {
                         {/* 게시글 내용 (본문) */}
                         {qna.content && (
                           <Typography variant="body1" sx={{mt: 2}}>
-                            {qna.content}
+                            {qna.content.length > 20
+                              ? `${qna.content.substring(0, 20)}...`
+                              : qna.content}
                           </Typography>
                         )}
 
@@ -361,14 +363,20 @@ const QnaBoardList = () => {
                               <Button
                                 variant="outlined"
                                 color="warning"
-                                onClick={() => handleEditQnaBoard(qna._id)}>
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  handleEditQnaBoard(qna._id);
+                                }}>
                                 수정
                               </Button>
                             )}
                             <Button
                               variant="outlined"
                               color="error"
-                              onClick={() => handleDeleteQnaBoard(qna._id)}>
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleDeleteQnaBoard(qna._id);
+                              }}>
                               삭제
                             </Button>
                           </Box>
