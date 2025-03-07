@@ -21,7 +21,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 const SERVER_URL =
   process.env.REACT_APP_ENV === 'development'
     ? 'http://localhost:5000'
-    : 'https://ourrealtrip.shop/api/uploads';
+    : 'https://ourrealtrip.shop/api';
 
 /**
  * 이미지 경로 정규화 (\ → /, 맨 앞에 '/' 붙이기)
