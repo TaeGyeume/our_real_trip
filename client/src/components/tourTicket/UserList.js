@@ -8,6 +8,7 @@ import ReviewList from '../review/ReviewList';
 import {IconButton} from '@mui/material';
 import {ArrowBackIosNew, ArrowForwardIos} from '@mui/icons-material';
 import AdBanner from '../ad/AdBanner';
+import {tourticketBannerData} from '../../data/bannerData';
 import TourFilter from './TourFilter';
 
 const UserList = ({showFilter = true, showAdBanner = true}) => {
@@ -169,9 +170,32 @@ const UserList = ({showFilter = true, showAdBanner = true}) => {
     });
   };
 
+  const handlePriceChange = (event, newValue) => {
+    setPriceRange(newValue);
+  };
+
+  const handleRatingChange = event => {
+    setRatingFilter(event.target.value);
+  };
+
+  const handleCityChange = event => {
+    const city = event.target.name;
+
+    setSelectedCities(prev =>
+      prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city]
+    );
+  };
+
+  const handleResetFilters = () => {
+    setPriceRange([0, 100000]);
+    setRatingFilter('all');
+    setSelectedCities([]);
+    setRegionType('domestic');
+  };
+
   return (
     <>
-      {showAdBanner && <AdBanner banners={[{image: '/images/ad/tourticket1.png'}]} />}
+      {showAdBanner && <AdBanner banners={tourticketBannerData} />}
       <br />
       <div className="user-list-container">
         {showFilter && (

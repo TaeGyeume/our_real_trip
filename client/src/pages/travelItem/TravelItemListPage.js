@@ -38,7 +38,7 @@ const TravelItemListPage = () => {
         const response = await getUserFavorites();
         setFavorites(response.favorites.map(fav => fav.itemId));
       } catch (error) {
-        // console.error('즐겨찾기 목록 가져오기 오류:', error);
+        console.error('즐겨찾기 목록 가져오기 오류:', error);
       }
     };
 
@@ -114,28 +114,53 @@ const TravelItemListPage = () => {
         🛍️ 여행용품 조회
       </Typography>
 
-      {/* 카테고리 버튼 */}
-      <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
+      {/* 카테고리(상위) 버튼 - 밑줄 스타일 */}
+      <Box
+        display="flex"
+        justifyContent="flex-start"
+        gap={3}
+        mb={2}
+        sx={{borderBottom: '2px solid #e0e0e0'}}>
         {topCategories.map(category => (
-          <Button
+          <Box
             key={category._id}
-            variant={selectedCategory === category._id ? 'contained' : 'outlined'}
-            color="primary"
+            sx={{
+              pb: 1,
+              fontSize: '16px',
+              fontWeight: selectedCategory === category._id ? 'bold' : 'normal',
+              color: selectedCategory === category._id ? 'black' : 'gray',
+              borderBottom:
+                selectedCategory === category._id ? '3px solid black' : 'none',
+              cursor: 'pointer'
+            }}
             onClick={() => handleCategoryClick(category._id)}>
             {category.name}
-          </Button>
+          </Box>
         ))}
       </Box>
 
-      {/* 서브카테고리 버튼 */}
+      {/* 서브카테고리(하위) 버튼 - 둥근 스타일 */}
       {subCategories.length > 0 && (
         <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
           {subCategories.map(subCategory => (
             <Button
               key={subCategory._id}
-              variant={selectedSubCategory === subCategory._id ? 'contained' : 'outlined'} // 선택된 서브카테고리는 `contained` 유지
-              color="secondary"
-              onClick={() => handleSubCategoryClick(subCategory._id)}>
+              variant="contained"
+              onClick={() => handleSubCategoryClick(subCategory._id)}
+              sx={{
+                borderRadius: '20px', // 둥근 모서리
+                px: 2,
+                py: 1,
+                backgroundColor:
+                  selectedSubCategory === subCategory._id ? 'black' : 'transparent',
+                color: selectedSubCategory === subCategory._id ? 'white' : 'black',
+                border:
+                  selectedSubCategory === subCategory._id ? 'none' : '1px solid #e0e0e0',
+                '&:hover': {
+                  backgroundColor:
+                    selectedSubCategory === subCategory._id ? 'black' : '#f0f0f0'
+                }
+              }}>
               {subCategory.name}
             </Button>
           ))}
@@ -158,7 +183,7 @@ const TravelItemListPage = () => {
 
       {/* 상품 리스트 */}
       {!loading && !error && (
-        <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
+        <Box display="flex" flexWrap="wrap" gap={5} mb={3}>
           {items.length > 0 ? (
             items.map(item => (
               <TravelItemCard

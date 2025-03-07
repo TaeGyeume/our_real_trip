@@ -1,75 +1,44 @@
 import React from 'react';
-import UserList from '../components/tourTicket/UserList';
+import {useNavigate} from 'react-router-dom';
+import {Box} from '@mui/material';
+// import UserList from '../components/tourTicket/UserList';
 import PopularProductsSlider from '../components/views/PopularProductsSlider';
 import ConsoleLogo from '../components/common/ConsoleLogo';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import AdBanner from '../components/ad/AdBanner';
-
-const bannerData = [
-  {
-    image: '/images/ad/tourticket1.png'
-  },
-  {
-    image: '/images/ad/tourticket2.png'
-  },
-  {
-    image: '/images/ad/tourticket3.png'
-  },
-  {
-    image: '/images/ad/tourticket4.png'
-  },
-  {
-    image: '/images/ad/main1.png'
-  },
-  {
-    image: '/images/ad/main2.png'
-  },
-  {
-    image: '/images/ad/accommodation1.jpg'
-  },
-  {
-    image: '/images/ad/accommodation2.png'
-  },
-  {
-    image: '/images/ad/accommodation3.png'
-  },
-  {
-    image: '/images/ad/accommodation4.jpg'
-  },
-  {
-    image: '/images/ad/air1.png'
-  },
-  {
-    image: '/images/ad/air2.png'
-  },
-  {
-    image: '/images/ad/air3.png'
-  },
-  {
-    image: '/images/ad/air4.png'
-  }
-];
+import LocationCardSlider from '../components/common/LocationCardSlider';
+import {locationData} from '../data/locationData';
+import {mainBannerData} from '../data/bannerData';
 
 const Main = () => {
-  return (
-    <div className="container mt-5">
-      <ConsoleLogo />
-      <h2 className="text-center mb-4">메인페이지입니다</h2>
+  const navigate = useNavigate();
 
-      <AdBanner banners={bannerData} />
+  // 카드 클릭 시 이동할 라우팅 예시
+  const handleCardClick = id => {
+    // 예: /products/seoul 로 이동
+    navigate(`/location/${id}`);
+  };
+
+  return (
+    <Box sx={{padding: 3}}>
+      <ConsoleLogo />
+
+      <LocationCardSlider locations={locationData} onCardClick={handleCardClick} />
+
+      <AdBanner banners={mainBannerData} />
 
       {/* Flexbox 기반 레이아웃 적용 */}
-      <div className="main-layout">
-        {/* 메인 컨텐츠 */}
-
-        <div>
-          <UserList showFilter={false} showAdBanner={false} />
-        </div>
-        <div>
-          <PopularProductsSlider />
-        </div>
+      <div>
+        <UserList showFilter={false} showAdBanner={false} />
       </div>
-    </div>
+      <div>
+        <PopularProductsSlider />
+      </div>
+
+      <Box sx={{mt: 5}}>
+        <PopularProductsSlider />
+      </Box>
+    </Box>
   );
 };
 

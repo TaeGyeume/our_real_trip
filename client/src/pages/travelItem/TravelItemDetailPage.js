@@ -159,7 +159,7 @@ const TravelItemDetailPage = () => {
             <ReviewList
               productId={itemId}
               setRatingInfo={setRatingInfo}
-              ratingInfo={ratingInfo}
+              ratingInfo={ratingInfo[itemId] || {avgRating: 0, reviewCount: 0}}
               showOnlySummary={true}
             />
             <FaChevronRight className="more-icon" onClick={scrollToReviews} />
@@ -243,8 +243,8 @@ const TravelItemDetailPage = () => {
               <ReviewList
                 productId={itemId}
                 setRatingInfo={setRatingInfo}
-                ratingInfo={ratingInfo}
-                showReviewCount={true}
+                ratingInfo={ratingInfo[itemId] || {avgRating: 0, reviewCount: 0}}
+                showOnlySummary={true}
               />
             </span>
           </h2>

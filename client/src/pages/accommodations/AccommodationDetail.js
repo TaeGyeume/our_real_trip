@@ -1,5 +1,5 @@
 // src/pages/accommodation/AccommodationDetail.js
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {getReviews} from '../../api/review/reviewService';
 import {useReviewContext} from '../../contexts/ReviewContext';
@@ -39,7 +39,7 @@ const AccommodationDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
-  const {reviewStatus, setReviewStatus} = useReviewContext();
+  const {setReviewStatus} = useReviewContext();
   const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
   const [openAlert, setOpenAlert] = useState(false);
   const reviewSectionRef = useRef(null);
@@ -75,7 +75,6 @@ const AccommodationDetail = () => {
       try {
         const params = {startDate, endDate, adults, minPrice, maxPrice};
         const data = await fetchAccommodationDetail(accommodationId, params);
-        console.log('불러온 숙소 데이터:', data);
 
         const updatedRooms = data.availableRooms.map(room => ({
           ...room,
@@ -94,33 +93,38 @@ const AccommodationDetail = () => {
       }
     };
 
-    const fetchReviews = async () => {
-      try {
-        const data = await getReviews(accommodationId);
-        console.log('Fetched Reviews:', data);
-
-        const updatedReviewStatus = {};
-
-        // 유저 정보가 있을 때만 리뷰 상태 확인
-        if (user && user._id) {
-          data.forEach(review => {
-            if (review.userId._id === user._id) {
-              const key = `${review.productId}_${review.bookingId}`;
-              updatedReviewStatus[key] = true;
-            }
-          });
-        }
-
-        setReviewStatus(prev => ({...prev, ...updatedReviewStatus}));
-      } catch (err) {
-        console.error('리뷰 조회 오류:', err);
-      }
-    };
     fetchUserProfile().then(() => {
       loadAccommodationDetail();
-      fetchReviews();
     });
   }, [accommodationId, startDate, endDate, adults, minPrice, maxPrice, setReviewStatus]);
+
+  // `fetchReviews`를 useCallback으로 감싸기
+  const fetchReviews = useCallback(async () => {
+    try {
+      const data = await getReviews(accommodationId);
+
+      if (!user || !user._id || !Array.isArray(data)) return; // user가 없거나 데이터가 배열이 아니면 실행하지 않음
+
+      const updatedReviewStatus = {};
+      data.forEach(review => {
+        if (review.userId._id === user._id) {
+          const key = `${review.productId}_${review.bookingId}`;
+          updatedReviewStatus[key] = true;
+        }
+      });
+
+      setReviewStatus(prev => ({...prev, ...updatedReviewStatus}));
+    } catch (err) {
+      console.error('리뷰 조회 오류:', err);
+    }
+  }, [accommodationId, user, setReviewStatus]);
+
+  // user 값이 있을 때만 fetchReviews 실행
+  useEffect(() => {
+    if (user) {
+      fetchReviews();
+    }
+  }, [user, fetchReviews]);
 
   if (loading) return <Typography>로딩 중...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
@@ -169,17 +173,19 @@ const AccommodationDetail = () => {
               {accommodation.description}
             </Typography>
           </CardContent>
-          <Box
-            sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+          <div className="review-summary">
             <FaShareAlt
               style={{
+                top: '10px',
+                right: '10px',
+                border: 'none',
+                background: 'none',
                 fontSize: '18px',
-                color: 'darkgray',
-                cursor: 'pointer',
-                marginRight: '10px'
+                color: 'dark gray'
               }}
               onClick={handleCopyLink}
-            />
+            />{' '}
+            &nbsp;&nbsp;
             <Snackbar
               open={openAlert}
               anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
@@ -187,15 +193,14 @@ const AccommodationDetail = () => {
                 링크 복사 완료 🎉
               </Alert>
             </Snackbar>
-
             <ReviewList
               productId={accommodationId}
               setRatingInfo={setRatingInfo}
-              ratingInfo={ratingInfo}
+              ratingInfo={ratingInfo[accommodationId] || {avgRating: 0, reviewCount: 0}}
               showOnlySummary={true}
             />
             <FaChevronRight className="more-icon" onClick={scrollToReviews} />
-          </Box>
+          </div>
         </Card>
 
         {/* 리뷰 요약 및 공유 아이콘 */}
@@ -289,8 +294,8 @@ const AccommodationDetail = () => {
               <ReviewList
                 productId={accommodationId}
                 setRatingInfo={setRatingInfo}
-                ratingInfo={ratingInfo}
-                showReviewCount={true}
+                ratingInfo={ratingInfo[accommodationId] || {avgRating: 0, reviewCount: 0}}
+                showOnlySummary={true}
               />
             </span>
           </h2>

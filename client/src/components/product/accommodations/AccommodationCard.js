@@ -1,5 +1,5 @@
 // src/components/accommodations/AccommodationCard.js
-import React from 'react';
+import React, {useState} from 'react';
 import {createSearchParams, useNavigate} from 'react-router-dom';
 import {deleteAccommodation} from '../../../api/accommodation/accommodationService';
 import {
@@ -8,8 +8,11 @@ import {
   CardContent,
   Typography,
   Button,
-  CardActions
+  CardActions,
+  Box
 } from '@mui/material';
+import ReviewList from '../../review/ReviewList';
+import {useAuthStore} from '../../../store/authStore';
 
 // 기본 날짜 설정 함수 (오늘 + n일)
 const getFormattedDate = (daysToAdd = 0) => {
@@ -24,6 +27,8 @@ const AccommodationCard = ({
   onAccommodationDeleted
 }) => {
   const navigate = useNavigate(); // 페이지 이동을 위한 `useNavigate` 사용
+  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
+  const {user, isAuthenticated} = useAuthStore();
 
   // 기본 필터값 설정 (queryOptions가 없을 경우 적용)
   const params = {
@@ -92,53 +97,108 @@ const AccommodationCard = ({
     <Card
       sx={{
         maxWidth: 300,
+        height: isAuthenticated && user?.roles.includes('admin') ? 370 : 330, // 관리자일 때 카드 크기 증가
         borderRadius: 3,
         boxShadow: 3,
         cursor: 'pointer',
-        transition: '0.3s',
+        transition: 'height 0.3s ease-in-out', // 부드러운 크기 변환
         '&:hover': {boxShadow: 6},
-        mb: 2
-      }}
-      onClick={handleCardClick}>
+        mb: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden' // 내용이 넘치지 않도록 설정
+      }}>
       {/* 숙소 이미지 */}
-      <CardMedia component="img" height="200" image={imageUrl} alt={accommodation.name} />
+      <CardMedia
+        component="img"
+        height="190"
+        image={imageUrl}
+        alt={accommodation.name}
+        sx={{
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
+          objectFit: 'cover'
+        }}
+      />
 
       {/* 숙소 정보 */}
-      <CardContent>
-        <Typography variant="h6" fontWeight="bold">
+      <CardContent sx={{p: 2, flexGrow: 1}}>
+        <Typography
+          variant="h6"
+          fontWeight="bold"
+          sx={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
           {accommodation.name}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
-          {accommodation.description}
-        </Typography>
-        <Typography variant="body1" fontWeight="bold">
-          최저가: {accommodation.minPrice?.toLocaleString()}원
+
+        {/* 평점 표시 */}
+        {ratingInfo[accommodation._id]?.reviewCount === 0 ? (
+          <Box display="flex" alignItems="center" sx={{mt: 1}}>
+            <Typography
+              variant="body2"
+              fontWeight="bold"
+              sx={{display: 'flex', alignItems: 'center'}}>
+              <span style={{color: '#007BFF', fontSize: '18px', marginRight: '4px'}}>
+                ⭐
+              </span>
+              0 <span style={{marginLeft: '4px', color: 'gray'}}>(0 리뷰)</span>
+            </Typography>
+          </Box>
+        ) : (
+          <ReviewList
+            productId={accommodation._id}
+            setRatingInfo={setRatingInfo}
+            ratingInfo={ratingInfo[accommodation._id] || {avgRating: 0, reviewCount: 0}}
+            showOnlySummary={true}
+          />
+        )}
+
+        {/* 가격 */}
+        <Typography variant="h6" fontWeight="bold" sx={{mt: 1}}>
+          {accommodation.minPrice?.toLocaleString()}원/박
         </Typography>
       </CardContent>
 
-      {/* 액션 버튼 */}
-      <CardActions sx={{justifyContent: 'space-between', px: 2, pb: 2}}>
-        <Button
-          variant="contained"
-          color="warning"
-          size="small"
-          onClick={e => {
-            e.stopPropagation();
-            handleModifyClick(e);
-          }}>
-          ✏️ 수정
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          size="small"
-          onClick={e => {
-            e.stopPropagation();
-            handleDeleteClick(e);
-          }}>
-          🗑️ 삭제
-        </Button>
-      </CardActions>
+      {/* 관리자 전용 버튼 */}
+      {isAuthenticated && user?.roles.includes('admin') && (
+        <CardActions sx={{justifyContent: 'space-between', px: 2, pb: 2}}>
+          <Button
+            variant="contained"
+            color="warning"
+            size="small"
+            onClick={e => {
+              e.stopPropagation();
+              navigate(`/product/accommodations/modify/${accommodation._id}`);
+            }}>
+            ✏️ 수정
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={async e => {
+              e.stopPropagation();
+              const confirmDelete = window.confirm(
+                `"${accommodation.name}" 숙소를 삭제하시겠습니까?`
+              );
+              if (!confirmDelete) return;
+
+              try {
+                await deleteAccommodation(accommodation._id);
+                alert('숙소가 삭제되었습니다.');
+                if (onAccommodationDeleted) {
+                  onAccommodationDeleted(accommodation._id);
+                } else {
+                  window.location.reload();
+                }
+              } catch (err) {
+                console.error('숙소 삭제 오류:', err);
+                alert('숙소 삭제에 실패했습니다.');
+              }
+            }}>
+            🗑️ 삭제
+          </Button>
+        </CardActions>
+      )}
     </Card>
   );
 };
