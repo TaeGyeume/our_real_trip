@@ -12,6 +12,7 @@ import AccommodationImageGallery from '../../components/accommodations/Accommoda
 import AccommodationSearch from '../../components/accommodations/AccommodationSearch';
 import NearbyAccommodations from '../../components/accommodations/NearbyAccommodations';
 import authAPI from '../../api/auth/auth';
+import './styles/AccommodationDetail.css';
 import {
   Box,
   Typography,
@@ -157,47 +158,61 @@ const AccommodationDetail = () => {
 
   return (
     <Box sx={{maxWidth: '1200px', mx: 'auto', p: 3}}>
-      {/* 숙소 제목 & 설명 */}
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
-        {accommodation.name}
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{mb: 2}}>
-        {accommodation.description}
-      </Typography>
+      <Box sx={{maxWidth: '1200px', mx: 'auto', mt: 4, p: 2}}>
+        {/* 숙소 이름 및 설명 */}
+        <Card sx={{p: 3, mb: 3}}>
+          <CardContent>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              {accommodation.name}
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{mb: 2}}>
+              {accommodation.description}
+            </Typography>
+          </CardContent>
+          <Box
+            sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+            <FaShareAlt
+              style={{
+                fontSize: '18px',
+                color: 'darkgray',
+                cursor: 'pointer',
+                marginRight: '10px'
+              }}
+              onClick={handleCopyLink}
+            />
+            <Snackbar
+              open={openAlert}
+              anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
+              <Alert severity="success" variant="filled">
+                링크 복사 완료 🎉
+              </Alert>
+            </Snackbar>
 
-      <div className="review-summary">
-        <FaShareAlt
-          style={{
-            top: '10px',
-            right: '10px',
-            border: 'none',
-            background: 'none',
-            fontSize: '18px',
-            color: 'dark gray'
-          }}
-          onClick={handleCopyLink}
-        />{' '}
-        &nbsp;&nbsp;
-        <Snackbar open={openAlert} anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
-          <Alert severity="success" variant="filled">
-            링크 복사 완료 🎉
-          </Alert>
-        </Snackbar>
-        <ReviewList
-          productId={accommodationId}
-          setRatingInfo={setRatingInfo}
-          ratingInfo={ratingInfo}
-          showOnlySummary={true}
-        />
-        <FaChevronRight className="more-icon" onClick={scrollToReviews} />
-      </div>
+            <ReviewList
+              productId={accommodationId}
+              setRatingInfo={setRatingInfo}
+              ratingInfo={ratingInfo}
+              showOnlySummary={true}
+            />
+            <FaChevronRight className="more-icon" onClick={scrollToReviews} />
+          </Box>
+        </Card>
 
-      {/* 숙소 이미지 갤러리 */}
-      <AccommodationImageGallery
-        images={accommodation.images}
-        accommodationName={accommodation.name}
-        serverUrl={SERVER_URL}
-      />
+        {/* 리뷰 요약 및 공유 아이콘 */}
+
+        {/* 숙소 이미지 갤러리 */}
+        <Card sx={{p: 3, mb: 3}}>
+          <CardContent>
+            <AccommodationImageGallery
+              images={accommodation.images}
+              accommodationName={accommodation.name}
+              serverUrl={SERVER_URL}
+            />
+          </CardContent>
+        </Card>
+
+        <Divider sx={{my: 3}} />
+      </Box>
 
       {/* 숙소 정보 (주소 & 지도) */}
       <Card sx={{my: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, boxShadow: 1}}>
@@ -224,7 +239,9 @@ const AccommodationDetail = () => {
       </Card>
 
       {/* 숙소 편의시설 */}
-      <AccommodationAmenities amenities={accommodation.amenities} />
+      <Box sx={{mb: 3}}>
+        <AccommodationAmenities amenities={accommodation.amenities} />
+      </Box>
 
       {/* 날짜 및 인원 검색 기능 */}
       <AccommodationSearch
@@ -255,34 +272,36 @@ const AccommodationDetail = () => {
       </Box>
 
       {/* 리뷰 리스트  */}
-      <div>
-        <h2
-          ref={reviewSectionRef}
-          style={{
-            fontSize: '24px',
-            textAlign: 'left',
-            marginBottom: '30px',
-            display: 'flex',
-            alignItems: 'center', // 세로 정렬
-            gap: '8px' // 간격 추가
-          }}>
-          여행자 리뷰
-          <span style={{fontSize: '24px', color: 'dodgerblue', fontWeight: 'bold'}}>
-            <ReviewList
-              productId={accommodationId}
-              setRatingInfo={setRatingInfo}
-              ratingInfo={ratingInfo}
-              showReviewCount={true}
-            />
-          </span>
-        </h2>
-        <ReviewList
-          productId={accommodationId}
-          setRatingInfo={setRatingInfo}
-          ratingInfo={ratingInfo}
-          showOnlySummary={false}
-        />
-      </div>
+      <Card sx={{p: 3, mt: 3}}>
+        <div>
+          <h2
+            ref={reviewSectionRef}
+            style={{
+              fontSize: '24px',
+              textAlign: 'left',
+              marginBottom: '30px',
+              display: 'flex',
+              alignItems: 'center', // 세로 정렬
+              gap: '8px' // 간격 추가
+            }}>
+            여행자 리뷰
+            <span style={{fontSize: '24px', color: 'dodgerblue', fontWeight: 'bold'}}>
+              <ReviewList
+                productId={accommodationId}
+                setRatingInfo={setRatingInfo}
+                ratingInfo={ratingInfo}
+                showReviewCount={true}
+              />
+            </span>
+          </h2>
+          <ReviewList
+            productId={accommodationId}
+            setRatingInfo={setRatingInfo}
+            ratingInfo={ratingInfo}
+            showOnlySummary={false}
+          />
+        </div>
+      </Card>
 
       {/* 주변 숙소 컴포넌트 추가 */}
       {accommodation.coordinates?.coordinates && (
