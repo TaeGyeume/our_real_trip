@@ -1,126 +1,3 @@
-// import React, {useState} from 'react';
-// import {useNavigate} from 'react-router-dom';
-// import {createTourTicket} from '../../../api/tourTicket/tourTicketService';
-
-// const locationOptions = [
-//   '서울',
-//   '경기도',
-//   '강원도',
-//   '충청북도',
-//   '충청남도',
-//   '전라북도',
-//   '전라남도',
-//   '경상북도',
-//   '경상남도',
-//   '제주도'
-// ];
-
-// const TourTicketForm = () => {
-//   const navigate = useNavigate();
-
-//   const [formData, setFormData] = useState({
-//     title: '',
-//     description: '',
-//     location: '',
-//     price: '',
-//     stock: '',
-//     images: []
-//   });
-
-//   const handleFileChange = e => {
-//     setFormData({...formData, images: [...e.target.files]});
-//   };
-
-//   const handleChange = e => {
-//     setFormData({...formData, [e.target.name]: e.target.value});
-//   };
-
-//   const handleSubmit = async e => {
-//     e.preventDefault();
-//     const formDataObj = new FormData();
-
-//     formData.images.forEach(file => {
-//       formDataObj.append('images', file);
-//     });
-
-//     formDataObj.append('title', formData.title);
-//     formDataObj.append('description', formData.description);
-//     formDataObj.append('location', formData.location);
-//     formDataObj.append('price', formData.price);
-//     formDataObj.append('stock', formData.stock);
-
-//     try {
-//       await createTourTicket(formDataObj);
-//       alert('상품 등록 성공!');
-//       navigate('/product/tourTicket/list');
-//     } catch (error) {
-//       console.error('상품 등록 실패:', error);
-//     }
-//   };
-
-//   return (
-//     <div>
-//       <h2>투어 & 티켓 상품 등록</h2>
-//       <form onSubmit={handleSubmit} encType="multipart/form-data">
-//         <input
-//           type="text"
-//           name="title"
-//           placeholder="상품명"
-//           value={formData.title}
-//           onChange={handleChange}
-//           required
-//         />
-//         <textarea
-//           name="description"
-//           placeholder="상품 설명"
-//           value={formData.description}
-//           onChange={handleChange}
-//           required
-//         />
-//         <select
-//           name="location"
-//           value={formData.location}
-//           onChange={handleChange}
-//           required>
-//           <option value="">지역 선택</option>
-//           {locationOptions.map(loc => (
-//             <option key={loc} value={loc}>
-//               {loc}
-//             </option>
-//           ))}
-//         </select>
-//         <input
-//           type="number"
-//           name="price"
-//           placeholder="가격"
-//           value={formData.price}
-//           onChange={handleChange}
-//           required
-//         />
-//         <input
-//           type="number"
-//           name="stock"
-//           placeholder="재고"
-//           value={formData.stock}
-//           onChange={handleChange}
-//           required
-//         />
-//         <input
-//           type="file"
-//           name="images"
-//           multiple
-//           accept="image/*"
-//           onChange={handleFileChange}
-//           required
-//         />
-//         <button type="submit">등록</button>
-//       </form>
-//     </div>
-//   );
-// };
-
-// export default TourTicketForm;
-
 import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {createTourTicket} from '../../../api/tourTicket/tourTicketService';
@@ -139,7 +16,8 @@ import {
 } from '@mui/material';
 import {styled} from '@mui/system';
 
-const locationOptions = [
+// 국내 지역 리스트
+const domesticLocations = [
   '서울',
   '경기도',
   '강원도',
@@ -150,6 +28,18 @@ const locationOptions = [
   '경상북도',
   '경상남도',
   '제주도'
+];
+
+// 해외 지역 리스트
+const internationalLocations = [
+  '도쿄',
+  '베이징',
+  '타이베이',
+  '런던',
+  '파리',
+  '시드니',
+  '뉴욕',
+  '방콕'
 ];
 
 // 스타일링 추가
@@ -175,14 +65,20 @@ const TourTicketForm = () => {
     images: []
   });
 
+  // 국내/해외 선택 상태
+  const [regionType, setRegionType] = useState('domestic'); // 기본값: 국내
+
+  // 파일 선택 핸들러
   const handleFileChange = e => {
     setFormData({...formData, images: [...e.target.files]});
   };
 
+  // 입력 필드 핸들러
   const handleChange = e => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
 
+  // 상품 등록 핸들러
   const handleSubmit = async e => {
     e.preventDefault();
     const formDataObj = new FormData();
@@ -215,6 +111,7 @@ const TourTicketForm = () => {
           </Typography>
 
           <StyledForm onSubmit={handleSubmit} encType="multipart/form-data">
+            {/* 상품명 입력 */}
             <TextField
               label="상품명"
               name="title"
@@ -223,6 +120,8 @@ const TourTicketForm = () => {
               required
               fullWidth
             />
+
+            {/* 상품 설명 입력 */}
             <TextField
               label="상품 설명"
               name="description"
@@ -233,7 +132,24 @@ const TourTicketForm = () => {
               rows={3}
               fullWidth
             />
+
+            {/* 국내 / 해외 구분 선택 */}
             <FormControl fullWidth>
+              <InputLabel>지역 구분</InputLabel>
+              <Select
+                value={regionType}
+                onChange={e => {
+                  setRegionType(e.target.value);
+                  setFormData({...formData, location: ''}); // 지역 선택 초기화
+                }}
+                input={<OutlinedInput label="지역 구분" />}>
+                <MenuItem value="domestic">국내</MenuItem>
+                <MenuItem value="international">해외</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* 지역 선택 */}
+            <FormControl fullWidth disabled={!regionType}>
               <InputLabel>지역 선택</InputLabel>
               <Select
                 name="location"
@@ -241,13 +157,18 @@ const TourTicketForm = () => {
                 onChange={handleChange}
                 required
                 input={<OutlinedInput label="지역 선택" />}>
-                {locationOptions.map(loc => (
+                {(regionType === 'domestic'
+                  ? domesticLocations
+                  : internationalLocations
+                ).map(loc => (
                   <MenuItem key={loc} value={loc}>
                     {loc}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
+
+            {/* 가격 입력 */}
             <TextField
               label="가격 (₩)"
               name="price"
@@ -257,6 +178,8 @@ const TourTicketForm = () => {
               required
               fullWidth
             />
+
+            {/* 재고 입력 */}
             <TextField
               label="재고 수량"
               name="stock"
@@ -290,6 +213,7 @@ const TourTicketForm = () => {
               </Button>
             </label>
 
+            {/* 등록 버튼 */}
             <Button
               type="submit"
               variant="contained"

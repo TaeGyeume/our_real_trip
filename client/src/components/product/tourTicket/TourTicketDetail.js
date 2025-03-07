@@ -14,6 +14,11 @@ const TourTicketDetail = () => {
   const [currentIndex, setCurrentIndex] = useState(0); // 현재 이미지 인덱스
   const [selectedTickets, setSelectedTickets] = useState(new Set()); // 선택된 티켓 ID
 
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   useEffect(() => {
     const fetchTicket = async () => {
       try {
@@ -33,12 +38,6 @@ const TourTicketDetail = () => {
     }
 
     if (!ticket || ticket.images.length <= 1) return; // 이미지가 하나면 슬라이드 X
-
-    // const interval = setInterval(() => {
-    //   setCurrentIndex(prevIndex => (prevIndex + 1) % ticket.images.length);
-    // }, 2000);
-
-    // return () => clearInterval(interval);
   }, [ticket]);
 
   if (!ticket) {
@@ -81,7 +80,7 @@ const TourTicketDetail = () => {
 
       <div className="image-slider">
         <img
-          src={`http://localhost:5000${ticket.images[currentIndex]}`}
+          src={`${SERVER_URL}${ticket.images[currentIndex]}`}
           alt={ticket.title}
           className="slider-image"
         />
@@ -119,11 +118,6 @@ const TourTicketDetail = () => {
         수정하기
       </button>
       <button onClick={() => navigate('/product/tourTicket/list')}>상품 목록</button>
-
-      <div>
-        <h2>📝 리뷰</h2>
-        <ReviewList productId={id} />
-      </div>
     </div>
   );
 };
