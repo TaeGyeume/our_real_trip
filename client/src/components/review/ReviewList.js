@@ -20,7 +20,7 @@ import {FaStarHalfAlt, FaStar, FaChevronDown} from 'react-icons/fa';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
 import {useAuthStore} from '../../store/authStore';
-import {ButtonGroup, Button, Typography} from '@mui/material';
+import {ButtonGroup, Button} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
