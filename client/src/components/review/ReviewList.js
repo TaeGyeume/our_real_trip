@@ -20,7 +20,7 @@ import {FaStarHalfAlt, FaStar, FaChevronDown} from 'react-icons/fa';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
 import {useAuthStore} from '../../store/authStore';
-import {ButtonGroup, Button} from '@mui/material';
+import {ButtonGroup, Button, Typography} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -507,6 +507,10 @@ const ReviewList = ({
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
                     placeholder="리뷰를 수정하세요."
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
                   />
 
                   <div className="edit-images">
@@ -645,7 +649,12 @@ const ReviewList = ({
                     placeholder="댓글을 입력하세요."
                     value={commentInput}
                     onChange={e => setCommentInput(e.target.value)}
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
                   />
+
                   <ButtonGroup variant="outlined" aria-label="Basic button group">
                     <Button
                       variant="outlined"
@@ -673,6 +682,10 @@ const ReviewList = ({
                               placeholder="댓글을 수정하세요."
                               rows={4}
                               cols={100}
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}
                             />
                             <ButtonGroup
                               variant="outlined"
@@ -729,7 +742,14 @@ const ReviewList = ({
                                 </div>
                               )}
                             </div>
-                            <div className="comment-content">{comment.content}</div>
+                            <div
+                              className="comment-content"
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}>
+                              {comment.content}
+                            </div>
                           </div>
                         </>
                       )}
@@ -750,6 +770,7 @@ const ReviewList = ({
                     <div className="review-rating">
                       {[...Array(5)].map((_, index) => {
                         const currentStar = index + 1;
+
                         return (
                           <span key={index}>
                             {review.rating >= currentStar ? (
@@ -837,6 +858,10 @@ const ReviewList = ({
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
                     placeholder="리뷰를 수정하세요."
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
                   />
 
                   <div className="edit-images">
@@ -891,7 +916,14 @@ const ReviewList = ({
               ) : (
                 <>
                   {/* 리뷰 내용 및 이미지 표시 */}
-                  <p className="review-text">{review.content}</p>
+                  <p
+                    className="review-text"
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}>
+                    {review.content}
+                  </p>
 
                   {review.images && review.images.length > 0 && (
                     <div className="review-images">
@@ -975,6 +1007,10 @@ const ReviewList = ({
                     placeholder="댓글을 입력하세요..."
                     value={commentInput}
                     onChange={e => setCommentInput(e.target.value)}
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
                   />
                   <ButtonGroup variant="outlined" aria-label="Basic button group">
                     <Button
@@ -1003,6 +1039,10 @@ const ReviewList = ({
                               placeholder="댓글을 수정하세요."
                               rows={4}
                               cols={100}
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}
                             />
                             <ButtonGroup
                               variant="outlined"
@@ -1055,7 +1095,14 @@ const ReviewList = ({
                                 </div>
                               )}
                             </div>
-                            <div className="comment-content">{comment.content}</div>
+                            <div
+                              className="comment-content"
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}>
+                              {comment.content}
+                            </div>
                           </div>
                         </>
                       )}

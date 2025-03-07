@@ -61,10 +61,10 @@ const Main = () => {
       {/* Flexbox 기반 레이아웃 적용 */}
       <div className="main-layout">
         {/* 메인 컨텐츠 */}
-        <div className="main-content">
+        {/* <div className="main-content">
           <h3>지역 필수 티켓</h3>
           <UserList />
-        </div>
+        </div> */}
         <div>
           <PopularProductsSlider />
         </div>
