@@ -196,7 +196,7 @@ const AccommodationDetail = () => {
             <ReviewList
               productId={accommodationId}
               setRatingInfo={setRatingInfo}
-              ratingInfo={ratingInfo}
+              ratingInfo={ratingInfo[accommodationId] || {avgRating: 0, reviewCount: 0}}
               showOnlySummary={true}
             />
             <FaChevronRight className="more-icon" onClick={scrollToReviews} />
@@ -294,8 +294,8 @@ const AccommodationDetail = () => {
               <ReviewList
                 productId={accommodationId}
                 setRatingInfo={setRatingInfo}
-                ratingInfo={ratingInfo}
-                showReviewCount={true}
+                ratingInfo={ratingInfo[accommodationId] || {avgRating: 0, reviewCount: 0}}
+                showOnlySummary={true}
               />
             </span>
           </h2>

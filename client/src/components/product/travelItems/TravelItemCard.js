@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useAuthStore} from '../../../store/authStore';
 import {deleteTravelItem} from '../../../api/travelItem/travelItemService';
+import ReviewList from '../../review/ReviewList';
 import FavoriteButton from '../../user/FavoriteButton'; // 즐겨찾기 버튼 추가
 import {
   Card,
@@ -16,6 +17,7 @@ import {
 const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle}) => {
   const navigate = useNavigate();
   const {user, isAuthenticated} = useAuthStore();
+  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
   const SERVER_URL =
     process.env.REACT_APP_ENV === 'development'
       ? 'http://localhost:5000'
@@ -114,10 +116,12 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
           {travelItem?.name || '상품명 없음'}
         </Typography>
 
-        {/* 별점 */}
-        <Typography variant="body2" color="text.primary">
-          ⭐ {travelItem?.rating || '0.0'}
-        </Typography>
+        <ReviewList
+          productId={travelItem._id}
+          setRatingInfo={setRatingInfo}
+          ratingInfo={ratingInfo[travelItem._id] || {avgRating: 0, reviewCount: 0}} // 해당 상품의 리뷰 정보만 전달
+          showOnlySummary={true}
+        />
 
         {/* 가격 */}
         <Typography variant="h6" fontWeight="bold" color="text.primary">
