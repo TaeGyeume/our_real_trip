@@ -131,17 +131,44 @@ const TourTicketDetail = () => {
     ? Object.keys(reviewStatus).some(key => key.startsWith(`${id}_`) && reviewStatus[key])
     : false;
 
+  const domesticLocations = [
+    '서울',
+    '경기도',
+    '강원도',
+    '충청북도',
+    '충청남도',
+    '전라북도',
+    '전라남도',
+    '경상북도',
+    '경상남도',
+    '제주도'
+  ];
+  const internationalLocations = [
+    '도쿄',
+    '베이징',
+    '타이베이',
+    '런던',
+    '파리',
+    '시드니',
+    '뉴욕',
+    '방콕'
+  ];
+
   return (
     <div className="user-detail-tour-ticket-container">
       {/* 왼쪽 div 배치 */}
       <div className="user-detail-tour-ticket-detail">
         <div className="user-detail-ticket-header">
           <div className="user-detail-ticket-location">
-            <span>대한민국&nbsp;</span>
-            <FaChevronRight />
-            &nbsp;
-            <FaMapMarkerAlt />
-            <span>{ticket.location}</span>
+            <div className="user-detail-ticket-location">
+              <span>
+                {domesticLocations.includes(ticket.location) ? '국내' : '해외'}&nbsp;
+              </span>
+              <FaChevronRight />
+              &nbsp;
+              <FaMapMarkerAlt />
+              <span>{ticket.location}</span>
+            </div>
           </div>
 
           <h1 className="user-detail-ticket-title">{ticket.title}</h1>

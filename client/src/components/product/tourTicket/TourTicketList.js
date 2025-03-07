@@ -5,7 +5,6 @@ import {
 } from '../../../api/tourTicket/tourTicketService';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {Box, Card, CardMedia, CardContent, Typography} from '@mui/material';
-// import './styles/TourTicketList.css';
 
 const TourTicketList = () => {
   const [tickets, setTickets] = useState([]);
@@ -14,6 +13,11 @@ const TourTicketList = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -147,7 +151,7 @@ const TourTicketList = () => {
               <CardMedia
                 component="img"
                 height="200"
-                image={`http://localhost:5000${ticket.images[0]}`}
+                image={`${SERVER_URL}${ticket.images[0]}`}
                 alt={ticket.title}
               />
               <CardContent>

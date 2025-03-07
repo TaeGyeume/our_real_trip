@@ -30,6 +30,11 @@ const TourTicketModify = () => {
   const [newImages, setNewImages] = useState([]);
   const [deleteImages, setDeleteImages] = useState([]);
 
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   useEffect(() => {
     const fetchTicket = async () => {
       try {
@@ -162,7 +167,7 @@ const TourTicketModify = () => {
         <div>
           {ticket?.images.map((image, index) => (
             <div key={index} style={{display: 'flex', alignItems: 'center'}}>
-              <img src={`http://localhost:5000${image}`} alt="기존 이미지" width="100" />
+              <img src={`${SERVER_URL}${image}`} alt="기존 이미지" width="100" />
               <input
                 type="checkbox"
                 checked={deleteImages.includes(image)}
