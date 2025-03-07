@@ -103,6 +103,8 @@ const UserList = () => {
 
   const filteredTickets = useMemo(() => {
     return tickets.filter(ticket => {
+      const ticketRating = ratingInfo[ticket._id]?.avgRating || 0;
+
       // 국내/해외 필터 적용
       if (regionType === 'domestic' && !domesticLocations.includes(ticket.location)) {
         return false;
@@ -120,10 +122,13 @@ const UserList = () => {
         return false;
       }
 
-      // 평점 필터 적용 (4점 이상, 5점만)
-      if (ratingFilter !== 'all') {
-        const minRating = parseFloat(ratingFilter);
-        if (ticket.rating < minRating) {
+      // 평점 필터 적용
+      if (ratingFilter === '4') {
+        if (ticketRating < 4) {
+          return false;
+        }
+      } else if (ratingFilter === '1') {
+        if (ticketRating >= 1) {
           return false;
         }
       }
@@ -135,7 +140,7 @@ const UserList = () => {
 
       return true;
     });
-  }, [tickets, priceRange, ratingFilter, selectedCities, regionType]);
+  }, [tickets, priceRange, ratingFilter, selectedCities, regionType, ratingInfo]);
 
   // 필터된 티켓을 location(지역)별로 그룹화
   const groupedTickets = useMemo(() => {
@@ -302,7 +307,7 @@ const UserList = () => {
                 label="4점 이상"
               />
               <FormControlLabel
-                value="5"
+                value="1"
                 control={
                   <Radio
                     sx={{
@@ -312,7 +317,7 @@ const UserList = () => {
                     }}
                   />
                 }
-                label="5점만"
+                label="1점 이하"
               />
             </RadioGroup>
           </FormControl>
