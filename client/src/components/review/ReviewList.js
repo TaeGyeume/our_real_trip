@@ -20,7 +20,7 @@ import {FaStarHalfAlt, FaStar, FaChevronDown} from 'react-icons/fa';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
 import {useAuthStore} from '../../store/authStore';
-import {ButtonGroup, Button} from '@mui/material';
+import {ButtonGroup, Button, Typography} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -131,19 +131,6 @@ const ReviewList = ({
   if (showReviewCount) {
     return <div>{ratingInfo?.reviewCount || 0}</div>;
   }
-
-  // 평점 통계 계산
-  const calculateRatingStats = reviews => {
-    const total = reviews.length;
-    const sumRatings = reviews.reduce((acc, review) => acc + review.rating, 0);
-    const avgRating = total ? (sumRatings / total).toFixed(1) : 0;
-
-    const distribution = [0, 0, 0, 0, 0]; // 5~1점 순서
-    reviews.forEach(review => {
-      const idx = 5 - Math.round(review.rating);
-      distribution[idx]++;
-    });
-  };
 
   const toggleMenu = (reviewId, e) => {
     if (e) e.stopPropagation();
@@ -406,6 +393,17 @@ const ReviewList = ({
     );
   };
 
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
+  const getImageUrl = imagePath => {
+    if (!imagePath) return '/default-image.jpg';
+
+    return imagePath.startsWith('/uploads/') ? `${SERVER_URL}${imagePath}` : imagePath;
+  };
+
   const isAdmin = currentUser?.roles?.includes('admin');
 
   return (
@@ -520,6 +518,10 @@ const ReviewList = ({
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
                     placeholder="리뷰를 수정하세요."
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
                   />
 
                   <div className="edit-images">
@@ -541,7 +543,8 @@ const ReviewList = ({
                           />
                         ) : (
                           <img
-                            src={`http://localhost:5000${img}`}
+                            // src={`http://localhost:5000${img}`}
+                            src={getImageUrl(img)}
                             alt={`기존 이미지 ${index + 1}`}
                           />
                         )}
@@ -580,7 +583,8 @@ const ReviewList = ({
                       {topReview.images.map((image, index) => (
                         <img
                           key={index}
-                          src={`http://localhost:5000${image}`}
+                          // src={`http://localhost:5000${image}`}
+                          src={getImageUrl(image)}
                           alt={`리뷰 이미지 ${index + 1}`}
                           className="review-thumbnail"
                           onClick={() => {
@@ -625,7 +629,8 @@ const ReviewList = ({
 
                             {/* 선택된 이미지 */}
                             <img
-                              src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              // src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              src={getImageUrl(selectedImages[currentImageIndex])}
                               alt="확대된 이미지"
                               className="modal-image"
                             />
@@ -658,7 +663,12 @@ const ReviewList = ({
                     placeholder="댓글을 입력하세요."
                     value={commentInput}
                     onChange={e => setCommentInput(e.target.value)}
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
                   />
+
                   <ButtonGroup variant="outlined" aria-label="Basic button group">
                     <Button
                       variant="outlined"
@@ -686,6 +696,10 @@ const ReviewList = ({
                               placeholder="댓글을 수정하세요."
                               rows={4}
                               cols={100}
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}
                             />
                             <ButtonGroup
                               variant="outlined"
@@ -742,7 +756,14 @@ const ReviewList = ({
                                 </div>
                               )}
                             </div>
-                            <div className="comment-content">{comment.content}</div>
+                            <div
+                              className="comment-content"
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}>
+                              {comment.content}
+                            </div>
                           </div>
                         </>
                       )}
@@ -763,6 +784,7 @@ const ReviewList = ({
                     <div className="review-rating">
                       {[...Array(5)].map((_, index) => {
                         const currentStar = index + 1;
+
                         return (
                           <span key={index}>
                             {review.rating >= currentStar ? (
@@ -850,6 +872,10 @@ const ReviewList = ({
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
                     placeholder="리뷰를 수정하세요."
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
                   />
 
                   <div className="edit-images">
@@ -871,7 +897,8 @@ const ReviewList = ({
                           />
                         ) : (
                           <img
-                            src={`http://localhost:5000${img}`}
+                            // src={`http://localhost:5000${img}`}
+                            src={getImageUrl(img)}
                             alt={`기존 이미지 ${index + 1}`}
                           />
                         )}
@@ -904,14 +931,22 @@ const ReviewList = ({
               ) : (
                 <>
                   {/* 리뷰 내용 및 이미지 표시 */}
-                  <p className="review-text">{review.content}</p>
+                  <p
+                    className="review-text"
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}>
+                    {review.content}
+                  </p>
 
                   {review.images && review.images.length > 0 && (
                     <div className="review-images">
                       {review.images.map((image, index) => (
                         <img
                           key={index}
-                          src={`http://localhost:5000${image}`}
+                          // src={`http://localhost:5000${image}`}
+                          src={getImageUrl(image)}
                           alt={`리뷰 이미지 ${index + 1}`}
                           className="review-thumbnail"
                           onClick={() =>
@@ -955,7 +990,8 @@ const ReviewList = ({
 
                             {/* 선택된 이미지 */}
                             <img
-                              src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              // src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              src={getImageUrl(selectedImages[currentImageIndex])}
                               alt="확대된 이미지"
                               className="modal-image"
                             />
@@ -988,6 +1024,10 @@ const ReviewList = ({
                     placeholder="댓글을 입력하세요..."
                     value={commentInput}
                     onChange={e => setCommentInput(e.target.value)}
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
                   />
                   <ButtonGroup variant="outlined" aria-label="Basic button group">
                     <Button
@@ -1016,6 +1056,10 @@ const ReviewList = ({
                               placeholder="댓글을 수정하세요."
                               rows={4}
                               cols={100}
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}
                             />
                             <ButtonGroup
                               variant="outlined"
@@ -1068,7 +1112,14 @@ const ReviewList = ({
                                 </div>
                               )}
                             </div>
-                            <div className="comment-content">{comment.content}</div>
+                            <div
+                              className="comment-content"
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}>
+                              {comment.content}
+                            </div>
                           </div>
                         </>
                       )}
@@ -1080,7 +1131,7 @@ const ReviewList = ({
           ))}
 
           {/* 리뷰 더 보기 버튼 */}
-          <div style={{alignItems: 'center'}}>
+          <div style={{display: 'flex', justifyContent: 'center', width: '100%'}}>
             {visibleReviews < reviews.length && (
               <button
                 className="load-more-btn"
