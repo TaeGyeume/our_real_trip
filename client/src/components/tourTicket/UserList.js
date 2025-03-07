@@ -10,14 +10,16 @@ import {ArrowBackIosNew, ArrowForwardIos} from '@mui/icons-material';
 import AdBanner from '../ad/AdBanner';
 import TourFilter from './TourFilter';
 
-const UserList = () => {
+const UserList = ({showFilter = true, showAdBanner = true}) => {
   const [tickets, setTickets] = useState([]);
   const [favorites, setFavorites] = useState([]);
+
   const [visibleIndex, setVisibleIndex] = useState({});
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [ratingFilter, setRatingFilter] = useState('all');
   const [regionType, setRegionType] = useState('domestic');
   const [selectedCities, setSelectedCities] = useState([]);
+
   const [ratingInfo, setRatingInfo] = useState({});
 
   const navigate = useNavigate();
@@ -174,30 +176,32 @@ const UserList = () => {
 
   return (
     <>
-      <AdBanner banners={[{image: '/images/ad/tourticket1.png'}]} />
+      {showAdBanner && <AdBanner banners={[{image: '/images/ad/tourticket1.png'}]} />}
       <br />
       <div className="user-list-container">
-        <TourFilter
-          priceRange={priceRange}
-          setPriceRange={setPriceRange}
-          ratingFilter={ratingFilter}
-          setRatingFilter={setRatingFilter}
-          regionType={regionType}
-          setRegionType={type => {
-            setRegionType(type);
-            setSelectedCities([]);
-          }}
-          selectedCities={selectedCities}
-          setSelectedCities={setSelectedCities}
-          domesticLocations={domesticLocations}
-          internationalLocations={internationalLocations}
-          handleResetFilters={() => {
-            setPriceRange([0, 100000]);
-            setRatingFilter('all');
-            setSelectedCities([]);
-            setRegionType('domestic');
-          }}
-        />
+        {showFilter && (
+          <TourFilter
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            ratingFilter={ratingFilter}
+            setRatingFilter={setRatingFilter}
+            regionType={regionType}
+            setRegionType={type => {
+              setRegionType(type);
+              setSelectedCities([]);
+            }}
+            selectedCities={selectedCities}
+            setSelectedCities={setSelectedCities}
+            domesticLocations={domesticLocations}
+            internationalLocations={internationalLocations}
+            handleResetFilters={() => {
+              setPriceRange([0, 100000]);
+              setRatingFilter('all');
+              setSelectedCities([]);
+              setRegionType('domestic');
+            }}
+          />
+        )}
 
         <div className="user-list-tour-ticket-container">
           {Object.keys(groupedTickets).map(location => (
