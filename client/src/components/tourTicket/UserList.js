@@ -29,6 +29,8 @@ const UserList = () => {
   const [ratingFilter, setRatingFilter] = useState('all');
   const [selectedCities, setSelectedCities] = useState([]);
 
+  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
+
   const navigate = useNavigate();
   const initialRender = useRef(true);
 
@@ -331,9 +333,21 @@ const UserList = () => {
 
                       <div className="user-list-ticket-info">
                         <h3 className="user-list-ticket-title">{ticket.title}</h3>
-                        <p className="user-list-ticket-price">
+
+                        <div className="user-list-review-summary">
+                          <ReviewList
+                            productId={ticket._id}
+                            setRatingInfo={setRatingInfo}
+                            ratingInfo={
+                              ratingInfo[ticket._id] || {avgRating: 0, reviewCount: 0}
+                            } // 해당 상품의 리뷰 정보만 전달
+                            showOnlySummary={true}
+                          />
+                        </div>
+
+                        <div className="user-list-ticket-price">
                           {ticket.price.toLocaleString()}원 / 1인
-                        </p>
+                        </div>
                       </div>
                     </div>
                   ))}
