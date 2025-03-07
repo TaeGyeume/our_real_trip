@@ -20,7 +20,7 @@ import {FaStarHalfAlt, FaStar, FaChevronDown} from 'react-icons/fa';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
 import {useAuthStore} from '../../store/authStore';
-import {ButtonGroup, Button, Typography} from '@mui/material';
+import {ButtonGroup, Button} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -90,7 +90,28 @@ const ReviewList = ({
         const sortedReviews = [...validReviews].sort((a, b) => b.likes - a.likes);
 
         // 리뷰 개수 및 평점 업데이트
-        setRatingInfo({avgRating, reviewCount: validReviews.length});
+        // setRatingInfo({avgRating, reviewCount: validReviews.length});
+        // if (validReviews.length > 0) {
+        //   setRatingInfo(prev => {
+        //     const updatedInfo = {
+        //       avgRating: parseFloat(avgRating),
+        //       reviewCount: validReviews.length
+        //     };
+
+        //     return updatedInfo;
+        //   });
+        // }
+
+        if (validReviews.length > 0) {
+          setRatingInfo(prev => ({
+            ...prev, // ✅ 기존 상태 유지
+            [productId]: { // ✅ 각 상품 ID별로 저장
+              avgRating: parseFloat(avgRating),
+              reviewCount: validReviews.length
+            }
+          }));
+        }
+        
 
         // 좋아요 가장 많은 리뷰 설정 (없으면 `null`)
         setTopReview(sortedReviews.length > 0 ? sortedReviews[0] : null);
@@ -401,6 +422,17 @@ const ReviewList = ({
   const getImageUrl = imagePath => {
     if (!imagePath) return '/default-image.jpg';
 
+    // 배열인 경우 첫 번째 이미지 선택
+    if (Array.isArray(imagePath) && imagePath.length > 0) {
+      imagePath = imagePath[0];
+    }
+
+    // 문자열이 아닌 경우 기본 이미지 반환
+    if (typeof imagePath !== 'string') {
+      return '/default-image.jpg';
+    }
+
+    // 경로가 '/uploads/'로 시작하면 서버 URL 붙이기
     return imagePath.startsWith('/uploads/') ? `${SERVER_URL}${imagePath}` : imagePath;
   };
 

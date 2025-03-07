@@ -3,18 +3,22 @@ body {
   font-family: 'BM Dohyeon', sans-serif;
 }
 
+.user-list-review-summary {
+  font-size: 14px !important;
+}
+
 .user-list-container {
   display: flex;
   gap: 20px;
-  max-width: 1300px;
+  max-width: 1700px;
   margin: 0 auto;
   padding: 20px;
 }
 
 .user-list-filter {
-  width: 300px; /* 고정 너비 */
+  width: 250px; /* 고정 너비 */
   background: #fff;
-  padding: 20px;
+  padding: 15px;
   border-radius: 8px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
   height: fit-content;
@@ -47,17 +51,19 @@ body {
   /* height: 300px; */
   min-width: 100%; /* 부모 크기 유지 */
   transition: transform 0.5s ease-in-out;
-  overflow: hidden;
+  overflow: visible;
   justify-content: flex-start; /* 카드가 적을 경우 정렬 */
 }
 
 /* 개별 카드 */
 .user-list-tour-ticket-card {
+  position: relative;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 2px;
   flex: 0 0 calc(25% - 20px); /* 카드 크기 균일하게 */
   transition: all 0.3s ease-in-out;
+  width: calc(100% / 4 - 50px);
 }
 
 .user-list-tour-ticket-card:hover {
@@ -74,20 +80,48 @@ body {
 }
 
 .user-list-ticket-info {
-  margin-top: 10px;
+  /* margin-top: 10px;
   text-align: left;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; */
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+  padding: 10px;
+  justify-content: space-between;
 }
 
 .user-list-ticket-title {
+  /* font-size: 14px;
+  font-weight: bold;
+  flex-grow: 1;
+  display: flex;
+  align-items: flex-start;
+  height: 50px; */
   font-size: 14px;
   font-weight: bold;
+  height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-list-ticket-price {
-  font-size: 1rem;
+  /* font-size: 12px;
   font-weight: bold;
-  color: #ff5722;
+  color: #656565;
+  text-align: left;
+  height: 30px;
+  justify-content: flex-end; */
+  font-size: 12px;
+  font-weight: bold;
+  color: #656565;
+  height: 30px;
+  text-align: left;
+  display: flex;
+  align-items: center;
 }
 
 /* 좌우 이동 버튼 */
@@ -133,4 +167,14 @@ body {
   overflow: hidden;
   width: 100%;
   padding-bottom: 20px; /* 슬라이드 아래쪽 간격 추가 */
+}
+
+.user-list-favorite-list-icon {
+  position: absolute;
+  top: 5px; /* 상단 여백 */
+  right: 5px; /* 우측 여백 */
+  z-index: 10; /* 이미지보다 위에 배치 */
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
 }
