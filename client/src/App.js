@@ -143,6 +143,7 @@ const App = () => {
             path="/login"
             element={isAuthenticated ? <Navigate to="/profile" /> : <AuthPages.Login />}
           />
+          <Route path="/qna" element={<QnaBoardList />} />
           <Route path="/packages" element={<PackageList />} />
           <Route path="/package/:id" element={<PackageDetail />} />
           <Route path="/find-userid" element={<FindUserId />} />
@@ -186,7 +187,6 @@ const App = () => {
             />
             <Route path="/flights/booking" element={<FlightBookingPage />} />
             <Route path="/favorite-list" element={<FavoriteList />} />
-            <Route path="/qna" element={<QnaBoardList />} />
             <Route path="/qna/:qnaBoardId" element={<QnaBoardDetail />} />
             <Route path="/qna/write" element={<QnaBoardWrite />} />
             <Route
