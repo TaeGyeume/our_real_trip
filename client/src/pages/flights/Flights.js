@@ -7,6 +7,7 @@ import {fetchFlights} from '../../api/flight/flights';
 import moment from 'moment-timezone';
 import {ToggleButton, Typography, Box, Chip} from '@mui/material';
 import AdBanner from '../../components/ad/AdBanner';
+import {flightBannerData} from '../../data/bannerData';
 
 const Flights = () => {
   const [flights, setFlights] = useState([]); // 전체 항공편 데이터
@@ -47,13 +48,6 @@ const Flights = () => {
     // 검색된 데이터를 state로 전달하며 결과 페이지로 이동
     navigate('/flights/results', {state: {flights: filtered}});
   };
-
-  const bannerData = [
-    {image: '/images/ad/air1.png'},
-    {image: '/images/ad/air2.png'},
-    {image: '/images/ad/air3.png'},
-    {image: '/images/ad/air4.png'}
-  ];
 
   return (
     <div className="container mt-4">
@@ -154,7 +148,7 @@ const Flights = () => {
         </Typography>
       </Box>
 
-      <AdBanner banners={bannerData} />
+      <AdBanner banners={flightBannerData} />
 
       <FlightCardList flights={flights} />
       <FlightCardList flights={flights} />

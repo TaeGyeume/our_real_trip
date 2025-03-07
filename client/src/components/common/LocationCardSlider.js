@@ -10,7 +10,6 @@ const LocationCardSlider = ({locations, onCardClick}) => {
 
   // react-slick slider 설정
   const settings = {
-    dots: true,
     infinite: false,
     speed: 500,
     slidesToShow: 4,
@@ -27,7 +26,7 @@ const LocationCardSlider = ({locations, onCardClick}) => {
 
   return (
     <Box
-      sx={{mt: 4, position: 'relative'}}
+      sx={{mt: -1, position: 'relative', gap: 0.5}}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}>
       <Slider {...settings}>
