@@ -341,54 +341,101 @@ const PackageDetail = () => {
         ))}
       </Box>
 
-      {/* 예약하기 버튼 */}
+      {/* 예약 및 결제 정보 */}
       <Box
         sx={{
-          position: 'fixed',
-          top: '50%',
-          right: '20px',
-          transform: 'translateY(-50%)',
-          width: '200px',
-          padding: '16px',
-          backgroundColor: 'white',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          position: 'fixed', // 고정 배치
+          top: '50%', // 상단에서 50% 지점에 배치
+          right: '20px', // 오른쪽 여백
+          transform: 'translateY(-50%)', // 세로 중앙 정렬
+          width: '300px', // 너비
+          padding: '16px', // 패딩
+          backgroundColor: 'white', // 배경색
+          borderRadius: '10px',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
           textAlign: 'center',
-          zIndex: 1000 // 다른 요소보다 위에 표시되도록 설정
+          zIndex: 1000,
+          border: '1px solid #ddd'
         }}>
-        {/* 결제 혜택 */}
-        <Box sx={{mb: 2}}>
-          <Typography variant="body2" color="text.secondary">
-            결제 혜택
-          </Typography>
-          {discountRate > 0 ? (
-            <Box>
-              <Typography
-                variant="h6"
-                sx={{textDecoration: 'line-through', color: 'gray'}}>
-                {price.toLocaleString()}원
-              </Typography>
-              <Typography variant="h5" sx={{fontWeight: 'bold', color: 'red'}}>
-                {finalPrice.toLocaleString()}원
-              </Typography>
-              <Typography variant="caption" sx={{color: 'blue'}}>
-                (할인율 {discountRate}%)
-              </Typography>
-            </Box>
-          ) : (
-            <Typography variant="h5" sx={{fontWeight: 'bold', color: 'red'}}>
+        {/* 일반가 표시 */}
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{fontWeight: 'bold', mb: 1}}>
+          일반가
+        </Typography>
+
+        {/* 가격 정보 */}
+        {discountRate > 0 ? (
+          <Box>
+            <Typography
+              variant="h6"
+              sx={{
+                textDecoration: 'line-through',
+                color: 'gray',
+                fontSize: '12px'
+              }}>
+              {price.toLocaleString()}원
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 'bold',
+                color: 'red',
+                fontSize: '22px'
+              }}>
               {finalPrice.toLocaleString()}원
             </Typography>
-          )}
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{width: '100%', fontSize: '16px', fontWeight: 'bold'}}
-            onClick={() => navigate(`/package/booking/${id}`)}>
-            예약하기
-          </Button>
-        </Box>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'blue',
+                fontWeight: 'bold',
+                fontSize: '14px'
+              }}>
+              (할인율 {discountRate}%)
+            </Typography>
+          </Box>
+        ) : (
+          <Typography
+            variant="h5"
+            sx={{fontWeight: 'bold', color: 'red', fontSize: '22px'}}>
+            {finalPrice.toLocaleString()}원
+          </Typography>
+        )}
+
+        {/* 예약하기 버튼 */}
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{
+            width: '100%',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            mt: 2,
+            borderRadius: '8px',
+            padding: '12px',
+            backgroundColor: '#007aff',
+            '&:hover': {backgroundColor: '#0066cc'}
+          }}
+          onClick={() => navigate(`/package/booking/${id}`)}>
+          ⚡ 예약하기
+        </Button>
+
+        {/* 구매 후 즉시 확정 문구 */}
+        <Typography
+          variant="body2"
+          sx={{
+            color: 'gray',
+            mt: 1,
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+          ⚡ 구매 후 즉시 확정됩니다.
+          <span style={{marginLeft: '4px', cursor: 'pointer'}}>❓</span>
+        </Typography>
       </Box>
     </Container>
   );
