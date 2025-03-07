@@ -122,11 +122,11 @@ const TravelItemDetailPage = () => {
   };
 
   return (
-    <div className="tour-ticket-container">
+    <div className="user-detail-tour-ticket-container">
       {/* 왼쪽 div 배치 */}
-      <div className="tour-ticket-detail">
-        <div className="ticket-header">
-          <div className="ticket-location">
+      <div className="user-detail-tour-ticket-detail">
+        <div className="user-detail-ticket-header">
+          <div className="user-detail-ticket-location">
             <span>대한민국&nbsp;</span>
             <FaChevronRight />
             &nbsp;
@@ -134,9 +134,9 @@ const TravelItemDetailPage = () => {
             <span>서울</span>
           </div>
 
-          <h1 className="ticket-title">{item.name}</h1>
+          <h1 className="user-detail-ticket-title">{item.name}</h1>
 
-          <div className="review-summary">
+          <div className="user-detail-review-summary">
             <FaShareAlt
               style={{
                 top: '10px',
@@ -166,9 +166,9 @@ const TravelItemDetailPage = () => {
           </div>
         </div>
 
-        <hr className="sun" />
+        <hr className="user-detail-sun" />
 
-        <div className="credit">
+        <div className="user-detail-credit">
           <p>
             <FaCheckCircle color="green" />
             &nbsp; <b>즉시확정</b> 구매 즉시 예약 확정 (일부 상품 이용일 추가 예약 필요)
@@ -179,18 +179,20 @@ const TravelItemDetailPage = () => {
           </p>
         </div>
 
-        <hr className="sun" />
+        <hr className="user-detail-sun" />
 
         <br />
-        <div className="ticket-description">{item.description}</div>
+        <div className="user-detail-ticket-description">{item.description}</div>
 
-        <div className="details-section">
-          <div className="image-list">
-            <div className="image-wrapper">
+        <div className="user-detail-details-section">
+          <div className="user-detail-image-list">
+            <div className="user-detail-image-wrapper">
               <img src={imageUrl} alt={item.name} />
               {!showDetails && (
-                <div className="image-overlay">
-                  <button className="toggle-button" onClick={() => setShowDetails(true)}>
+                <div className="user-detail-image-overlay">
+                  <button
+                    className="user-detail-toggle-button"
+                    onClick={() => setShowDetails(true)}>
                     상품 설명 더 보기 &nbsp;
                     <FaChevronDown />
                   </button>
@@ -214,18 +216,21 @@ const TravelItemDetailPage = () => {
                 })}
 
                 {/* 이미지 접기 버튼 */}
-                <button
-                  className="toggle-button close-btn"
-                  onClick={() => setShowDetails(false)}>
-                  상품 설명 접기 &nbsp;
-                  <FaChevronUp />
-                </button>
+                <div
+                  style={{display: 'flex', justifyContent: 'center', marginTop: '10px'}}>
+                  <button
+                    className="user-detail-toggle-button close-btn"
+                    onClick={() => setShowDetails(false)}>
+                    상품 설명 접기 &nbsp;
+                    <FaChevronUp />
+                  </button>
+                </div>
               </>
             )}
           </div>
         </div>
 
-        <hr className="sun" />
+        <hr className="user-detail-sun" />
 
         <div>
           <h2
@@ -258,10 +263,10 @@ const TravelItemDetailPage = () => {
       </div>
 
       {/* 오른쪽 div 배치 */}
-      <div className="empty-space">
+      <div className="user-detail-empty-space">
         <br />
-        <div className="right-space">
-          <div className="price-info">
+        <div className="user-detail-right-space">
+          <div className="user-detail-price-info">
             <p
               style={{
                 fontFamily: `"Apple SD Gothic", "Malgun Gothic", sans-serif`,
@@ -270,14 +275,14 @@ const TravelItemDetailPage = () => {
               }}>
               일반가
             </p>
-            <p className="original-price">{item.price.toLocaleString()}원</p>
+            <p className="user-detail-original-price">{item.price.toLocaleString()}원</p>
           </div>
 
-          <button className="reserve-button" onClick={handleReserve}>
+          <button className="user-detail-reserve-button" onClick={handleReserve}>
             ⚡ 예약하기
           </button>
 
-          <p className="instant-confirmation">
+          <p className="user-detail-instant-confirmation">
             <FaBolt /> 구매 후 즉시 확정됩니다. <FaQuestionCircle />
           </p>
         </div>

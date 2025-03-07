@@ -50,37 +50,6 @@ const AccommodationCard = ({
     window.open(url, '_blank');
   };
 
-  // 수정 페이지로 이동
-  const handleModifyClick = e => {
-    e.stopPropagation(); // 카드 클릭 이벤트 방지
-    navigate(`/product/accommodations/modify/${accommodation._id}`);
-  };
-
-  // 숙소 삭제 핸들러
-  const handleDeleteClick = async e => {
-    e.stopPropagation(); // 카드 클릭 이벤트 방지
-
-    const confirmDelete = window.confirm(
-      `"${accommodation.name}" 숙소를 삭제하시겠습니까?`
-    );
-    if (!confirmDelete) return;
-
-    try {
-      await deleteAccommodation(accommodation._id);
-
-      alert('숙소가 삭제되었습니다.');
-
-      if (onAccommodationDeleted) {
-        onAccommodationDeleted(accommodation._id); // 부모 컴포넌트에서 목록 업데이트
-      } else {
-        window.location.reload(); // 현재 페이지 새로고침
-      }
-    } catch (err) {
-      console.error('숙소 삭제 오류:', err);
-      alert('숙소 삭제에 실패했습니다.');
-    }
-  };
-
   // 이미지 URL 변환 로직 추가
   const SERVER_URL =
     process.env.REACT_APP_ENV === 'development'
@@ -96,8 +65,8 @@ const AccommodationCard = ({
   return (
     <Card
       sx={{
-        maxWidth: 300,
-        height: isAuthenticated && user?.roles.includes('admin') ? 370 : 330, // 관리자일 때 카드 크기 증가
+        maxWidth: 260,
+        height: isAuthenticated && user?.roles.includes('admin') ? 350 : 310, // 관리자일 때 카드 크기 증가
         borderRadius: 3,
         boxShadow: 3,
         cursor: 'pointer',
@@ -107,11 +76,12 @@ const AccommodationCard = ({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden' // 내용이 넘치지 않도록 설정
-      }}>
+      }}
+      onClick={handleCardClick}>
       {/* 숙소 이미지 */}
       <CardMedia
         component="img"
-        height="190"
+        height="170"
         image={imageUrl}
         alt={accommodation.name}
         sx={{
@@ -131,26 +101,12 @@ const AccommodationCard = ({
         </Typography>
 
         {/* 평점 표시 */}
-        {ratingInfo[accommodation._id]?.reviewCount === 0 ? (
-          <Box display="flex" alignItems="center" sx={{mt: 1}}>
-            <Typography
-              variant="body2"
-              fontWeight="bold"
-              sx={{display: 'flex', alignItems: 'center'}}>
-              <span style={{color: '#007BFF', fontSize: '18px', marginRight: '4px'}}>
-                ⭐
-              </span>
-              0 <span style={{marginLeft: '4px', color: 'gray'}}>(0 리뷰)</span>
-            </Typography>
-          </Box>
-        ) : (
-          <ReviewList
-            productId={accommodation._id}
-            setRatingInfo={setRatingInfo}
-            ratingInfo={ratingInfo[accommodation._id] || {avgRating: 0, reviewCount: 0}}
-            showOnlySummary={true}
-          />
-        )}
+        <ReviewList
+          productId={accommodation._id}
+          setRatingInfo={setRatingInfo}
+          ratingInfo={ratingInfo[accommodation._id] || {avgRating: 0, reviewCount: 0}}
+          showOnlySummary={true}
+        />
 
         {/* 가격 */}
         <Typography variant="h6" fontWeight="bold" sx={{mt: 1}}>

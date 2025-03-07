@@ -15,7 +15,7 @@ const AccommodationAmenities = ({amenities}) => {
   return (
     <Box sx={{mt: 4, p: 2, borderRadius: 2, backgroundColor: '#f5f5f5'}}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
-        🏡 숙소 편의시설
+        숙소 편의시설
       </Typography>
 
       {/* 편의시설 목록을 2열로 정렬 */}

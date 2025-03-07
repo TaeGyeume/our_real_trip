@@ -2,6 +2,17 @@ import React, {useState, useEffect} from 'react';
 import {useParams, useSearchParams, useNavigate} from 'react-router-dom';
 import {getRoomById} from '../../api/room/roomService';
 import RoomImageGallery from '../../components/accommodations/RoomImageGallery';
+import {
+  Box,
+  Typography,
+  Paper,
+  Divider,
+  Button,
+  Chip,
+  Grid,
+  ListItemText
+} from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const RoomDetail = () => {
   const {roomId} = useParams();
@@ -54,61 +65,101 @@ const RoomDetail = () => {
   };
 
   return (
-    <div className="container mt-4">
+    <Box sx={{maxWidth: 900, mx: 'auto', mt: 4, p: 2}}>
       {/* 객실 이미지 갤러리 */}
       <RoomImageGallery imageUrls={imageUrls} />
 
       {/* 객실 정보 카드 */}
-      <div className="card mt-4 p-4">
-        <div className="d-flex justify-content-between border-bottom pb-3">
-          <div>
-            <p>
-              <strong>체크인 날짜:</strong> {startDate}
-            </p>
-            <p>
-              <strong>체크아웃 날짜:</strong> {endDate}
-            </p>
-          </div>
-          <div>
-            <p>
-              <strong>인원:</strong> {adults}명
-            </p>
-          </div>
-        </div>
+      <Paper elevation={3} sx={{mt: 4, p: 3, borderRadius: 2}}>
+        {/* 체크인/체크아웃 정보 */}
+        <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 3}}>
+          <Paper
+            elevation={2}
+            sx={{p: 2, borderRadius: 2, flex: 1, textAlign: 'center', mx: 1}}>
+            <Typography variant="subtitle1" fontWeight="bold">
+              체크인 날짜
+            </Typography>
+            <Typography variant="body1">{startDate}</Typography>
+          </Paper>
+          <Paper
+            elevation={2}
+            sx={{p: 2, borderRadius: 2, flex: 1, textAlign: 'center', mx: 1}}>
+            <Typography variant="subtitle1" fontWeight="bold">
+              체크아웃 날짜
+            </Typography>
+            <Typography variant="body1">{endDate}</Typography>
+          </Paper>
+        </Box>
 
-        <div className="mt-3">
-          <h3 className="mb-3">{roomData.name}</h3>
-          {roomData.description && (
-            <p style={{fontSize: '1.1rem', color: '#555'}}>{roomData.description}</p>
-          )}
+        {/* 객실 이름과 설명 */}
+        <Typography variant="h4" fontWeight="bold" sx={{mb: 2}}>
+          {roomData.name}
+        </Typography>
+        {roomData.description && (
+          <Typography variant="body1" sx={{fontSize: '1.1rem', color: '#555', mb: 2}}>
+            {roomData.description}
+          </Typography>
+        )}
 
-          <p>
+        <Divider sx={{mb: 3}} />
+
+        {/* 객실 상세 정보 */}
+        <Box sx={{mb: 3}}>
+          <Typography variant="body1">
             <strong>최대 수용 인원:</strong> {roomData.maxGuests}명
-          </p>
-          <p>
+          </Typography>
+        </Box>
+
+        {/* 체크인/체크아웃 시간 */}
+        <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 3}}>
+          <Typography variant="body1">
             <strong>체크인 시간:</strong> {roomData.checkInTime || '15:00'}
-          </p>
-          <p>
+          </Typography>
+          <Typography variant="body1">
             <strong>체크아웃 시간:</strong> {roomData.checkOutTime || '11:00'}
-          </p>
+          </Typography>
+        </Box>
 
-          {roomData.amenities?.length > 0 && (
-            <p>
-              <strong>편의시설:</strong> {roomData.amenities.join(', ')}
-            </p>
-          )}
+        <Divider sx={{mb: 3}} />
 
-          <div className="d-flex justify-content-between align-items-center mt-4">
-            <h4>
-              💰 <strong>{roomData.pricePerNight.toLocaleString()}원</strong>/1박
-            </h4>
-            <button className="btn btn-primary btn-lg" onClick={handleBooking}>
-              🏨 예약하기
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* 편의시설 */}
+        {roomData.amenities?.length > 0 && (
+          <Box sx={{mt: 3, p: 2, borderRadius: 2, backgroundColor: '#f5f5f5'}}>
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
+              객실 편의시설
+            </Typography>
+
+            <Box sx={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1}}>
+              {roomData.amenities.map((amenity, index) => (
+                <Box key={index} sx={{display: 'flex', alignItems: 'center'}}>
+                  <CheckCircleIcon sx={{color: 'secondary.main', mr: 1}} />
+                  <Typography variant="body1" sx={{color: 'text.primary'}}>
+                    {amenity}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        <Divider sx={{mt: 3, mb: 3}} />
+
+        {/* 가격 & 예약 버튼 */}
+        <Box
+          sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <Typography variant="h5" fontWeight="bold">
+            {roomData.pricePerNight.toLocaleString()}원 / 1박
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={handleBooking}>
+            🏨 예약하기
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 

@@ -31,9 +31,6 @@ const Main = () => {
       <div>
         <UserList showFilter={false} showAdBanner={false} />
       </div>
-      <div>
-        <PopularProductsSlider />
-      </div>
 
       <Box sx={{mt: 5}}>
         <PopularProductsSlider />

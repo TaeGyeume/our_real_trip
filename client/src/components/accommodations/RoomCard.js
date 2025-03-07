@@ -138,13 +138,11 @@ const RoomCard = ({room, onRoomDeleted}) => {
               <strong>편의시설:</strong> {room.amenities.join(', ')}
             </Typography>
           )}
-          {startDate && (
+          {startDate && availableRooms !== null && availableRooms <= 3 && (
             <Typography
               variant="body2"
               color={availableRooms > 0 ? 'success.main' : 'error.main'}>
-              {availableRooms !== null
-                ? `예약 가능 객실: ${availableRooms}개`
-                : '로딩 중...'}
+              {availableRooms > 0 ? `객실이 ${availableRooms}개 남았어요!` : '예약 불가'}
             </Typography>
           )}
         </CardContent>

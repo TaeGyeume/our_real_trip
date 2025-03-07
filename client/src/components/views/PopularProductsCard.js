@@ -26,7 +26,7 @@ const PopularProductsCard = ({product}) => {
   return (
     <Card
       sx={{
-        width: 250, // 🔹 `TravelItemCard`와 동일한 크기
+        width: 250, // `TravelItemCard`와 동일한 크기
         // height: 330, // 기본 높이 (평점 추가 시 크기 조정 가능)
         borderRadius: 1,
         boxShadow: 1,
