@@ -77,11 +77,16 @@ export default function SignInCard() {
   // 소셜 로그인에서 중복 에러 처리
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('error') === 'duplicate') {
+    const errorParam = params.get('error');
+    if (errorParam) {
       setUseridError(true);
-      setErrorMessage('이미 가입된 사용자입니다.');
+      setErrorMessage(decodeURIComponent(errorParam));
+
+      // URL에서 error 파라미터 제거 (replace를 사용하여 history에 남기지 않음)
+      params.delete('error');
+      navigate(`${location.pathname}?${params.toString()}`, {replace: true});
     }
-  }, [location]);
+  }, [location, navigate]);
 
   // 비밀번호 찾기 모달 열기/닫기
   const handleForgotOpen = (e?: React.MouseEvent) => {
