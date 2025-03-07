@@ -223,7 +223,7 @@ const AccommodationDetail = () => {
       <Card sx={{my: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2, boxShadow: 1}}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold">
-            📍 주소
+            주소
           </Typography>
           <Typography variant="body1">{accommodation.address}</Typography>
 
@@ -262,7 +262,7 @@ const AccommodationDetail = () => {
       {/* 예약 가능한 객실 목록 */}
       <Box sx={{mt: 4}}>
         <Typography variant="h5" fontWeight="bold" sx={{mb: 2}}>
-          🏨 예약 가능한 객실
+          예약 가능한 객실
         </Typography>
         <Divider sx={{mb: 2}} />
         {availableRooms?.length > 0 ? (
