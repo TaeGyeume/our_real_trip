@@ -3,27 +3,28 @@ import {useNavigate} from 'react-router-dom';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import {FLIGHT_IMAGES, AIRPORT_NAMES} from '../../data/airline';
 
 // 공항별 대표 이미지 매핑
-const FLIGHT_IMAGES = {
-  제주: '/images/flightscard/jeju.jpg',
-  부산: '/images/flightscard/busan.jpg',
-  대구: '/images/flightscard/daegu.jpg',
-  광주: '/images/flightscard/gwangju.jpg',
-  청주: '/images/flightscard/cheongju.jpg',
-  여수: '/images/flightscard/yeosu.jpg'
-};
+// const FLIGHT_IMAGES = {
+//   제주: '/images/flightscard/jeju.jpg',
+//   부산: '/images/flightscard/busan.jpg',
+//   대구: '/images/flightscard/daegu.jpg',
+//   광주: '/images/flightscard/gwangju.jpg',
+//   청주: '/images/flightscard/cheongju.jpg',
+//   여수: '/images/flightscard/yeosu.jpg'
+// };
 
 // IATA 코드 → 한글 도시명 변환
-const AIRPORT_NAMES = {
-  GMP: '서울', // 김포공항 → 서울
-  PUS: '부산', // 김해공항 → 부산
-  CJU: '제주', // 제주공항 → 제주
-  TAE: '대구', // 대구공항 → 대구
-  KWJ: '광주', // 광주공항 → 광주
-  CJJ: '청주', // 청주공항 → 청주
-  RSU: '여수' // 여수공항 → 여수
-};
+// const AIRPORT_NAMES = {
+//   GMP: '서울', // 김포공항 → 서울
+//   PUS: '부산', // 김해공항 → 부산
+//   CJU: '제주', // 제주공항 → 제주
+//   TAE: '대구', // 대구공항 → 대구
+//   KWJ: '광주', // 광주공항 → 광주
+//   CJJ: '청주', // 청주공항 → 청주
+//   RSU: '여수' // 여수공항 → 여수
+// };
 
 const FlightCardList = ({flights}) => {
   const navigate = useNavigate();

@@ -1,4 +1,6 @@
 const TravelItem = require('../models/TravelItem');
+const mongoose = require('mongoose');
+const Review = require('../models/Review');
 const fs = require('fs');
 const path = require('path');
 
@@ -361,5 +363,29 @@ exports.deleteCategory = async categoryId => {
   } catch (error) {
     console.error('카테고리 삭제 중 오류 발생:', error.message);
     return {message: '카테고리 삭제 중 오류 발생: ' + error.message};
+  }
+};
+
+// 여행용품의 평균 평점을 업데이트하는 함수
+exports.updateTravelItemRating = async productId => {
+  try {
+    const objectId = new mongoose.Types.ObjectId(productId); // productId를 ObjectId로 변환
+
+    // 여행용품과 연결된 모든 리뷰들의 평균 평점 계산
+    const result = await Review.aggregate([
+      {$match: {productId: objectId}}, // ObjectId 변환 후 비교
+      {$group: {_id: null, avgRating: {$avg: '$rating'}}} // 평균 평점 계산
+    ]);
+
+    const avgRating = result.length > 0 ? result[0].avgRating : 0; // 리뷰가 없으면 0
+
+    // 여행용품 문서 업데이트
+    await TravelItem.findByIdAndUpdate(productId, {rating: avgRating});
+
+    console.log(`여행용품(${productId}) 평점 업데이트 완료: ${avgRating}`);
+    return avgRating;
+  } catch (error) {
+    console.error('여행용품 평점 업데이트 중 오류 발생:', error);
+    throw new Error('여행용품 평점 업데이트 중 오류 발생: ' + error.message);
   }
 };
