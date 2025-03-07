@@ -69,6 +69,7 @@ export default function ForgotPassword({open, handleClose}: ForgotPasswordProps)
         {success && <div className="alert alert-success">{success}</div>}
 
         <OutlinedInput
+          autoComplete="off"
           autoFocus
           required
           margin="dense"
