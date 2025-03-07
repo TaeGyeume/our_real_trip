@@ -169,17 +169,19 @@ const AccommodationDetail = () => {
               {accommodation.description}
             </Typography>
           </CardContent>
-          <Box
-            sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+          <div className="review-summary">
             <FaShareAlt
               style={{
+                top: '10px',
+                right: '10px',
+                border: 'none',
+                background: 'none',
                 fontSize: '18px',
-                color: 'darkgray',
-                cursor: 'pointer',
-                marginRight: '10px'
+                color: 'dark gray'
               }}
               onClick={handleCopyLink}
-            />
+            />{' '}
+            &nbsp;&nbsp;
             <Snackbar
               open={openAlert}
               anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
@@ -187,7 +189,6 @@ const AccommodationDetail = () => {
                 링크 복사 완료 🎉
               </Alert>
             </Snackbar>
-
             <ReviewList
               productId={accommodationId}
               setRatingInfo={setRatingInfo}
@@ -195,7 +196,7 @@ const AccommodationDetail = () => {
               showOnlySummary={true}
             />
             <FaChevronRight className="more-icon" onClick={scrollToReviews} />
-          </Box>
+          </div>
         </Card>
 
         {/* 리뷰 요약 및 공유 아이콘 */}

@@ -1,6 +1,4 @@
-// src/components/accommodations/AccommodationImageGallery.js
 import React, {useState} from 'react';
-import Slider from 'react-slick';
 import Modal from 'react-modal';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -13,72 +11,109 @@ const AccommodationImageGallery = ({images, accommodationName, serverUrl}) => {
 
   if (!images || images.length === 0) return null;
 
-  // 이미지가 1개일 때 슬라이더 설정을 다르게 적용
-  const settings = {
-    dots: images.length > 1, // 이미지 1개면 dots 비활성화
-    infinite: images.length > 1, // 이미지 1개면 무한 스크롤 비활성화
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: images.length > 1, // 1개일 때 자동 재생 X
-    autoplaySpeed: 3000,
-    arrows: images.length > 1, // 이미지 1개면 화살표 숨김
-    beforeChange: (current, next) => {
-      document.querySelectorAll('.slick-slide').forEach(slide => {
-        if (slide.getAttribute('aria-hidden') === 'true') {
-          slide.setAttribute('tabindex', '-1'); // 포커스 방지
-        } else {
-          slide.removeAttribute('tabindex'); // 활성화된 슬라이드는 tabindex 제거
-        }
-      });
-    }
-  };
-
-  // 이미지 클릭 시 모달 열기
   const openModal = index => {
     setSelectedImageIndex(index);
     setModalIsOpen(true);
   };
 
-  // 모달 닫기
   const closeModal = () => {
     setModalIsOpen(false);
   };
 
-  // 다음 이미지 보기
   const nextImage = () => {
     setSelectedImageIndex(prevIndex => (prevIndex + 1) % images.length);
   };
 
-  // 이전 이미지 보기
   const prevImage = () => {
     setSelectedImageIndex(prevIndex => (prevIndex - 1 + images.length) % images.length);
   };
 
   return (
     <div>
-      {/* 이미지 슬라이더 */}
-      <Slider {...settings} className="mb-3">
-        {images.map((img, index) => {
-          let imageUrl = img.startsWith('/uploads/') ? `${serverUrl}${img}` : img;
+      {images.length === 1 ? (
+        // 이미지가 1개일 때 (기존 방식 유지)
+        <div onClick={() => openModal(0)} style={{cursor: 'pointer'}}>
+          <img
+            src={
+              images[0].startsWith('/uploads/') ? `${serverUrl}${images[0]}` : images[0]
+            }
+            alt={`${accommodationName} 이미지`}
+            style={{
+              width: '100%',
+              height: '400px',
+              objectFit: 'cover',
+              borderRadius: '8px'
+            }}
+          />
+        </div>
+      ) : (
+        // 이미지가 2개 이상일 때 (격자 레이아웃 적용)
+        <div style={{display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px'}}>
+          {/* 첫 번째 큰 이미지 */}
+          <div onClick={() => openModal(0)} style={{cursor: 'pointer'}}>
+            <img
+              src={
+                images[0].startsWith('/uploads/') ? `${serverUrl}${images[0]}` : images[0]
+              }
+              alt={`${accommodationName} 이미지 1`}
+              style={{
+                width: '100%',
+                height: '400px',
+                objectFit: 'cover',
+                borderRadius: '8px'
+              }}
+            />
+          </div>
 
-          return (
-            <div key={index} className="carousel-slide" style={{cursor: 'pointer'}}>
-              <img
-                src={imageUrl}
-                alt={`${accommodationName} 이미지 ${index + 1}`}
-                style={{
-                  width: '100%',
-                  height: '400px',
-                  objectFit: 'cover',
-                  borderRadius: '8px'
-                }}
-                onClick={() => openModal(index)}
-              />
-            </div>
-          );
-        })}
-      </Slider>
+          {/* 작은 이미지 최대 2개만 표시 */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateRows: `repeat(2, 1fr)`,
+              gap: '10px'
+            }}>
+            {images.slice(1, 3).map((img, index) => {
+              // "더보기"를 마지막에 추가할지 여부 체크
+              const isLastImage = index === 1 && images.length > 3;
+              return (
+                <div
+                  key={index}
+                  onClick={() => openModal(index + 1)}
+                  style={{cursor: 'pointer', position: 'relative'}}>
+                  <img
+                    src={img.startsWith('/uploads/') ? `${serverUrl}${img}` : img}
+                    alt={`${accommodationName} 이미지 ${index + 2}`}
+                    style={{
+                      width: '100%',
+                      height: '190px',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      filter: isLastImage ? 'brightness(50%)' : 'none' // 마지막 이미지일 경우 흐리게
+                    }}
+                  />
+                  {isLastImage && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        color: 'white',
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        padding: '10px 15px',
+                        borderRadius: '5px'
+                      }}>
+                      더보기
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 이미지 확대 모달 */}
       <Modal
@@ -127,7 +162,11 @@ const AccommodationImageGallery = ({images, accommodationName, serverUrl}) => {
 
         {/* 확대 이미지 */}
         <img
-          src={`${serverUrl}${images[selectedImageIndex]}`}
+          src={
+            images[selectedImageIndex].startsWith('/uploads/')
+              ? `${serverUrl}${images[selectedImageIndex]}`
+              : images[selectedImageIndex]
+          }
           alt="확대 이미지"
           style={{
             maxWidth: '90vw',
