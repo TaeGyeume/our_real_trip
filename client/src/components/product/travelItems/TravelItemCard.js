@@ -70,7 +70,7 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
   return (
     <Card
       sx={{
-        width: 250,
+        width: 300,
         height: isAuthenticated && user?.roles.includes('admin') ? 370 : 330, // 관리자일 때 크기 증가
         borderRadius: 1,
         boxShadow: 1,
@@ -79,13 +79,14 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
         '&:hover': {boxShadow: 6},
         mb: 2,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}
       onClick={handleCardClick}>
       {/* 이미지 영역 */}
       <CardMedia
         component="img"
-        height="200"
+        height="190"
         image={imageUrl}
         alt={travelItem?.name || '상품 이미지'}
         onError={() => setImgError(true)}

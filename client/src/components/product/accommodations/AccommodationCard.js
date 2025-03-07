@@ -106,7 +106,7 @@ const AccommodationCard = ({
         mb: 2,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden' // 🔹 내용이 넘치지 않도록 설정
+        overflow: 'hidden' // 내용이 넘치지 않도록 설정
       }}>
       {/* 숙소 이미지 */}
       <CardMedia

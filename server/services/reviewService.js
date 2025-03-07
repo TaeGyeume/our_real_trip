@@ -4,22 +4,12 @@ const Accommodation = require('../models/Accommodation');
 const TravelItem = require('../models/TravelItem');
 const mongoose = require('mongoose');
 const accommodationService = require('../services/accommodationService');
-const travelItemService = require('../services/travelItemService');
 
 exports.createReview = async reviewData => {
   try {
     const newReview = new Review(reviewData);
     await newReview.save();
-    // `productId`를 기반으로 숙소/여행용품 판별
-    const productType = await determineProductType(reviewData.productId);
-    if (!productType)
-      throw new Error('해당 productId에 대한 숙소 또는 여행용품을 찾을 수 없습니다.');
 
-    if (productType === 'accommodation') {
-      await accommodationService.updateAccommodationRating(reviewData.productId);
-    } else {
-      await travelItemService.updateTravelItemRating(reviewData.productId);
-    }
     return newReview;
   } catch (error) {
     console.error('리뷰 등록 오류:', error);
@@ -100,13 +90,7 @@ exports.updateReview = async (reviewId, updateData, imageFiles) => {
     }
 
     await review.save();
-    // `productId`를 기반으로 숙소/여행용품 판별
-    const productType = await determineProductType(review.productId);
-    if (productType === 'accommodation') {
-      await accommodationService.updateAccommodationRating(review.productId);
-    } else {
-      await travelItemService.updateTravelItemRating(review.productId);
-    }
+    await accommodationService.updateAccommodationRating(review.productId);
     return review;
   } catch (error) {
     console.error('[서버] 리뷰 수정 실패:', error.message);
@@ -129,13 +113,7 @@ exports.deleteReview = async id => {
       throw new Error('리뷰를 찾을 수 없습니다.');
     }
 
-    // `productId`를 기반으로 숙소/여행용품 판별
-    const productType = await determineProductType(review.productId);
-    if (productType === 'accommodation') {
-      await accommodationService.updateAccommodationRating(review.productId);
-    } else {
-      await travelItemService.updateTravelItemRating(review.productId);
-    }
+    await accommodationService.updateAccommodationRating(review.productId);
     console.log('[서버] 리뷰 및 댓글 삭제 성공');
   } catch (error) {
     console.error('[서버] 리뷰 삭제 실패:', error.message);
