@@ -400,7 +400,7 @@ const UserList = () => {
         <Typography variant="subtitle1" fontWeight="bold" mt={2}>
           평점
         </Typography>
-        
+
         <FormControl component="fieldset">
           <RadioGroup value={ratingFilter} onChange={handleRatingChange}>
             <FormControlLabel value="all" control={<Radio />} label="전체" />

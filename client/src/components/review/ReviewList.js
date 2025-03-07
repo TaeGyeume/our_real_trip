@@ -393,6 +393,17 @@ const ReviewList = ({
     );
   };
 
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
+  const getImageUrl = imagePath => {
+    if (!imagePath) return '/default-image.jpg';
+
+    return imagePath.startsWith('/uploads/') ? `${SERVER_URL}${imagePath}` : imagePath;
+  };
+
   const isAdmin = currentUser?.roles?.includes('admin');
 
   return (
@@ -532,7 +543,8 @@ const ReviewList = ({
                           />
                         ) : (
                           <img
-                            src={`http://localhost:5000${img}`}
+                            // src={`http://localhost:5000${img}`}
+                            src={getImageUrl(img)}
                             alt={`기존 이미지 ${index + 1}`}
                           />
                         )}
@@ -571,7 +583,8 @@ const ReviewList = ({
                       {topReview.images.map((image, index) => (
                         <img
                           key={index}
-                          src={`http://localhost:5000${image}`}
+                          // src={`http://localhost:5000${image}`}
+                          src={getImageUrl(image)}
                           alt={`리뷰 이미지 ${index + 1}`}
                           className="review-thumbnail"
                           onClick={() => {
@@ -616,7 +629,8 @@ const ReviewList = ({
 
                             {/* 선택된 이미지 */}
                             <img
-                              src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              // src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              src={getImageUrl(selectedImages[currentImageIndex])}
                               alt="확대된 이미지"
                               className="modal-image"
                             />
@@ -883,7 +897,8 @@ const ReviewList = ({
                           />
                         ) : (
                           <img
-                            src={`http://localhost:5000${img}`}
+                            // src={`http://localhost:5000${img}`}
+                            src={getImageUrl(img)}
                             alt={`기존 이미지 ${index + 1}`}
                           />
                         )}
@@ -930,7 +945,8 @@ const ReviewList = ({
                       {review.images.map((image, index) => (
                         <img
                           key={index}
-                          src={`http://localhost:5000${image}`}
+                          // src={`http://localhost:5000${image}`}
+                          src={getImageUrl(image)}
                           alt={`리뷰 이미지 ${index + 1}`}
                           className="review-thumbnail"
                           onClick={() =>
@@ -974,7 +990,8 @@ const ReviewList = ({
 
                             {/* 선택된 이미지 */}
                             <img
-                              src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              // src={`http://localhost:5000${selectedImages[currentImageIndex]}`}
+                              src={getImageUrl(selectedImages[currentImageIndex])}
                               alt="확대된 이미지"
                               className="modal-image"
                             />
