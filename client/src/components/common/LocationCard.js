@@ -9,7 +9,9 @@ const LocationCard = ({title, image, onClick}) => {
         borderRadius: 2, // 모서리 둥글게
         overflow: 'hidden', // 둥근 모서리에 맞게 내용 잘림
         position: 'relative', // 오버레이(absolute) 배치를 위해 relative 설정
-        cursor: 'pointer'
+        cursor: 'pointer',
+        marginBottom: 4,
+        ml: 1
       }}
       onClick={onClick}>
       <CardActionArea

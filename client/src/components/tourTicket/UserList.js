@@ -19,6 +19,7 @@ import {
 import {ArrowBackIosNew, ArrowForwardIos} from '@mui/icons-material';
 import ReviewList from '../review/ReviewList';
 import AdBanner from '../ad/AdBanner';
+import {tourticketBannerData} from '../../data/bannerData';
 
 const UserList = () => {
   const [tickets, setTickets] = useState([]);
@@ -224,24 +225,9 @@ const UserList = () => {
     setRegionType('domestic');
   };
 
-  const bannerData = [
-    {
-      image: '/images/ad/tourticket1.png'
-    },
-    {
-      image: '/images/ad/tourticket2.png'
-    },
-    {
-      image: '/images/ad/tourticket3.png'
-    },
-    {
-      image: '/images/ad/tourticket4.png'
-    }
-  ];
-
   return (
     <>
-      <AdBanner banners={bannerData} />
+      <AdBanner banners={tourticketBannerData} />
       <br />
       <div className="user-list-container">
         <div className="user-list-filter">
