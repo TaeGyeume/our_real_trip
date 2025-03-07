@@ -71,11 +71,11 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
     <Card
       sx={{
         width: 250,
-        height: isAuthenticated && user?.roles.includes('admin') ? 370 : 330, // 🔹 관리자일 때 크기 증가
+        height: isAuthenticated && user?.roles.includes('admin') ? 370 : 330, // 관리자일 때 크기 증가
         borderRadius: 1,
         boxShadow: 1,
         cursor: 'pointer',
-        transition: 'height 0.3s ease-in-out', // 🔹 부드러운 크기 변화 효과 추가
+        transition: 'height 0.3s ease-in-out', // 부드러운 크기 변화 효과 추가
         '&:hover': {boxShadow: 6},
         mb: 2,
         display: 'flex',
@@ -101,7 +101,7 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
-          flexGrow: 1 // 🔹 버튼이 추가될 때 밀리지 않도록 함
+          flexGrow: 1 // 버튼이 추가될 때 밀리지 않도록 함
         }}>
         {/* 상품명 (한 줄 고정, 길면 생략) */}
         <Typography
