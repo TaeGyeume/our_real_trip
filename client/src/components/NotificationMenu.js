@@ -100,7 +100,12 @@ const NotificationMenu = () => {
               overflowY: 'auto'
             }}
             ref={listRef}>
-            <Paper sx={{boxShadow: 3, borderRadius: 1}}>
+            <Paper
+              sx={{
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                boxShadow: 3,
+                borderRadius: 1
+              }}>
               <MenuList>
                 <Typography variant="subtitle1" sx={{p: 1}}>
                   알림

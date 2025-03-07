@@ -93,7 +93,7 @@ const TravelItemPurchaseForm = () => {
       .slice(2, 19) // YYMMDDTHHMMSS
       .replace(/[-T:]/g, ''); // YYMMDDHHMMSS
 
-    const merchant_uid = `${user.username}_${formattedDate}`;
+    const merchant_uid = `travelItem_${user.username}_${formattedDate}`;
 
     try {
       const bookingResponse = await createBooking({

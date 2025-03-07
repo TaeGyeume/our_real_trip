@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es5", // 출력할 JavaScript 버전
+    "lib": ["dom", "dom.iterable", "esnext"], // 사용할 라이브러리
+    "allowJs": true, // 기존 JavaScript 파일도 사용할 수 있도록 허용
+    "skipLibCheck": true, // 라이브러리의 타입 검사 건너뛰기
+    "esModuleInterop": true, // CommonJS와 ESModules 간 호환성
+    "allowSyntheticDefaultImports": true, // 기본 import 구문 허용
+    "strict": true, // 엄격한 타입 체크
+    "forceConsistentCasingInFileNames": true, // 파일명 대소문자 일관성 강제
+    "module": "esnext", // ES 모듈 시스템 사용
+    "moduleResolution": "node", // Node.js 모듈 해석 방식
+    "resolveJsonModule": true, // JSON 파일을 모듈로 해석
+    "isolatedModules": true, // 독립적인 모듈로 처리
+    "noEmit": false, // 컴파일된 JavaScript 파일 생성
+    "outDir": "./build", // 컴파일된 파일을 저장할 디렉터리
+    "jsx": "react" // JSX 구문을 처리할 방법
+  },
+  "include": [
+    "src" // TypeScript로 처리할 파일 범위 지정
+  ],
+  "exclude": [
+    "node_modules", // 제외할 파일/폴더
+    "build" // 빌드 폴더 제외
+  ]
+}

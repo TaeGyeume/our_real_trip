@@ -2,8 +2,6 @@ import axios from '../axios';
 import {authAPI} from '../auth/auth';
 import {useAuthStore} from '../../store/authStore';
 
-// const BASE_URL = 'http://localhost:5000/reviews';
-
 const requestConfig = {
   withCredentials: true,
   headers: {
@@ -136,7 +134,7 @@ export const toggleLike = async (reviewId, userId) => {
     // console.log(`[프론트] 좋아요 요청 userId:`, userId);
 
     const response = await axios.patch(
-      `${reviewId}/like`,
+      `reviews/${reviewId}/like`,
       {userId},
       {
         headers: {
@@ -156,7 +154,7 @@ export const toggleLike = async (reviewId, userId) => {
 
 export const getBestReviews = async productId => {
   try {
-    const response = await axios.get(`${productId}/best`);
+    const response = await axios.get(`reviews/${productId}/best`);
     return response.data.reviews;
   } catch (error) {
     console.error(

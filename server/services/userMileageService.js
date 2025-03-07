@@ -3,11 +3,7 @@ const MileageHistory = require('../models/MileageHistory');
 const mongoose = require('mongoose');
 
 // 마일리지 적립 (User에 반영 + MileageHistory에 기록)
-exports.addMileageWithHistory = async (
-  userId,
-  amount,
-  description = '예약 결제 적립'
-) => {
+exports.addMileageWithHistory = async (userId, amount, description = '예약 적립') => {
   try {
     const user = await User.findById(userId);
     if (!user) throw new Error('사용자를 찾을 수 없습니다.');
