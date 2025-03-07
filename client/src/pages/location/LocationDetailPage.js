@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {Box, Typography, Button} from '@mui/material';
 import {locationData} from '../../data/locationData';
+import TourTicketList from '../../components/mainbodycard/TourTicketList';
 
 const LocationDetailPage = () => {
   const {id} = useParams();
@@ -178,7 +179,7 @@ const LocationDetailPage = () => {
             </Typography>
             {/* 투어·티켓 관련 컴포넌트 or 데이터 */}
             <Typography variant="body2">
-              여기에 투어·티켓 상품 리스트를 보여줍니다.
+              <TourTicketList location={locationInfo.title} />
             </Typography>
           </Box>
         )}
