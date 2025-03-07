@@ -167,3 +167,21 @@ exports.deleteCategory = async (req, res) => {
     res.status(400).json({message: error.message});
   }
 };
+
+exports.updateRating = async (req, res) => {
+  try {
+    const {itemId} = req.params;
+
+    // 여행용품의 평점 업데이트
+    const updatedRating = await travelItemService.updateTravelItemRating(itemId);
+
+    res.json({
+      message: '여행용품 평점이 업데이트되었습니다.',
+      rating: updatedRating
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({message: '여행용품 평점 업데이트 중 오류 발생', error: error.message});
+  }
+};
