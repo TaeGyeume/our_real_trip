@@ -16,7 +16,7 @@ import {
   FaBolt,
   FaQuestionCircle
 } from 'react-icons/fa';
-import {Alert, Snackbar, Button, TextField, Typography} from '@mui/material';
+import {Alert, Snackbar, Typography} from '@mui/material';
 
 const TourTicketDetail = () => {
   const {id} = useParams();
@@ -26,7 +26,7 @@ const TourTicketDetail = () => {
   const [ticket, setTicket] = useState(null);
   const [user, setUser] = useState(null);
 
-  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
+  const [ratingInfo, setRatingInfo] = useState({});
   const [showDetails, setShowDetails] = useState(false);
   const [openAlert, setOpenAlert] = useState(false);
 
@@ -131,17 +131,44 @@ const TourTicketDetail = () => {
     ? Object.keys(reviewStatus).some(key => key.startsWith(`${id}_`) && reviewStatus[key])
     : false;
 
+  const domesticLocations = [
+    '서울',
+    '경기도',
+    '강원도',
+    '충청북도',
+    '충청남도',
+    '전라북도',
+    '전라남도',
+    '경상북도',
+    '경상남도',
+    '제주도'
+  ];
+  const internationalLocations = [
+    '도쿄',
+    '베이징',
+    '타이베이',
+    '런던',
+    '파리',
+    '시드니',
+    '뉴욕',
+    '방콕'
+  ];
+
   return (
     <div className="user-detail-tour-ticket-container">
       {/* 왼쪽 div 배치 */}
       <div className="user-detail-tour-ticket-detail">
         <div className="user-detail-ticket-header">
           <div className="user-detail-ticket-location">
-            <span>대한민국&nbsp;</span>
-            <FaChevronRight />
-            &nbsp;
-            <FaMapMarkerAlt />
-            <span>{ticket.location}</span>
+            <div className="user-detail-ticket-location">
+              <span>
+                {domesticLocations.includes(ticket.location) ? '국내' : '해외'}&nbsp;
+              </span>
+              <FaChevronRight />
+              &nbsp;
+              <FaMapMarkerAlt />
+              <span>{ticket.location}</span>
+            </div>
           </div>
 
           <h1 className="user-detail-ticket-title">{ticket.title}</h1>
@@ -169,7 +196,7 @@ const TourTicketDetail = () => {
             <ReviewList
               productId={id}
               setRatingInfo={setRatingInfo}
-              ratingInfo={ratingInfo}
+              ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
               showOnlySummary={true}
             />
             <FaChevronRight className="user-detail-more-icon" onClick={scrollToReviews} />
@@ -208,7 +235,9 @@ const TourTicketDetail = () => {
               <img src={`${imageUrls[0]}`} alt={ticket.title} />
               {!showDetails && (
                 <div className="user-detail-image-overlay">
-                  <button className="user-detail-toggle-button" onClick={() => setShowDetails(true)}>
+                  <button
+                    className="user-detail-toggle-button"
+                    onClick={() => setShowDetails(true)}>
                     상품 설명 더 보기 &nbsp;
                     <FaChevronDown />
                   </button>
@@ -243,7 +272,7 @@ const TourTicketDetail = () => {
               <ReviewList
                 productId={id}
                 setRatingInfo={setRatingInfo}
-                ratingInfo={ratingInfo}
+                ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
                 showReviewCount={true}
               />
             </span>
@@ -251,7 +280,7 @@ const TourTicketDetail = () => {
           <ReviewList
             productId={id}
             setRatingInfo={setRatingInfo}
-            ratingInfo={ratingInfo}
+            ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
             showOnlySummary={false}
           />
         </div>
@@ -270,7 +299,9 @@ const TourTicketDetail = () => {
               }}>
               일반가
             </p>
-            <p className="user-detail-original-price">{ticket.price.toLocaleString()}원</p>
+            <p className="user-detail-original-price">
+              {ticket.price.toLocaleString()}원
+            </p>
           </div>
 
           {hasReview ? (

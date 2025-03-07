@@ -30,6 +30,11 @@ const TourTicketBookingForm = () => {
 
   const navigate = useNavigate();
 
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
+
   useEffect(() => {
     const fetchTicket = async () => {
       try {
@@ -185,7 +190,7 @@ const TourTicketBookingForm = () => {
               <div className="ticket-header">
                 {ticket.images && ticket.images.length > 0 && (
                   <img
-                    src={`http://localhost:5000${ticket.images[0]}`}
+                    src={`${SERVER_URL}${ticket.images[0]}`}
                     alt="투어 티켓 썸네일"
                     className="ticket-thumbnail"
                   />
