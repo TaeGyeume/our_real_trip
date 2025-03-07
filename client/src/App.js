@@ -77,6 +77,7 @@ import PackageBookingForm from './components/booking/PackageBookingForm';
 import AdminPackageList from './pages/product/packges/PackageList';
 import Modal from 'react-modal';
 // import FlightList from './components/flights/FlightList';
+import LocationDetailPage from './pages/location/LocationDetailPage';
 
 const App = () => {
   const [serverMessage, setServerMessage] = useState('');
@@ -160,6 +161,7 @@ const App = () => {
             element={<AccommodationDetail />}
           />
           <Route path="/accommodation/room/:roomId" element={<RoomDetail />} />
+          <Route path="/location/:id" element={<LocationDetailPage />} />
 
           {/* 항공편 목록 페이지 추가 */}
           <Route path="/flights" element={<Flights />} />
