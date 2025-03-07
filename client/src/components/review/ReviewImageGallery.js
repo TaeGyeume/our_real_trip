@@ -17,6 +17,11 @@ const ReviewImageGallery = ({topReview, reviews}) => {
 
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  
+  const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000'
+    : 'https://ourrealtrip.shop/api';
 
   const handleOpenGalleryModal = index => {
     if (index !== undefined && allImages.length > 0) {
@@ -49,7 +54,7 @@ const ReviewImageGallery = ({topReview, reviews}) => {
             key={index}
             className="gallery-image"
             onClick={() => handleOpenGalleryModal(index)}>
-            <img src={`http://localhost:5000${image}`} alt={`리뷰 이미지 ${index + 1}`} />
+            <img src={`${SERVER_URL}${image}`} alt={`리뷰 이미지 ${index + 1}`} />
             {index === 3 && remainingImages > 0 && (
               <div className="more-images-overlay">+ {remainingImages}</div>
             )}
@@ -94,7 +99,7 @@ const ReviewImageGallery = ({topReview, reviews}) => {
 
             {allImages.length > 0 && (
               <img
-                src={`http://localhost:5000${allImages[galleryIndex]}`}
+                src={`${SERVER_URL}${allImages[galleryIndex]}`}
                 alt="확대된 이미지"
                 className="modal-image"
               />

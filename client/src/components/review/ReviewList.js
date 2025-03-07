@@ -104,8 +104,8 @@ const ReviewList = ({
 
         if (validReviews.length > 0) {
           setRatingInfo(prev => ({
-            ...prev, // ✅ 기존 상태 유지
-            [productId]: { // ✅ 각 상품 ID별로 저장
+            ...prev, // 기존 상태 유지
+            [productId]: { // 각 상품 ID별로 저장
               avgRating: parseFloat(avgRating),
               reviewCount: validReviews.length
             }

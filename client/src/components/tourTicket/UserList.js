@@ -29,6 +29,7 @@ const UserList = () => {
   const [ratingFilter, setRatingFilter] = useState('all');
   const [selectedCities, setSelectedCities] = useState([]);
 
+  const [regionType, setRegionType] = useState('domestic');
   const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
 
   const navigate = useNavigate();
@@ -38,6 +39,29 @@ const UserList = () => {
     process.env.REACT_APP_ENV === 'development'
       ? 'http://localhost:5000'
       : 'https://ourrealtrip.shop/api';
+
+  const domesticLocations = [
+    '서울',
+    '경기도',
+    '강원도',
+    '충청북도',
+    '충청남도',
+    '전라북도',
+    '전라남도',
+    '경상북도',
+    '경상남도',
+    '제주도'
+  ];
+  const internationalLocations = [
+    '도쿄',
+    '베이징',
+    '타이베이',
+    '런던',
+    '파리',
+    '시드니',
+    '뉴욕',
+    '방콕'
+  ];
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -79,6 +103,18 @@ const UserList = () => {
 
   const filteredTickets = useMemo(() => {
     return tickets.filter(ticket => {
+      // 국내/해외 필터 적용
+      if (regionType === 'domestic' && !domesticLocations.includes(ticket.location)) {
+        return false;
+      }
+
+      if (
+        regionType === 'international' &&
+        !internationalLocations.includes(ticket.location)
+      ) {
+        return false;
+      }
+
       // 가격 필터 적용
       if (ticket.price < priceRange[0] || ticket.price > priceRange[1]) {
         return false;
@@ -99,7 +135,7 @@ const UserList = () => {
 
       return true;
     });
-  }, [tickets, priceRange, ratingFilter, selectedCities]);
+  }, [tickets, priceRange, ratingFilter, selectedCities, regionType]);
 
   // 필터된 티켓을 location(지역)별로 그룹화
   const groupedTickets = useMemo(() => {
@@ -180,6 +216,7 @@ const UserList = () => {
     setPriceRange([0, 100000]);
     setRatingFilter('all');
     setSelectedCities([]);
+    setRegionType('domestic');
   };
 
   const bannerData = [
@@ -238,40 +275,107 @@ const UserList = () => {
 
           <FormControl component="fieldset">
             <RadioGroup value={ratingFilter} onChange={handleRatingChange}>
-              <FormControlLabel value="all" control={<Radio />} label="전체" />
-              <FormControlLabel value="4" control={<Radio />} label="4점 이상" />
-              <FormControlLabel value="5" control={<Radio />} label="5점만" />
+              <FormControlLabel
+                value="all"
+                control={
+                  <Radio
+                    sx={{
+                      '&.Mui-checked': {
+                        color: 'dodgerblue'
+                      }
+                    }}
+                  />
+                }
+                label="전체"
+              />
+              <FormControlLabel
+                value="4"
+                control={
+                  <Radio
+                    sx={{
+                      '&.Mui-checked': {
+                        color: 'dodgerblue'
+                      }
+                    }}
+                  />
+                }
+                label="4점 이상"
+              />
+              <FormControlLabel
+                value="5"
+                control={
+                  <Radio
+                    sx={{
+                      '&.Mui-checked': {
+                        color: 'dodgerblue'
+                      }
+                    }}
+                  />
+                }
+                label="5점만"
+              />
             </RadioGroup>
           </FormControl>
           <hr className="sun" />
           <Typography variant="subtitle1" fontWeight="bold" mt={2}>
+            지역 구분
+          </Typography>
+          <FormControl fullWidth>
+            <RadioGroup
+              row
+              value={regionType}
+              onChange={e => {
+                setRegionType(e.target.value);
+                setSelectedCities([]); // 지역 선택 초기화
+              }}>
+              <FormControlLabel
+                value="domestic"
+                control={
+                  <Radio
+                    sx={{
+                      '&.Mui-checked': {
+                        color: 'dodgerblue'
+                      }
+                    }}
+                  />
+                }
+                label="국내"
+              />
+              <FormControlLabel
+                value="international"
+                control={
+                  <Radio
+                    sx={{
+                      '&.Mui-checked': {
+                        color: 'dodgerblue'
+                      }
+                    }}
+                  />
+                }
+                label="해외"
+              />
+            </RadioGroup>
+          </FormControl>
+
+          <Typography variant="subtitle1" fontWeight="bold" mt={2}>
             여행지
           </Typography>
           <FormGroup>
-            {[
-              '서울',
-              '경기도',
-              '강원도',
-              '충청북도',
-              '충청남도',
-              '전라북도',
-              '전라남도',
-              '경상북도',
-              '경상남도',
-              '제주도'
-            ].map(city => (
-              <FormControlLabel
-                key={city}
-                control={
-                  <Checkbox
-                    checked={selectedCities.includes(city)}
-                    onChange={handleCityChange}
-                    name={city}
-                  />
-                }
-                label={city}
-              />
-            ))}
+            {(regionType === 'domestic' ? domesticLocations : internationalLocations).map(
+              city => (
+                <FormControlLabel
+                  key={city}
+                  control={
+                    <Checkbox
+                      checked={selectedCities.includes(city)}
+                      onChange={handleCityChange}
+                      name={city}
+                    />
+                  }
+                  label={city}
+                />
+              )
+            )}
           </FormGroup>
         </div>
 
