@@ -1,3 +1,8 @@
+html,
+body {
+  font-family: 'BM Dohyeon', sans-serif;
+}
+
 .user-list-container {
   display: flex;
   gap: 20px;
@@ -35,22 +40,15 @@
   width: 100%;
 }
 
-/* .user-list-tour-ticket-grid {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  transition: transform 0.5s ease-in-out;
-  overflow: hidden;
-} */
 .user-list-tour-ticket-grid {
   display: flex;
   flex-wrap: nowrap;
   gap: 20px;
+  /* height: 300px; */
   min-width: 100%; /* 부모 크기 유지 */
   transition: transform 0.5s ease-in-out;
   overflow: hidden;
-  justify-content: flex-start; /* 👈 카드가 적을 경우 정렬 */
+  justify-content: flex-start; /* 카드가 적을 경우 정렬 */
 }
 
 /* 개별 카드 */
@@ -58,7 +56,7 @@
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 2px;
-  flex: 0 0 calc(25% - 20px); /* ✅ 카드 크기 균일하게 */
+  flex: 0 0 calc(25% - 20px); /* 카드 크기 균일하게 */
   transition: all 0.3s ease-in-out;
 }
 
@@ -70,7 +68,7 @@
 /* 카드 이미지 */
 .user-list-ticket-image {
   width: 100%;
-  height: 200px;
+  height: 150px;
   object-fit: cover;
   border-radius: 2px;
 }
@@ -94,17 +92,6 @@
 
 /* 좌우 이동 버튼 */
 .user-list-scroll-button {
-  /* position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  color: white;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 50%;
-  z-index: 10;
-  font-size: 18px;
-  font-weight: bold; */
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
