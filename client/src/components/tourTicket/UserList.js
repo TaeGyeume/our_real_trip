@@ -29,8 +29,7 @@ const UserList = () => {
   const [ratingFilter, setRatingFilter] = useState('all');
   const [selectedCities, setSelectedCities] = useState([]);
 
-  const [ratingInfo, setRatingInfo] = useState({ avgRating: 0, reviewCount: 0 });
-
+  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
 
   const navigate = useNavigate();
   const initialRender = useRef(true);
@@ -336,10 +335,18 @@ const UserList = () => {
                         <h3 className="user-list-ticket-title">{ticket.title}</h3>
 
                         <div className="user-list-review-summary">
-                          <ReviewList
+                          {/* <ReviewList
                             productId={ticket._id}
                             setRatingInfo={setRatingInfo}
                             ratingInfo={ratingInfo}
+                            showOnlySummary={true}
+                          /> */}
+                          <ReviewList
+                            productId={ticket._id}
+                            setRatingInfo={setRatingInfo}
+                            ratingInfo={
+                              ratingInfo[ticket._id] || {avgRating: 0, reviewCount: 0}
+                            } // ✅ 해당 상품의 리뷰 정보만 전달
                             showOnlySummary={true}
                           />
                         </div>

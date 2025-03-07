@@ -26,7 +26,7 @@ const TourTicketDetail = () => {
   const [ticket, setTicket] = useState(null);
   const [user, setUser] = useState(null);
 
-  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
+  const [ratingInfo, setRatingInfo] = useState({});
   const [showDetails, setShowDetails] = useState(false);
   const [openAlert, setOpenAlert] = useState(false);
 
@@ -169,7 +169,7 @@ const TourTicketDetail = () => {
             <ReviewList
               productId={id}
               setRatingInfo={setRatingInfo}
-              ratingInfo={ratingInfo}
+              ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
               showOnlySummary={true}
             />
             <FaChevronRight className="user-detail-more-icon" onClick={scrollToReviews} />
@@ -245,7 +245,7 @@ const TourTicketDetail = () => {
               <ReviewList
                 productId={id}
                 setRatingInfo={setRatingInfo}
-                ratingInfo={ratingInfo}
+                ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
                 showReviewCount={true}
               />
             </span>
@@ -253,7 +253,7 @@ const TourTicketDetail = () => {
           <ReviewList
             productId={id}
             setRatingInfo={setRatingInfo}
-            ratingInfo={ratingInfo}
+            ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
             showOnlySummary={false}
           />
         </div>
