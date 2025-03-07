@@ -18,7 +18,10 @@ import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import HotelIcon from '@mui/icons-material/Hotel';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 
-const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000'
+    : 'https://ourrealtrip.shop/api/uploads';
 
 /**
  * 이미지 경로 정규화 (\ → /, 맨 앞에 '/' 붙이기)

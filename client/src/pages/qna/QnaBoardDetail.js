@@ -1,53 +1,57 @@
 import React, {useEffect, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Button,
+  TextField,
+  Grid,
+  Avatar,
+  Divider,
+  CircularProgress,
+  Paper
+} from '@mui/material';
+import {
   getQnaBoardById,
   deleteQnaBoard,
   getQnaComments,
   createQnaComment,
   deleteQnaComment
 } from '../../api/qna/qnaBoardService';
-import {getUserProfile} from '../../api/user/user'; //  사용자 정보 조회 API
-import './styles/QnaBoardDetail.css'; // 스타일 파일 (별도로 생성 필요)
+import {getUserProfile} from '../../api/user/user';
 
 const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const QnaBoardDetail = () => {
   const {qnaBoardId} = useParams();
-  // console.log(' QnA 게시글 ID:', qnaBoardId);
-
   const navigate = useNavigate();
-  const [user, setUser] = useState(null); //  현재 로그인한 사용자 정보
+  const [user, setUser] = useState(null);
   const [qnaBoard, setQnaBoard] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [commentLoading, setCommentLoading] = useState(false);
 
-  //  현재 로그인한 사용자 정보를 가져오기
-  const fetchUser = async () => {
-    try {
-      const response = await getUserProfile();
-      setUser(response.data);
-    } catch (error) {
-      setUser(null);
-    }
-  };
-
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await getUserProfile();
+        setUser(response.data);
+      } catch (error) {
+        setUser(null);
+      }
+    };
+
     const fetchQnaBoard = async () => {
       try {
         const data = await getQnaBoardById(qnaBoardId);
-        // console.log(' QnA 게시글 데이터:', data);
         setQnaBoard(data);
         setLoading(false);
       } catch (error) {
         if (error.response?.status === 404) {
-          // 게시글이 삭제된 경우
-          // alert('게시글을 찾을 수 없습니다.');
-          navigate('/qna'); // 목록 페이지로 리디렉션
-        } else {
-          // console.error(' QnA 게시글 조회 오류:', error);
+          navigate('/qna');
         }
       }
     };
@@ -57,7 +61,7 @@ const QnaBoardDetail = () => {
         const response = await getQnaComments(qnaBoardId);
         setComments(response.comments);
       } catch (error) {
-        console.error(' QnA 댓글 조회 오류:', error);
+        console.error('QnA 댓글 조회 오류:', error);
       }
     };
 
@@ -66,29 +70,19 @@ const QnaBoardDetail = () => {
     fetchComments();
   }, [qnaBoardId, navigate]);
 
-  //  QnA 게시글 삭제
   const handleDeleteQnaBoard = async () => {
     if (!user) return alert('로그인이 필요합니다.');
 
     if (window.confirm('정말로 삭제하시겠습니까?')) {
       try {
-        console.log(' 게시글 삭제 요청:', {
-          boardId: qnaBoardId,
-          userId: user._id, // 현재 로그인한 사용자 ID
-          roles: user.roles // 현재 사용자 역할
-        });
-
         await deleteQnaBoard(qnaBoardId);
-        // alert('게시글이 삭제되었습니다.');
-        navigate('/qna'); // 목록으로 이동
+        navigate('/qna');
       } catch (error) {
-        // console.error(' QnA 게시글 삭제 오류:', error);
-        // alert('게시글 삭제 중 오류 발생');
+        console.error('게시글 삭제 오류:', error);
       }
     }
   };
 
-  //  댓글 작성
   const handleCreateComment = async () => {
     if (!user) return alert('로그인이 필요합니다.');
     if (!newComment.trim()) return alert('댓글을 입력하세요.');
@@ -96,28 +90,20 @@ const QnaBoardDetail = () => {
     setCommentLoading(true);
     try {
       const response = await createQnaComment(qnaBoardId, newComment);
-
-      // 새 댓글을 기존 목록에 추가하여 즉시 반영
       setComments(prevComments => [
         {
           ...response.qnaComment,
-          user: {
-            _id: user._id,
-            username: user.username,
-            email: user.email
-          }
+          user: {_id: user._id, username: user.username, email: user.email}
         },
         ...prevComments
       ]);
-
       setNewComment('');
     } catch (error) {
-      console.error(' QnA 댓글 작성 오류:', error);
+      console.error('댓글 작성 오류:', error);
     }
     setCommentLoading(false);
   };
 
-  // 댓글 삭제
   const handleDeleteComment = async commentId => {
     if (!user) return alert('로그인이 필요합니다.');
 
@@ -128,96 +114,121 @@ const QnaBoardDetail = () => {
           prevComments.filter(comment => comment._id !== commentId)
         );
       } catch (error) {
-        console.error(' QnA 댓글 삭제 오류:', error);
-        alert('댓글 삭제 중 오류 발생');
+        console.error('댓글 삭제 오류:', error);
       }
     }
   };
 
-  if (loading) return <p>로딩 중...</p>;
-
-  if (!qnaBoard) return <p>게시글을 찾을 수 없습니다.</p>;
+  if (loading) return <CircularProgress sx={{display: 'block', margin: 'auto', mt: 4}} />;
+  if (!qnaBoard)
+    return <Typography align="center">게시글을 찾을 수 없습니다.</Typography>;
 
   return (
-    <div className="qna-detail-container">
-      <h1>{qnaBoard.title}</h1>
-      <p>카테고리: {qnaBoard.category}</p>
-      <p>
-        작성자: <strong>{qnaBoard.user?.username || '익명'}</strong>
-        {qnaBoard.user?.email && ` (${qnaBoard.user.email})`}
-      </p>
-      <p>
-        작성일:{' '}
-        {qnaBoard.createdAt
-          ? new Date(qnaBoard.createdAt).toLocaleString()
-          : '알 수 없음'}
-      </p>
-      <p>{qnaBoard.content}</p>
-      {qnaBoard.images && qnaBoard.images.length > 0 && (
-        <div className="qna-images">
-          {qnaBoard.images.map((img, index) => (
-            <img key={index} src={`${SERVER_URL}${img}`} alt="첨부 이미지" />
-          ))}
-        </div>
-      )}
-      {qnaBoard.attachments && qnaBoard.attachments.length > 0 && (
-        <div className="qna-attachments">
-          {qnaBoard.attachments.map((file, index) => (
-            <a
-              key={index}
-              href={`${SERVER_URL}${file}`}
-              download
-              target="_blank"
-              rel="noopener noreferrer">
-              첨부파일 {index + 1}
-            </a>
-          ))}
-        </div>
-      )}
+    <Box sx={{maxWidth: '900px', margin: 'auto', mt: 4, p: 2}}>
+      {/* 게시글 상세 */}
+      <Card sx={{p: 3, boxShadow: 3}}>
+        <CardContent>
+          <Typography variant="h4" sx={{fontWeight: 'bold', mb: 2}}>
+            {qnaBoard.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            카테고리: {qnaBoard.category}
+          </Typography>
+          <Typography variant="body2" sx={{mt: 1}}>
+            작성자: <strong>{qnaBoard.user?.username || '익명'}</strong> (
+            {qnaBoard.user?.email || '비공개'})
+          </Typography>
+          <Typography variant="body2" sx={{mt: 1, mb: 2}}>
+            작성일: {new Date(qnaBoard.createdAt).toLocaleString()}
+          </Typography>
+          <Divider />
+          <Typography variant="body1" sx={{mt: 2}}>
+            {qnaBoard.content}
+          </Typography>
 
-      {user && (user._id === qnaBoard.user?._id || user.roles?.includes('admin')) && (
-        <button onClick={handleDeleteQnaBoard} className="delete-button">
-          게시글 삭제
-        </button>
-      )}
+          {/* 이미지 & 첨부파일 */}
+          {qnaBoard.images?.length > 0 && (
+            <Grid container spacing={2} sx={{mt: 2}}>
+              {qnaBoard.images.map((img, index) => (
+                <Grid item xs={6} key={index}>
+                  <img
+                    src={`${SERVER_URL}${img}`}
+                    alt="첨부 이미지"
+                    style={{width: '100%', borderRadius: '8px'}}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          )}
 
-      <div className="qna-comments">
-        <h3>댓글 ({comments.length})</h3>
+          {qnaBoard.attachments?.length > 0 && (
+            <Box sx={{mt: 2}}>
+              {qnaBoard.attachments.map((file, index) => (
+                <Button
+                  key={index}
+                  href={`${SERVER_URL}${file}`}
+                  download
+                  sx={{display: 'block', textAlign: 'left', textTransform: 'none'}}>
+                  📎 첨부파일 {index + 1}
+                </Button>
+              ))}
+            </Box>
+          )}
+
+          {/* 삭제 버튼 */}
+          {user && (user._id === qnaBoard.user?._id || user.roles?.includes('admin')) && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDeleteQnaBoard}
+              sx={{mt: 2}}>
+              게시글 삭제
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 댓글 섹션 */}
+      <Box sx={{mt: 4}}>
+        <Typography variant="h5">💬 댓글 ({comments.length})</Typography>
         {comments.map(comment => (
-          <div key={comment._id || Math.random()} className="qna-comment">
-            <p>
-              <strong>{comment.user?.username || '알 수 없음'}</strong>
-              {comment.isAdmin && <span>(관리자)</span>}
-            </p>
-            <p>{comment.content}</p>
-            <p className="comment-date">
-              {comment.createdAt
-                ? new Date(comment.createdAt).toLocaleString()
-                : '날짜 없음'}
-            </p>
+          <Paper key={comment._id} sx={{p: 2, mt: 2, borderRadius: 2}}>
+            <Box sx={{display: 'flex', alignItems: 'center'}}>
+              <Avatar sx={{bgcolor: 'primary.main', mr: 2}}>
+                {comment.user?.username?.charAt(0)}
+              </Avatar>
+              <Typography variant="body1">{comment.user?.username || '익명'}</Typography>
+            </Box>
+            <Typography variant="body2" sx={{mt: 1}}>
+              {comment.content}
+            </Typography>
             {user &&
               (user._id === comment.user?._id || user.roles?.includes('admin')) && (
-                <button
+                <Button
+                  size="small"
+                  color="error"
                   onClick={() => handleDeleteComment(comment._id)}
-                  className="delete-comment">
+                  sx={{mt: 1}}>
                   삭제
-                </button>
+                </Button>
               )}
-          </div>
+          </Paper>
         ))}
-      </div>
+      </Box>
 
-      <div className="comment-input">
-        <textarea
-          placeholder="댓글을 입력하세요..."
+      {/* 댓글 입력 */}
+      <Box sx={{mt: 3}}>
+        <TextField
+          fullWidth
+          label="댓글 입력"
           value={newComment}
           onChange={e => setNewComment(e.target.value)}
         />
-        <button onClick={handleCreateComment} disabled={commentLoading}>
-          {commentLoading ? '작성 중...' : '댓글 작성'}
-        </button>
-      </div>
-    </div>
+        <Button variant="contained" onClick={handleCreateComment} sx={{mt: 1}}>
+          댓글 작성
+        </Button>
+      </Box>
+    </Box>
   );
 };
 
