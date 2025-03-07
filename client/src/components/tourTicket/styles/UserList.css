@@ -3,6 +3,10 @@ body {
   font-family: 'BM Dohyeon', sans-serif;
 }
 
+.user-list-review-summary {
+  font-size: 14px !important;
+}
+
 .user-list-container {
   display: flex;
   gap: 20px;
@@ -84,8 +88,9 @@ body {
   justify-content: flex-end; */
   display: flex;
   flex-direction: column;
-  height: 80px;
+  height: 100px;
   padding: 10px;
+  justify-content: space-between;
 }
 
 .user-list-ticket-title {

@@ -16,7 +16,7 @@ import {
   FaBolt,
   FaQuestionCircle
 } from 'react-icons/fa';
-import {Alert, Snackbar, Button, TextField, Typography} from '@mui/material';
+import {Alert, Snackbar, Typography} from '@mui/material';
 
 const TourTicketDetail = () => {
   const {id} = useParams();
@@ -26,7 +26,7 @@ const TourTicketDetail = () => {
   const [ticket, setTicket] = useState(null);
   const [user, setUser] = useState(null);
 
-  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
+  const [ratingInfo, setRatingInfo] = useState({});
   const [showDetails, setShowDetails] = useState(false);
   const [openAlert, setOpenAlert] = useState(false);
 
@@ -169,7 +169,7 @@ const TourTicketDetail = () => {
             <ReviewList
               productId={id}
               setRatingInfo={setRatingInfo}
-              ratingInfo={ratingInfo}
+              ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
               showOnlySummary={true}
             />
             <FaChevronRight className="user-detail-more-icon" onClick={scrollToReviews} />
@@ -208,7 +208,9 @@ const TourTicketDetail = () => {
               <img src={`${imageUrls[0]}`} alt={ticket.title} />
               {!showDetails && (
                 <div className="user-detail-image-overlay">
-                  <button className="user-detail-toggle-button" onClick={() => setShowDetails(true)}>
+                  <button
+                    className="user-detail-toggle-button"
+                    onClick={() => setShowDetails(true)}>
                     상품 설명 더 보기 &nbsp;
                     <FaChevronDown />
                   </button>
@@ -243,7 +245,7 @@ const TourTicketDetail = () => {
               <ReviewList
                 productId={id}
                 setRatingInfo={setRatingInfo}
-                ratingInfo={ratingInfo}
+                ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
                 showReviewCount={true}
               />
             </span>
@@ -251,7 +253,7 @@ const TourTicketDetail = () => {
           <ReviewList
             productId={id}
             setRatingInfo={setRatingInfo}
-            ratingInfo={ratingInfo}
+            ratingInfo={ratingInfo[id] || {avgRating: 0, reviewCount: 0}}
             showOnlySummary={false}
           />
         </div>
@@ -270,7 +272,9 @@ const TourTicketDetail = () => {
               }}>
               일반가
             </p>
-            <p className="user-detail-original-price">{ticket.price.toLocaleString()}원</p>
+            <p className="user-detail-original-price">
+              {ticket.price.toLocaleString()}원
+            </p>
           </div>
 
           {hasReview ? (

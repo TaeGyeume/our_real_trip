@@ -20,7 +20,7 @@ import {FaStarHalfAlt, FaStar, FaChevronDown} from 'react-icons/fa';
 import './styles/ReviewList.css';
 import authAPI from '../../api/auth/auth';
 import {useAuthStore} from '../../store/authStore';
-import {ButtonGroup, Button, Typography} from '@mui/material';
+import {ButtonGroup, Button} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -90,7 +90,28 @@ const ReviewList = ({
         const sortedReviews = [...validReviews].sort((a, b) => b.likes - a.likes);
 
         // 리뷰 개수 및 평점 업데이트
-        setRatingInfo({avgRating, reviewCount: validReviews.length});
+        // setRatingInfo({avgRating, reviewCount: validReviews.length});
+        // if (validReviews.length > 0) {
+        //   setRatingInfo(prev => {
+        //     const updatedInfo = {
+        //       avgRating: parseFloat(avgRating),
+        //       reviewCount: validReviews.length
+        //     };
+
+        //     return updatedInfo;
+        //   });
+        // }
+
+        if (validReviews.length > 0) {
+          setRatingInfo(prev => ({
+            ...prev, // ✅ 기존 상태 유지
+            [productId]: { // ✅ 각 상품 ID별로 저장
+              avgRating: parseFloat(avgRating),
+              reviewCount: validReviews.length
+            }
+          }));
+        }
+        
 
         // 좋아요 가장 많은 리뷰 설정 (없으면 `null`)
         setTopReview(sortedReviews.length > 0 ? sortedReviews[0] : null);
