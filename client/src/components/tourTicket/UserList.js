@@ -79,17 +79,12 @@ const UserList = ({showFilter = true, showAdBanner = true}) => {
   };
 
   const getImageUrl = ticket => {
-    let imageUrl = '/default-image.jpg';
-
-    if (ticket && Array.isArray(ticket.images) && ticket.images.length > 0) {
-      imageUrl = ticket.images[0];
-
-      if (imageUrl.startsWith('/uploads/')) {
-        imageUrl = `${SERVER_URL}${imageUrl}`;
-      }
+    if (!ticket || !Array.isArray(ticket.images) || ticket.images.length === 0) {
+      return '/default-image.jpg';
     }
 
-    return imageUrl;
+    const firstImage = ticket.images[0];
+    return firstImage.startsWith('/uploads/') ? `${SERVER_URL}${firstImage}` : firstImage;
   };
 
   const filteredTickets = useMemo(() => {
