@@ -4,33 +4,21 @@ import {getUserFavorites} from '../../api/user/favoriteService';
 import {useNavigate} from 'react-router-dom';
 import './styles/UserList.css';
 import FavoriteButton from '../user/FavoriteButton';
-import {
-  Slider,
-  FormControl,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  Checkbox,
-  Button,
-  Typography,
-  FormGroup,
-  IconButton
-} from '@mui/material';
-import {ArrowBackIosNew, ArrowForwardIos} from '@mui/icons-material';
 import ReviewList from '../review/ReviewList';
+import {IconButton} from '@mui/material';
+import {ArrowBackIosNew, ArrowForwardIos} from '@mui/icons-material';
 import AdBanner from '../ad/AdBanner';
+import TourFilter from './TourFilter';
 
 const UserList = () => {
   const [tickets, setTickets] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [visibleIndex, setVisibleIndex] = useState({});
-
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [ratingFilter, setRatingFilter] = useState('all');
-  const [selectedCities, setSelectedCities] = useState([]);
-
   const [regionType, setRegionType] = useState('domestic');
-  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
+  const [selectedCities, setSelectedCities] = useState([]);
+  const [ratingInfo, setRatingInfo] = useState({});
 
   const navigate = useNavigate();
   const initialRender = useRef(true);
@@ -98,6 +86,7 @@ const UserList = () => {
         imageUrl = `${SERVER_URL}${imageUrl}`;
       }
     }
+
     return imageUrl;
   };
 
@@ -105,44 +94,30 @@ const UserList = () => {
     return tickets.filter(ticket => {
       const ticketRating = ratingInfo[ticket._id]?.avgRating || 0;
 
-      // 국내/해외 필터 적용
-      if (regionType === 'domestic' && !domesticLocations.includes(ticket.location)) {
+      if (regionType === 'domestic' && !domesticLocations.includes(ticket.location))
         return false;
-      }
 
       if (
         regionType === 'international' &&
         !internationalLocations.includes(ticket.location)
-      ) {
+      )
+        return false;
+
+      if (ticket.price < priceRange[0] || ticket.price > priceRange[1]) return false;
+
+      if (ratingFilter === '4' && ticketRating < 4) {
+        return false;
+      } else if (ratingFilter === '1' && ticketRating >= 1) {
         return false;
       }
 
-      // 가격 필터 적용
-      if (ticket.price < priceRange[0] || ticket.price > priceRange[1]) {
+      if (selectedCities.length > 0 && !selectedCities.includes(ticket.location))
         return false;
-      }
-
-      // 평점 필터 적용
-      if (ratingFilter === '4') {
-        if (ticketRating < 4) {
-          return false;
-        }
-      } else if (ratingFilter === '1') {
-        if (ticketRating >= 1) {
-          return false;
-        }
-      }
-
-      // 여행지 필터 적용
-      if (selectedCities.length > 0 && !selectedCities.includes(ticket.location)) {
-        return false;
-      }
 
       return true;
     });
   }, [tickets, priceRange, ratingFilter, selectedCities, regionType, ratingInfo]);
 
-  // 필터된 티켓을 location(지역)별로 그룹화
   const groupedTickets = useMemo(() => {
     if (!filteredTickets.length) return {};
 
@@ -151,22 +126,18 @@ const UserList = () => {
 
       if (!acc[location]) acc[location] = [];
 
-      acc[location].push({
-        ...ticket,
-        imageUrl: getImageUrl(ticket),
-        isFavorite: isFavoriteItem(ticket._id)
-      });
+      acc[location].push(ticket);
 
       return acc;
     }, {});
 
     return grouped;
-  }, [filteredTickets, favorites]); // tickets, favorites 변경될 때만 업데이트
+  }, [filteredTickets]);
 
   useEffect(() => {
     if (initialRender.current) {
       initialRender.current = false;
-      return; // 첫 렌더링에서는 실행하지 않음
+      return;
     }
 
     if (Object.keys(groupedTickets).length === 0) return;
@@ -180,14 +151,14 @@ const UserList = () => {
 
       return newIndex;
     });
-  }, [groupedTickets]); // `groupedTickets`가 변경될 때만 실행
+  }, [groupedTickets]);
 
-  const itemsPerPage = 4; // 한 줄에 출력되는 카드의 수
+  const itemsPerPage = 4;
 
   const handleScrollLeft = location => {
     setVisibleIndex(prev => ({
       ...prev,
-      [location]: Math.max(0, (prev[location] || 0) - 2) // 한 칸씩 이동
+      [location]: Math.max(0, (prev[location] || 0) - 2)
     }));
   };
 
@@ -196,193 +167,37 @@ const UserList = () => {
       const maxIndex = Math.ceil(groupedTickets[location].length / itemsPerPage) - 1;
       return {
         ...prev,
-        [location]: Math.min(maxIndex, (prev[location] || 0) + 2) // 마지막 카드 고려해서 이동
+        [location]: Math.min(maxIndex, (prev[location] || 0) + 2)
       };
     });
   };
 
-  const handlePriceChange = (event, newValue) => {
-    setPriceRange(newValue);
-  };
-
-  const handleRatingChange = event => {
-    setRatingFilter(event.target.value);
-  };
-
-  const handleCityChange = event => {
-    const city = event.target.name;
-
-    setSelectedCities(prev =>
-      prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city]
-    );
-  };
-
-  const handleResetFilters = () => {
-    setPriceRange([0, 100000]);
-    setRatingFilter('all');
-    setSelectedCities([]);
-    setRegionType('domestic');
-  };
-
-  const bannerData = [
-    {
-      image: '/images/ad/tourticket1.png'
-    },
-    {
-      image: '/images/ad/tourticket2.png'
-    },
-    {
-      image: '/images/ad/tourticket3.png'
-    },
-    {
-      image: '/images/ad/tourticket4.png'
-    }
-  ];
-
   return (
     <>
-      <AdBanner banners={bannerData} />
+      <AdBanner banners={[{image: '/images/ad/tourticket1.png'}]} />
       <br />
       <div className="user-list-container">
-        <div className="user-list-filter">
-          <Typography variant="h6" fontWeight="bold">
-            필터
-          </Typography>
-          <Button onClick={handleResetFilters} sx={{float: 'right', color: 'gray'}}>
-            초기화
-          </Button>
-
-          <Typography variant="subtitle1" fontWeight="bold" mt={2}>
-            가격대
-          </Typography>
-
-          <Typography
-            variant="subtitle1"
-            fontWeight="bold"
-            mt={1}
-            sx={{color: 'dodgerblue'}}>
-            {priceRange[0].toLocaleString()}원 ~ {priceRange[1].toLocaleString()}원
-          </Typography>
-
-          <Slider
-            value={priceRange}
-            onChange={handlePriceChange}
-            min={0}
-            max={100000}
-            step={500} // 1만원 단위 조절
-            valueLabelDisplay="off"
-            sx={{color: 'dodgerblue'}}
-          />
-          <hr className="sun" />
-          <Typography variant="subtitle1" fontWeight="bold" mt={2}>
-            평점
-          </Typography>
-
-          <FormControl component="fieldset">
-            <RadioGroup value={ratingFilter} onChange={handleRatingChange}>
-              <FormControlLabel
-                value="all"
-                control={
-                  <Radio
-                    sx={{
-                      '&.Mui-checked': {
-                        color: 'dodgerblue'
-                      }
-                    }}
-                  />
-                }
-                label="전체"
-              />
-              <FormControlLabel
-                value="4"
-                control={
-                  <Radio
-                    sx={{
-                      '&.Mui-checked': {
-                        color: 'dodgerblue'
-                      }
-                    }}
-                  />
-                }
-                label="4점 이상"
-              />
-              <FormControlLabel
-                value="1"
-                control={
-                  <Radio
-                    sx={{
-                      '&.Mui-checked': {
-                        color: 'dodgerblue'
-                      }
-                    }}
-                  />
-                }
-                label="1점 이하"
-              />
-            </RadioGroup>
-          </FormControl>
-          <hr className="sun" />
-          <Typography variant="subtitle1" fontWeight="bold" mt={2}>
-            지역 구분
-          </Typography>
-          <FormControl fullWidth>
-            <RadioGroup
-              row
-              value={regionType}
-              onChange={e => {
-                setRegionType(e.target.value);
-                setSelectedCities([]); // 지역 선택 초기화
-              }}>
-              <FormControlLabel
-                value="domestic"
-                control={
-                  <Radio
-                    sx={{
-                      '&.Mui-checked': {
-                        color: 'dodgerblue'
-                      }
-                    }}
-                  />
-                }
-                label="국내"
-              />
-              <FormControlLabel
-                value="international"
-                control={
-                  <Radio
-                    sx={{
-                      '&.Mui-checked': {
-                        color: 'dodgerblue'
-                      }
-                    }}
-                  />
-                }
-                label="해외"
-              />
-            </RadioGroup>
-          </FormControl>
-
-          <Typography variant="subtitle1" fontWeight="bold" mt={2}>
-            여행지
-          </Typography>
-          <FormGroup>
-            {(regionType === 'domestic' ? domesticLocations : internationalLocations).map(
-              city => (
-                <FormControlLabel
-                  key={city}
-                  control={
-                    <Checkbox
-                      checked={selectedCities.includes(city)}
-                      onChange={handleCityChange}
-                      name={city}
-                    />
-                  }
-                  label={city}
-                />
-              )
-            )}
-          </FormGroup>
-        </div>
+        <TourFilter
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
+          ratingFilter={ratingFilter}
+          setRatingFilter={setRatingFilter}
+          regionType={regionType}
+          setRegionType={type => {
+            setRegionType(type);
+            setSelectedCities([]);
+          }}
+          selectedCities={selectedCities}
+          setSelectedCities={setSelectedCities}
+          domesticLocations={domesticLocations}
+          internationalLocations={internationalLocations}
+          handleResetFilters={() => {
+            setPriceRange([0, 100000]);
+            setRatingFilter('all');
+            setSelectedCities([]);
+            setRegionType('domestic');
+          }}
+        />
 
         <div className="user-list-tour-ticket-container">
           {Object.keys(groupedTickets).map(location => (
@@ -411,49 +226,41 @@ const UserList = () => {
                 <div
                   className="user-list-tour-ticket-grid"
                   style={{
-                    transform: `translateX(-${(visibleIndex[location] || 0) * 320}px)`,
-                    minWidth: '100%',
-                    justifyContent:
-                      groupedTickets[location].length < itemsPerPage
-                        ? 'flex-start'
-                        : 'unset'
+                    display: 'flex',
+                    transition: 'transform 0.3s ease-in-out',
+                    transform: `translateX(-${(visibleIndex[location] || 0) * 320}px)`
                   }}>
                   {groupedTickets[location].map(ticket => (
                     <div
                       key={ticket._id}
                       className="user-list-tour-ticket-card"
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate(`/tourTicket/list/${ticket._id}`);
-                      }}>
+                      onClick={() => navigate(`/tourTicket/list/${ticket._id}`)}>
                       <div className="user-list-favorite-list-icon">
                         <FavoriteButton
                           itemId={ticket._id}
                           itemType="TourTicket"
-                          initialFavoriteStatus={ticket.isFavorite}
+                          initialFavoriteStatus={isFavoriteItem(ticket._id)}
                         />
                       </div>
 
                       <img
-                        src={`${ticket.imageUrl}`}
+                        src={getImageUrl(ticket)}
                         alt={ticket.title}
                         className="user-list-ticket-image"
                       />
 
                       <div className="user-list-ticket-info">
                         <h3 className="user-list-ticket-title">{ticket.title}</h3>
-
                         <div className="user-list-review-summary">
                           <ReviewList
                             productId={ticket._id}
                             setRatingInfo={setRatingInfo}
                             ratingInfo={
                               ratingInfo[ticket._id] || {avgRating: 0, reviewCount: 0}
-                            } // 해당 상품의 리뷰 정보만 전달
+                            }
                             showOnlySummary={true}
                           />
                         </div>
-
                         <div className="user-list-ticket-price">
                           {ticket.price.toLocaleString()}원 / 1인
                         </div>
