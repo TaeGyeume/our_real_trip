@@ -29,7 +29,7 @@ const FavoriteButton = ({itemId, itemType, initialFavoriteStatus}) => {
       }
     } catch (error) {
       setIsFavorite(prev => !prev); // 에러 발생 시 롤백
-      console.error('🚨 즐겨찾기 토글 실패:', error);
+      console.error(' 즐겨찾기 토글 실패:', error);
     } finally {
       setLoading(false);
     }

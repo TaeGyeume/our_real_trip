@@ -154,13 +154,13 @@ export const authAPI = {
 
   //  아이디 찾기 API 요청
   findUserId: async email => {
-    console.log(' 아이디 찾기 요청 시작:', email); //  요청 확인
+    // console.log(' 아이디 찾기 요청 시작:', email); //  요청 확인
     try {
       const response = await handleRequest(
         api.post('/auth/find-userid', {email}, requestConfig),
         '아이디 찾기 요청 중 오류 발생'
       );
-      console.log(' 아이디 찾기 API 응답:', response); //  서버 응답 확인
+      // console.log(' 아이디 찾기 API 응답:', response); //  서버 응답 확인
       return response;
     } catch (error) {
       console.error(' 아이디 찾기 API 요청 실패:', error.response?.data || error); //  오류 로그 출력

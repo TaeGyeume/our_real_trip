@@ -34,7 +34,7 @@ const sendVerificationEmail = async (email, verificationCode) => {
             ${verificationCode}
           </h3>
           <br />
-          <p>이 코드는 <b>5분</b> 동안 유효합니다.</p>
+          <p>이 코드는 <b>5분</b> 동안 유지됩니다다.</p>
           <p>감사합니다.<br>Our Real Trip 팀</p>
         </div>
       `
