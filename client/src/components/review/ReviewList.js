@@ -90,7 +90,17 @@ const ReviewList = ({
         const sortedReviews = [...validReviews].sort((a, b) => b.likes - a.likes);
 
         // 리뷰 개수 및 평점 업데이트
-        setRatingInfo({avgRating, reviewCount: validReviews.length});
+        // setRatingInfo({avgRating, reviewCount: validReviews.length});
+        if (validReviews.length > 0) {
+          setRatingInfo(prev => {
+            const updatedInfo = {
+              avgRating: parseFloat(avgRating),
+              reviewCount: validReviews.length
+            };
+
+            return updatedInfo;
+          });
+        }
 
         // 좋아요 가장 많은 리뷰 설정 (없으면 `null`)
         setTopReview(sortedReviews.length > 0 ? sortedReviews[0] : null);

@@ -16,7 +16,7 @@ import {
   FaBolt,
   FaQuestionCircle
 } from 'react-icons/fa';
-import {Alert, Snackbar, Button, TextField, Typography} from '@mui/material';
+import {Alert, Snackbar, Typography} from '@mui/material';
 
 const TourTicketDetail = () => {
   const {id} = useParams();
@@ -208,7 +208,9 @@ const TourTicketDetail = () => {
               <img src={`${imageUrls[0]}`} alt={ticket.title} />
               {!showDetails && (
                 <div className="user-detail-image-overlay">
-                  <button className="user-detail-toggle-button" onClick={() => setShowDetails(true)}>
+                  <button
+                    className="user-detail-toggle-button"
+                    onClick={() => setShowDetails(true)}>
                     상품 설명 더 보기 &nbsp;
                     <FaChevronDown />
                   </button>
@@ -270,7 +272,9 @@ const TourTicketDetail = () => {
               }}>
               일반가
             </p>
-            <p className="user-detail-original-price">{ticket.price.toLocaleString()}원</p>
+            <p className="user-detail-original-price">
+              {ticket.price.toLocaleString()}원
+            </p>
           </div>
 
           {hasReview ? (
