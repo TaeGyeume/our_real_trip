@@ -396,7 +396,7 @@ const UserList = () => {
           step={500} // 1만원 단위 조절
           valueLabelDisplay="auto"
         />
-
+        <hr className="sun" />
         <Typography variant="subtitle1" fontWeight="bold" mt={2}>
           평점
         </Typography>
@@ -408,7 +408,7 @@ const UserList = () => {
             <FormControlLabel value="5" control={<Radio />} label="5점만" />
           </RadioGroup>
         </FormControl>
-
+        <hr className="sun" />
         <Typography variant="subtitle1" fontWeight="bold" mt={2}>
           여행지
         </Typography>
