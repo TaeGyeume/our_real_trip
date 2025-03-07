@@ -38,7 +38,7 @@ router.use('/flights', flightRoutes);
 router.use('/locations', locationRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/packages', packageRoutes);
-router.use('/products', productRoutes);
+router.use('/product', productRoutes);
 router.use('/qna', qnaRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/rooms', roomRoutes);
