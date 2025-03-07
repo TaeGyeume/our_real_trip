@@ -1,5 +1,5 @@
 // src/pages/accommodation/AccommodationDetail.js
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {getReviews} from '../../api/review/reviewService';
 import {useReviewContext} from '../../contexts/ReviewContext';
@@ -39,7 +39,7 @@ const AccommodationDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
-  const {reviewStatus, setReviewStatus} = useReviewContext();
+  const {setReviewStatus} = useReviewContext();
   const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
   const [openAlert, setOpenAlert] = useState(false);
   const reviewSectionRef = useRef(null);
@@ -75,7 +75,6 @@ const AccommodationDetail = () => {
       try {
         const params = {startDate, endDate, adults, minPrice, maxPrice};
         const data = await fetchAccommodationDetail(accommodationId, params);
-        console.log('불러온 숙소 데이터:', data);
 
         const updatedRooms = data.availableRooms.map(room => ({
           ...room,
@@ -94,33 +93,38 @@ const AccommodationDetail = () => {
       }
     };
 
-    const fetchReviews = async () => {
-      try {
-        const data = await getReviews(accommodationId);
-        console.log('Fetched Reviews:', data);
-
-        const updatedReviewStatus = {};
-
-        // 유저 정보가 있을 때만 리뷰 상태 확인
-        if (user && user._id) {
-          data.forEach(review => {
-            if (review.userId._id === user._id) {
-              const key = `${review.productId}_${review.bookingId}`;
-              updatedReviewStatus[key] = true;
-            }
-          });
-        }
-
-        setReviewStatus(prev => ({...prev, ...updatedReviewStatus}));
-      } catch (err) {
-        console.error('리뷰 조회 오류:', err);
-      }
-    };
     fetchUserProfile().then(() => {
       loadAccommodationDetail();
-      fetchReviews();
     });
   }, [accommodationId, startDate, endDate, adults, minPrice, maxPrice, setReviewStatus]);
+
+  // `fetchReviews`를 useCallback으로 감싸기
+  const fetchReviews = useCallback(async () => {
+    try {
+      const data = await getReviews(accommodationId);
+
+      if (!user || !user._id || !Array.isArray(data)) return; // user가 없거나 데이터가 배열이 아니면 실행하지 않음
+
+      const updatedReviewStatus = {};
+      data.forEach(review => {
+        if (review.userId._id === user._id) {
+          const key = `${review.productId}_${review.bookingId}`;
+          updatedReviewStatus[key] = true;
+        }
+      });
+
+      setReviewStatus(prev => ({...prev, ...updatedReviewStatus}));
+    } catch (err) {
+      console.error('리뷰 조회 오류:', err);
+    }
+  }, [accommodationId, user, setReviewStatus]);
+
+  // user 값이 있을 때만 fetchReviews 실행
+  useEffect(() => {
+    if (user) {
+      fetchReviews();
+    }
+  }, [user, fetchReviews]);
 
   if (loading) return <Typography>로딩 중...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
