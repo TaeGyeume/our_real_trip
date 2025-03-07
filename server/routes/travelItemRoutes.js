@@ -39,4 +39,7 @@ router.patch('/sub-category/:subCategoryId', travelItemController.updateSubCateg
 // 특정 하위 카테고리 삭제 (DELETE)
 router.delete('/category/:categoryId', travelItemController.deleteCategory);
 
+// 여행용품 평점 업데이트 엔드포인트
+router.patch('/:id/update-rating', travelItemController.updateRating);
+
 module.exports = router;

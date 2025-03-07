@@ -1,9 +1,8 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {createSearchParams} from 'react-router-dom';
 import {Card, CardMedia, CardContent, Typography, Box} from '@mui/material';
 import FavoriteButton from '../user/FavoriteButton';
-import {AiFillStar, AiOutlineStar} from 'react-icons/ai';
-import {FaStarHalfAlt} from 'react-icons/fa';
+import ReviewList from '../review/ReviewList';
 
 const getFormattedDate = (daysToAdd = 0) => {
   const date = new Date();
@@ -43,6 +42,7 @@ const AccommodationCard = ({
   if (imageUrl.startsWith('/uploads/')) {
     imageUrl = `${SERVER_URL}${imageUrl}`;
   }
+  const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
 
   return (
     <Card
@@ -75,26 +75,16 @@ const AccommodationCard = ({
         <Typography variant="body2" color="text.secondary" sx={{flexGrow: 1, mb: 1}}>
           {accommodation.description}
         </Typography>
+        {accommodation.rating ? (
+          <ReviewList
+            productId={accommodation._id}
+            setRatingInfo={setRatingInfo}
+            ratingInfo={ratingInfo[accommodation._id] || {avgRating: 0, reviewCount: 0}} // 해당 상품의 리뷰 정보만 전달
+            showOnlySummary={true}
+          />
+        ) : null}
         <Typography variant="body1" color="primary">
           <strong>최저가:</strong> {accommodation.minPrice?.toLocaleString()}원 / 박
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{flexGrow: 1, mb: 1, display: 'flex', alignItems: 'center'}}>
-          <span>{Number(accommodation.rating).toFixed(1)}</span>
-          <span style={{marginLeft: '8px'}}>
-            {[...Array(5)].map((_, index) => {
-              const starValue = index + 1;
-              if (accommodation.rating >= starValue) {
-                return <AiFillStar key={index} color="gold" size={16} />;
-              } else if (accommodation.rating >= starValue - 0.5) {
-                return <FaStarHalfAlt key={index} color="gold" size={16} />;
-              } else {
-                return <AiOutlineStar key={index} color="#E0E0E0" size={16} />;
-              }
-            })}
-          </span>
         </Typography>
       </CardContent>
 
