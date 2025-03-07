@@ -401,6 +401,17 @@ const ReviewList = ({
   const getImageUrl = imagePath => {
     if (!imagePath) return '/default-image.jpg';
 
+    // 배열인 경우 첫 번째 이미지 선택
+    if (Array.isArray(imagePath) && imagePath.length > 0) {
+      imagePath = imagePath[0];
+    }
+
+    // 문자열이 아닌 경우 기본 이미지 반환
+    if (typeof imagePath !== 'string') {
+      return '/default-image.jpg';
+    }
+
+    // 경로가 '/uploads/'로 시작하면 서버 URL 붙이기
     return imagePath.startsWith('/uploads/') ? `${SERVER_URL}${imagePath}` : imagePath;
   };
 

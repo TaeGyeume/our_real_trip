@@ -1,194 +1,3 @@
-// import React, {useEffect, useState} from 'react';
-// import {getTourTickets} from '../../api/tourTicket/tourTicketService';
-// import {getUserFavorites} from '../../api/user/favoriteService';
-// import {useNavigate} from 'react-router-dom';
-// import './styles/UserList.css';
-// import FavoriteButton from '../user/FavoriteButton';
-// import {IconButton} from '@mui/material';
-// import {ArrowBackIosNew, ArrowForwardIos} from '@mui/icons-material';
-
-// const UserList = () => {
-//   const [tickets, setTickets] = useState([]);
-//   const [favorites, setFavorites] = useState([]);
-//   const [visibleIndex, setVisibleIndex] = useState({});
-//   const navigate = useNavigate();
-
-//   const SERVER_URL =
-//     process.env.REACT_APP_ENV === 'development'
-//       ? 'http://localhost:5000'
-//       : 'https://ourrealtrip.shop/api';
-
-//   useEffect(() => {
-//     const fetchTickets = async () => {
-//       try {
-//         const data = await getTourTickets();
-//         setTickets(data);
-//       } catch (error) {
-//         console.error('투어 티켓 목록을 가져오는 중 오류 발생:', error);
-//       }
-//     };
-
-//     const fetchFavorites = async () => {
-//       try {
-//         const response = await getUserFavorites();
-//         setFavorites(response.favorites);
-//       } catch (error) {}
-//     };
-
-//     fetchTickets();
-//     fetchFavorites();
-//   }, []);
-
-//   const isFavoriteItem = itemId => {
-//     return favorites.some(fav => fav.itemId === itemId);
-//   };
-
-//   const getImageUrl = ticket => {
-//     let imageUrl = '/default-image.jpg';
-
-//     if (ticket && Array.isArray(ticket.images) && ticket.images.length > 0) {
-//       imageUrl = ticket.images[0];
-
-//       if (imageUrl.startsWith('/uploads/')) {
-//         imageUrl = `${SERVER_URL}${imageUrl}`;
-//       }
-//     }
-//     return imageUrl;
-//   };
-
-//   const groupedTickets = tickets.reduce((acc, ticket) => {
-//     const location = ticket.location || '기타';
-//     if (!acc[location]) acc[location] = [];
-//     acc[location].push({
-//       ...ticket,
-//       imageUrl: getImageUrl(ticket),
-//       isFavorite: isFavoriteItem(ticket._id)
-//     });
-//     return acc;
-//   }, {});
-
-//   useEffect(() => {
-//     // 📌 groupedTickets가 업데이트될 때 visibleIndex 초기화
-//     const initialVisibleIndex = Object.keys(groupedTickets).reduce((acc, location) => {
-//       acc[location] = 0;
-//       return acc;
-//     }, {});
-//     setVisibleIndex(initialVisibleIndex);
-//   }, [tickets]);
-
-//   const itemsPerPage = 4;
-
-//   const handleScrollLeft = location => {
-//     setVisibleIndex(prev => ({
-//       ...prev,
-//       [location]: Math.max(0, (prev[location] || 0) - 2)
-//     }));
-//   };
-
-//   const handleScrollRight = location => {
-//     setVisibleIndex(prev => ({
-//       ...prev,
-//       [location]: Math.min(
-//         groupedTickets[location].length - itemsPerPage,
-//         (prev[location] || 0) + 2
-//       )
-//     }));
-//   };
-
-//   return (
-//     <div className="user-list-tour-ticket-container">
-//       {Object.keys(groupedTickets).map(location => (
-//         <div key={location} className="user-list-location-section">
-//           {/* 📌 Location 타이틀에 스타일 적용 */}
-//           <h2 className="user-list-location-title">{location}</h2>
-
-//           <div className="user-list-tour-ticket-wrapper">
-//             {/* 좌측 이동 버튼 */}
-//             {groupedTickets[location].length > itemsPerPage &&
-//               (visibleIndex[location] || 0) > 0 && (
-//                 <IconButton
-//                   className="user-list-scroll-button user-list-scroll-button-left"
-//                   onClick={() => handleScrollLeft(location)}
-//                   sx={{
-//                     position: 'absolute',
-//                     left: '10px',
-//                     top: '50%',
-//                     transform: 'translateY(-50%)',
-//                     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-//                     color: 'white',
-//                     '&:hover': {backgroundColor: 'rgba(0, 0, 0, 0.8)'}
-//                   }}>
-//                   <ArrowBackIosNew fontSize="large" />
-//                 </IconButton>
-//               )}
-
-//             <div className="user-list-tour-ticket-track">
-//               <div
-//                 className="user-list-tour-ticket-grid"
-//                 style={{
-//                   transform: `translateX(-${(visibleIndex[location] || 0) * (100 / itemsPerPage)}%)`
-//                 }}>
-//                 {groupedTickets[location].map(ticket => (
-//                   <div
-//                     key={ticket._id}
-//                     className="user-list-tour-ticket-card"
-//                     onClick={e => {
-//                       e.stopPropagation();
-//                       navigate(`/tourTicket/list/${ticket._id}`);
-//                     }}>
-//                     <img
-//                       src={`${ticket.imageUrl}`}
-//                       alt={ticket.title}
-//                       className="user-list-ticket-image"
-//                     />
-
-//                     <div className="user-list-favorite-list-icon">
-//                       <FavoriteButton
-//                         itemId={ticket._id}
-//                         itemType="TourTicket"
-//                         initialFavoriteStatus={ticket.isFavorite}
-//                         onClick={e => e.stopPropagation()}
-//                       />
-//                     </div>
-//                     <div className="user-list-ticket-info">
-//                       <h3 className="user-list-ticket-title">{ticket.title}</h3>
-//                       <p className="user-list-ticket-price">
-//                         {ticket.price.toLocaleString()}원
-//                       </p>
-//                     </div>
-//                   </div>
-//                 ))}
-//               </div>
-//             </div>
-
-//       {/* 우측 이동 버튼 */}
-//       {groupedTickets[location].length > itemsPerPage &&
-//         (visibleIndex[location] || 0) + itemsPerPage <
-//           groupedTickets[location].length && (
-//           <IconButton
-//             className="user-list-scroll-button user-list-scroll-button-right"
-//             onClick={() => handleScrollRight(location)}
-//             sx={{
-//               position: 'absolute',
-//               right: '10px',
-//               top: '50%',
-//               transform: 'translateY(-50%)',
-//               backgroundColor: 'rgba(0, 0, 0, 0.5)',
-//               color: 'white',
-//               '&:hover': {backgroundColor: 'rgba(0, 0, 0, 0.8)'}
-//             }}>
-//             <ArrowForwardIos fontSize="large" />
-//           </IconButton>
-//         )}
-//     </div>
-//   </div>
-// ))}
-//     </div>
-//   );
-// };
-
-// export default UserList;
-
 import React, {useEffect, useState, useRef, useMemo} from 'react';
 import {getTourTickets} from '../../api/tourTicket/tourTicketService';
 import {getUserFavorites} from '../../api/user/favoriteService';
@@ -209,6 +18,7 @@ import {
   IconButton
 } from '@mui/material';
 import {ArrowBackIosNew, ArrowForwardIos} from '@mui/icons-material';
+import ReviewList from '../review/ReviewList';
 
 const UserList = () => {
   const [tickets, setTickets] = useState([]);
@@ -384,7 +194,11 @@ const UserList = () => {
           가격대
         </Typography>
 
-        <Typography variant="subtitle1" fontWeight="bold" mt={1} color="primary">
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          mt={1}
+          sx={{color: 'dodgerblue'}}>
           {priceRange[0].toLocaleString()}원 ~ {priceRange[1].toLocaleString()}원
         </Typography>
 
@@ -394,7 +208,8 @@ const UserList = () => {
           min={0}
           max={100000}
           step={500} // 1만원 단위 조절
-          valueLabelDisplay="auto"
+          valueLabelDisplay="off"
+          sx={{color: 'dodgerblue'}}
         />
         <hr className="sun" />
         <Typography variant="subtitle1" fontWeight="bold" mt={2}>
@@ -482,11 +297,6 @@ const UserList = () => {
                       e.stopPropagation();
                       navigate(`/tourTicket/list/${ticket._id}`);
                     }}>
-                    <img
-                      src={`${ticket.imageUrl}`}
-                      alt={ticket.title}
-                      className="user-list-ticket-image"
-                    />
                     <div className="user-list-favorite-list-icon">
                       <FavoriteButton
                         itemId={ticket._id}
@@ -494,10 +304,17 @@ const UserList = () => {
                         initialFavoriteStatus={ticket.isFavorite}
                       />
                     </div>
+
+                    <img
+                      src={`${ticket.imageUrl}`}
+                      alt={ticket.title}
+                      className="user-list-ticket-image"
+                    />
+
                     <div className="user-list-ticket-info">
                       <h3 className="user-list-ticket-title">{ticket.title}</h3>
                       <p className="user-list-ticket-price">
-                        {ticket.price.toLocaleString()}원
+                        {ticket.price.toLocaleString()}원 / 1인
                       </p>
                     </div>
                   </div>
