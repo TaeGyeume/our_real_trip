@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 
 const MileageInput = ({userMileage, totalPrice, discountAmount, onMileageChange}) => {
-  const [usedMileage, setUsedMileage] = useState(0);
+  const [usedMileage, setUsedMileage] = useState('');
   const [remainingMileage, setRemainingMileage] = useState(userMileage);
 
   useEffect(() => {
