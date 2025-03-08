@@ -8,6 +8,7 @@ import TravelItemInfo from '../../components/booking/TravelItemInfo';
 import ReservationInfo from '../../components/booking/ReservationInfo';
 import PackageInfo from '../../components/booking/PackageInfo';
 import Flightinfo from '../../components/booking/Flightinfo';
+import BookingStatus from '../../components/booking/BookingStatus';
 
 // 상품 유형 한글 변환 함수
 const translateType = type => {
@@ -56,6 +57,7 @@ const BookingDetail = () => {
 
   return (
     <div className="container mt-3">
+      <BookingStatus status={booking.paymentStatus} />
       <AccommodationInfo booking={booking} />
       <TourTicketInfo booking={booking} />
       <TravelItemInfo booking={booking} />
