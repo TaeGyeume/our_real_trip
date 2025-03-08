@@ -327,7 +327,7 @@ const QnaBoardEdit = () => {
                 <CardMedia
                   component="img"
                   height="100"
-                  image={`http://localhost:5000${path}`}
+                  image={`${SERVER_URL}${path}`}
                   alt="기존 이미지"
                 />
                 <CardActions>

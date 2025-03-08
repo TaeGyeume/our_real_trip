@@ -102,7 +102,12 @@ const normalizeImagePath = path => {
 export default function PackageEdit() {
   const {id} = useParams();
   const navigate = useNavigate();
-  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  // const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
 
   const [loading, setLoading] = useState(false);
 
