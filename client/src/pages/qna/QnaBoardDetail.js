@@ -32,7 +32,7 @@ const QnaBoardDetail = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
-  const [commentLoading, setCommentLoading] = useState(false);
+  const [, setCommentLoading] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
