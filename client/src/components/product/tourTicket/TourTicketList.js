@@ -4,31 +4,45 @@ import {
   deleteMultipleTourTickets
 } from '../../../api/tourTicket/tourTicketService';
 import {useLocation, useNavigate} from 'react-router-dom';
-import {Box, Card, CardMedia, CardContent, Typography} from '@mui/material';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Checkbox,
+  Typography,
+  Button,
+  Box,
+  IconButton
+} from '@mui/material';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import './styles/TourTicketList.css';
 
 const TourTicketList = () => {
   const [tickets, setTickets] = useState([]);
-  const [isDeleteMode, setIsDeleteMode] = useState(false); // 삭제 모드 여부
-  const [selectedTickets, setSelectedTickets] = useState(new Set()); // 선택된 티켓 ID
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedTickets, setSelectedTickets] = useState(new Set());
+
+  // 페이징
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  const SERVER_URL =
-    process.env.REACT_APP_ENV === 'development'
-      ? 'http://localhost:5000'
-      : 'https://ourrealtrip.shop/api';
 
   useEffect(() => {
     const fetchTickets = async () => {
       try {
         const data = await getTourTickets();
-
         const sortedTickets = data.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
 
-        setTickets(data);
+        setTickets(sortedTickets);
       } catch (error) {
         console.error('투어 티켓 목록을 가져오는 중 오류 발생:', error);
       }
@@ -37,26 +51,23 @@ const TourTicketList = () => {
     fetchTickets();
   }, []);
 
-  // 삭제 모드 토글
   const toggleDeleteMode = () => {
     setIsDeleteMode(prev => !prev);
-    setSelectedTickets(new Set()); // 선택 초기화
+    setSelectedTickets(new Set());
   };
 
-  // 품 선택 / 해제
   const handleSelectTicket = ticketId => {
     setSelectedTickets(prev => {
       const newSelection = new Set(prev);
-      if (newSelection.has(ticketId)) {
-        newSelection.delete(ticketId);
-      } else {
-        newSelection.add(ticketId);
-      }
+
+      newSelection.has(ticketId)
+        ? newSelection.delete(ticketId)
+        : newSelection.add(ticketId);
+
       return newSelection;
     });
   };
 
-  // 선택한 상품 삭제
   const handleDelete = async () => {
     if (selectedTickets.size === 0) {
       alert('삭제할 상품을 선택하세요.');
@@ -73,111 +84,211 @@ const TourTicketList = () => {
       await deleteMultipleTourTickets([...selectedTickets]);
       alert('삭제가 완료되었습니다.');
 
-      // 삭제 후 목록 갱신
       setTickets(prev => prev.filter(ticket => !selectedTickets.has(ticket._id)));
-      setSelectedTickets(new Set()); // 선택 초기화
-      setIsDeleteMode(false); // 삭제 모드 해제
+      setSelectedTickets(new Set());
+      setIsDeleteMode(false);
     } catch (error) {
       console.error('상품 삭제 중 오류 발생:', error);
       alert('상품 삭제 실패');
     }
   };
 
-  return (
-    <div className="tour-ticket-container" style={{flexDirection: 'column'}}>
-      <div className="tour-ticket-title">
-        <Typography variant="h4" fontWeight="bold" sx={{mb: 3, textAlign: 'left'}}>
-          🎫 투어 & 티켓 상품
-        </Typography>
-      </div>
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
 
-      {/* /product/tourTicket에서는 버튼을 숨김 */}
+  return (
+    <Box className="tour-ticket-container" display="flex" flexDirection="column" gap={2}>
+      {/* 제목 */}
+      <Typography variant="h4" fontWeight="bold">
+        🎫 투어 & 티켓 상품
+      </Typography>
+
+      {/* 버튼 그룹 */}
       {location.pathname !== '/product' && (
-        <div className="button-group">
-          <button onClick={() => navigate('/product/tourTicket/new')}>상품 등록</button>
+        <Box display="flex" gap={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/product/tourTicket/new')}
+            sx={{backgroundColor: 'rgb(0, 181, 204)', color: 'white'}}>
+            상품 등록
+          </Button>
           {!isDeleteMode ? (
-            <button onClick={toggleDeleteMode} className="delete-mode-btn">
+            <Button
+              variant="contained"
+              color="error"
+              onClick={toggleDeleteMode}
+              sx={{backgroundColor: 'rgb(236, 118, 64)', color: 'white'}}>
               삭제 모드
-            </button>
+            </Button>
           ) : (
             <>
-              <button onClick={handleDelete} className="confirm-delete-btn">
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={handleDelete}
+                sx={{backgroundColor: 'rgb(216, 65, 27)', color: 'white'}}>
                 삭제하기
-              </button>
-              <button onClick={toggleDeleteMode} className="cancel-delete-btn">
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={toggleDeleteMode}
+                sx={{backgroundColor: 'rgb(0, 51, 102)', color: 'white'}}>
                 삭제 취소
-              </button>
+              </Button>
             </>
           )}
-        </div>
+        </Box>
       )}
 
-      <Box display="flex" flexWrap="wrap" gap={3} mt={3} justifyContent="flex-start">
-        {tickets.length > 0 ? (
-          tickets.map(ticket => (
-            <Card
-              key={ticket._id}
-              sx={{
-                width: '300px',
-                borderRadius: 3,
-                boxShadow: 3,
-                cursor: 'pointer',
-                transition: '0.3s',
-                position: 'relative',
-                mb: 2,
-                '&:hover': {boxShadow: 6}
-              }}
-              onClick={() =>
-                isDeleteMode
-                  ? handleSelectTicket(ticket._id)
-                  : navigate(`/product/tourTicket/${ticket._id}`)
-              }>
-              {/* 체크박스, 이미지, 상품 정보 */}
+      {/* 테이블 컨테이너 */}
+      <TableContainer component={Paper} elevation={3}>
+        <Table sx={{tableLayout: 'fixed', width: '100%'}}>
+          <TableHead
+            sx={{
+              backgroundImage:
+                'linear-gradient(90deg, rgb(0, 181, 204) 0%, rgb(0, 51, 102) 100%)',
+              boxShadow: 3
+            }}>
+            <TableRow>
               {isDeleteMode && (
-                <input
-                  type="checkbox"
-                  checked={selectedTickets.has(ticket._id)}
-                  onChange={() => handleSelectTicket(ticket._id)}
-                  onClick={e => e.stopPropagation()} // 카드 클릭 방지
-                  style={{
-                    position: 'absolute',
-                    top: 10,
-                    left: 10,
-                    zIndex: 2,
-                    backgroundColor: 'white'
-                  }}
-                />
+                <TableCell
+                  sx={{
+                    color: 'white',
+                    fontWeight: 'bold',
+                    width: '60px',
+                    textAlign: 'center'
+                  }}>
+                  선택
+                </TableCell>
               )}
-              <CardMedia
-                component="img"
-                height="200"
-                image={`${SERVER_URL}${ticket.images[0]}`}
-                alt={ticket.title}
-              />
-              <CardContent>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  sx={{height: '2rem', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                  {ticket.title}
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{color: 'primary.main', mt: 1, fontWeight: 'bold'}}>
-                  💰 {ticket.price.toLocaleString()}원
-                </Typography>
-                <Typography>재고: {ticket.stock}</Typography>
-                <Typography variant="body1" sx={{mt: 1}}>
-                  지역: {ticket.location}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <p>등록된 상품이 없습니다.</p>
-        )}
-      </Box>
-    </div>
+              <TableCell
+                sx={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  width: '60px',
+                  textAlign: 'center'
+                }}>
+                번호
+              </TableCell>
+              <TableCell sx={{color: 'white', fontWeight: 'bold', textAlign: 'center'}}>
+                상품명
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  width: '150px',
+                  textAlign: 'center'
+                }}>
+                가격
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  width: '100px',
+                  textAlign: 'center'
+                }}>
+                재고
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  width: '120px',
+                  textAlign: 'center'
+                }}>
+                지역
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tickets.length > 0 ? (
+              tickets
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) // 현재 페이지의 데이터만 가져오기
+                .map((ticket, index) => (
+                  <TableRow
+                    key={ticket._id}
+                    hover
+                    sx={{cursor: 'pointer'}}
+                    onClick={() =>
+                      isDeleteMode
+                        ? handleSelectTicket(ticket._id)
+                        : navigate(`/product/tourTicket/${ticket._id}`)
+                    }
+                    selected={selectedTickets.has(ticket._id)}>
+                    {isDeleteMode && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedTickets.has(ticket._id)}
+                          onChange={() => handleSelectTicket(ticket._id)}
+                          onClick={e => e.stopPropagation()}
+                          color="primary"
+                        />
+                      </TableCell>
+                    )}
+                    <TableCell align="center" sx={{height: '76px', fontSize: '16px'}}>
+                      {page * rowsPerPage + index + 1}
+                    </TableCell>
+                    <TableCell align="left" sx={{height: '76px', fontSize: '16px'}}>
+                      {ticket.title}
+                    </TableCell>
+                    <TableCell align="center" sx={{height: '76px', fontSize: '16px'}}>
+                      {ticket.price.toLocaleString()}원
+                    </TableCell>
+                    <TableCell align="center" sx={{height: '76px', fontSize: '16px'}}>
+                      {ticket.stock}
+                    </TableCell>
+                    <TableCell align="center" sx={{height: '76px', fontSize: '16px'}}>
+                      {ticket.location}
+                    </TableCell>
+                  </TableRow>
+                ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={isDeleteMode ? 6 : 5}
+                  align="center"
+                  sx={{height: '76px', fontSize: '20px'}}>
+                  등록된 상품이 없습니다.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        {/* 페이지네이션 */}
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          sx={{padding: '10px 0'}}>
+          {/* 이전 페이지 버튼 (첫 번째 페이지에서는 숨김) */}
+          {page > 0 && (
+            <IconButton
+              onClick={event => handleChangePage(event, page - 1)}
+              sx={{minWidth: '30px'}}>
+              <ArrowBackIosNewIcon fontSize="small" />
+            </IconButton>
+          )}
+
+          {/* 현재 페이지 표시 */}
+          <Typography variant="body1" fontWeight="bold" sx={{mx: 2}}>
+            {`${page + 1} / ${Math.ceil(tickets.length / rowsPerPage)}`}
+          </Typography>
+
+          {/* 다음 페이지 버튼 (마지막 페이지에서는 숨김) */}
+          {page < Math.ceil(tickets.length / rowsPerPage) - 1 && (
+            <IconButton
+              onClick={event => handleChangePage(event, page + 1)}
+              sx={{minWidth: '30px'}}>
+              <ArrowForwardIosIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+      </TableContainer>
+    </Box>
   );
 };
 
