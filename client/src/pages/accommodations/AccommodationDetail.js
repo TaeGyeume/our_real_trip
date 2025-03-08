@@ -24,6 +24,8 @@ import {
   Alert
 } from '@mui/material';
 import {FaChevronRight, FaShareAlt} from 'react-icons/fa';
+import AdBanner from '../../components/ad/AdBanner';
+import {accommodationBannerData} from '../../data/bannerData';
 
 // 기본 날짜 설정 함수 (오늘 + n일)
 const getFormattedDate = (daysToAdd = 0) => {
@@ -307,7 +309,7 @@ const AccommodationDetail = () => {
           />
         </div>
       </Card>
-
+      <AdBanner banners={accommodationBannerData} />
       {/* 주변 숙소 컴포넌트 추가 */}
       {accommodation.coordinates?.coordinates && (
         <NearbyAccommodations

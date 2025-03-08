@@ -16,42 +16,60 @@ const ReservationInfo = ({booking}) => {
         예약자 정보
       </Typography>
 
-      <Card sx={{p: 2, mb: 2, boxShadow: 3, borderRadius: 2}}>
+      <Card
+        sx={{
+          p: 2,
+          mb: 2,
+          boxShadow: 1,
+          borderRadius: 1,
+          border: '1px solid #ddd',
+          backgroundColor: '#fafafa'
+        }}>
         <CardContent>
-          <Box sx={{mb: 1}}>
-            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+          {/* 이름 */}
+          <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 1}}>
+            <Typography variant="subtitle2" sx={{fontWeight: 'bold'}}>
               이름
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body2">
               {booking.reservationInfo.name || '정보 없음'}
             </Typography>
           </Box>
 
-          <Box sx={{mb: 1}}>
-            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+          {/* 이메일 */}
+          <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 1}}>
+            <Typography variant="subtitle2" sx={{fontWeight: 'bold'}}>
               이메일
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body2">
               {booking.reservationInfo.email || '정보 없음'}
             </Typography>
           </Box>
 
-          <Box>
-            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+          {/* 연락처 */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              mb: 1,
+              borderBottom: '1px dashed #bbb',
+              pb: 1
+            }}>
+            <Typography variant="subtitle2" sx={{fontWeight: 'bold'}}>
               연락처
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body2">
               {booking.reservationInfo.phone || '정보 없음'}
             </Typography>
           </Box>
 
-          {/* 주소 정보가 있을 경우에만 표시 */}
+          {/* 주소 (존재할 경우에만 표시) */}
           {booking.reservationInfo.address && (
             <Box sx={{mt: 2}}>
-              <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+              <Typography variant="subtitle2" sx={{fontWeight: 'bold'}}>
                 주소
               </Typography>
-              <Typography variant="body1">{booking.reservationInfo.address}</Typography>
+              <Typography variant="body2">{booking.reservationInfo.address}</Typography>
             </Box>
           )}
         </CardContent>
