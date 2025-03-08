@@ -90,12 +90,12 @@ const PackageBookingForm = () => {
 
         setFlightsData(validFlights);
 
-        // ✅ 숙박 기간 계산 (체크인 ~ 체크아웃)
+        //  숙박 기간 계산 (체크인 ~ 체크아웃)
         const startDate = new Date(pkg.startDates?.[0]);
         const endDate = new Date(pkg.endDates?.[0]);
         const numberOfNights = Math.max((endDate - startDate) / (1000 * 60 * 60 * 24), 1);
 
-        // ✅ 숙소 가격 계산 (숙박일 수 반영)
+        //  숙소 가격 계산 (숙박일 수 반영)
         const totalRoomPrice =
           pkg.accommodations?.reduce((sum, acc) => {
             if (!acc.rooms) return sum;
