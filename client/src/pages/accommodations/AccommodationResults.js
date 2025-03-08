@@ -3,6 +3,7 @@ import {useSearchParams} from 'react-router-dom';
 import {searchAccommodations} from '../../api/accommodation/accommodationService';
 import {getUserFavorites} from '../../api/user/favoriteService'; // 즐겨찾기 목록 가져오기 추가
 import {SearchBar, FilterPanel, AccommodationCard} from '../../components/accommodations';
+import {Box} from '@mui/material';
 
 // 오늘 날짜를 YYYY-MM-DD 포맷으로 반환하는 함수
 const getFormattedDate = (daysToAdd = 0) => {
@@ -144,6 +145,16 @@ const AccommodationResults = () => {
       <h2>숙소 검색 결과</h2>
 
       <SearchBar onSearch={handleSearch} />
+
+      <Box
+        sx={{
+          width: '100%',
+          height: '2px',
+          backgroundColor: '#ccc',
+          mb: 2,
+          marginTop: '10px'
+        }}
+      />
 
       <div className="row mt-3">
         <div className="col-md-3">
