@@ -70,8 +70,8 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
   return (
     <Card
       sx={{
-        width: 300,
-        height: isAuthenticated && user?.roles.includes('admin') ? 370 : 330, // 관리자일 때 크기 증가
+        width: 260,
+        height: isAuthenticated && user?.roles.includes('admin') ? 350 : 310, // 관리자일 때 크기 증가
         borderRadius: 1,
         boxShadow: 1,
         cursor: 'pointer',
@@ -80,18 +80,37 @@ const TravelItemCard = ({travelItem, onItemDeleted, isFavorite, onFavoriteToggle
         mb: 2,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        position: 'relative'
       }}
       onClick={handleCardClick}>
       {/* 이미지 영역 */}
       <CardMedia
         component="img"
-        height="190"
+        height="170"
         image={imageUrl}
         alt={travelItem?.name || '상품 이미지'}
         onError={() => setImgError(true)}
         sx={{objectFit: 'cover'}}
       />
+
+      {/* 즐겨찾기 버튼 (이미지 오른쪽 상단에 고정) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          zIndex: 10
+        }}
+        onClick={e => e.stopPropagation()} // 부모(Card) 클릭 이벤트 방지
+      >
+        <FavoriteButton
+          itemId={travelItem._id}
+          itemType="TravelItem"
+          initialFavoriteStatus={isFavorite}
+          onFavoriteToggle={onFavoriteToggle}
+        />
+      </Box>
 
       {/* 상품 정보 */}
       <CardContent

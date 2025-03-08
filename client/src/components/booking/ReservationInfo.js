@@ -44,6 +44,16 @@ const ReservationInfo = ({booking}) => {
               {booking.reservationInfo.phone || '정보 없음'}
             </Typography>
           </Box>
+
+          {/* 주소 정보가 있을 경우에만 표시 */}
+          {booking.reservationInfo.address && (
+            <Box sx={{mt: 2}}>
+              <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+                주소
+              </Typography>
+              <Typography variant="body1">{booking.reservationInfo.address}</Typography>
+            </Box>
+          )}
         </CardContent>
       </Card>
     </>

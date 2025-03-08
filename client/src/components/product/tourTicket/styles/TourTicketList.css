@@ -4,32 +4,10 @@
   text-align: left;
   padding: 20px;
   width: 100%;
-}
-
-.add-ticket-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 16px;
-  margin-bottom: 20px;
-}
-
-.add-ticket-button:hover {
-  background-color: #0056b3;
-}
-
-.tour-ticket-grid {
-  display: flex;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-  margin-top: 10px;
+  border-radius: 10px;
 }
 
 .tour-ticket-title {
-  width: 100%;
   font-size: 28px;
   font-weight: bold;
   color: #333;
@@ -37,70 +15,14 @@
   text-align: left;
 }
 
-.tour-ticket-card {
-  position: relative;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 15px;
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  text-align: left;
-}
-
-.tour-ticket-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.ticket-image {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.ticket-info {
-  margin-top: 10px;
-}
-
-.ticket-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin: 5px 0;
-}
-
-.ticket-description {
-  font-size: 0.9rem;
-  color: #555;
-}
-
-.ticket-price {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #ff5722;
-}
-
-.ticket-stock {
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.ticket-location {
-  font-size: 0.9rem;
-  color: #555;
-}
-
-/* 상품 등록 & 삭제 버튼 스타일 */
 .button-group {
   display: flex;
-  justify-content: flex-start;
   gap: 15px;
   margin-bottom: 20px;
 }
 
 .button-group button {
-  padding: 10px 15px;
+  padding: 12px 20px;
   font-size: 1rem;
   border: none;
   cursor: pointer;
@@ -111,6 +33,7 @@
 .add-button {
   background-color: #007bff;
   color: white;
+  font-weight: bold;
 }
 
 .add-button:hover {
@@ -120,57 +43,100 @@
 .delete-button {
   background-color: #dc3545;
   color: white;
+  font-weight: bold;
 }
 
 .delete-button:hover {
   background-color: #a71d2a;
 }
 
-/* 체크박스 스타일 */
-.tour-ticket-checkbox {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  z-index: 10;
+.tour-ticket-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
 }
 
-/* 선택된 상품 강조 (연한 빨간색 테두리) */
-.selected {
-  border: 2px solid #ff4d4d !important;
-  box-shadow: 0 0 10px rgba(255, 77, 77, 0.5);
+.tour-ticket-list {
+  width: 100%;
+  max-width: 1000px;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  table-layout: fixed;
 }
 
-/* 즐겨찾기 아이콘 - 이미지 오른쪽 상단에 위치 */
-.favorite-list-icon {
-  position: absolute;
-  top: 12px; /* 상단에서 여백 */
-  right: 12px; /* 오른쪽에서 여백 */
-  font-size: 22px; /* 아이콘 크기 */
-  cursor: pointer;
-  color: #ffcc00; /* 기본 색상 */
-  padding: 6px; /* 패딩 추가 */
-  z-index: 10; /* 다른 요소 위에 배치 */
-  transition: background 0.3s ease-in-out;
+.tour-ticket-list th, .tour-ticket-list td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  font-size: 16px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 74.67px; /* 행 높이 통일 */
 }
 
-.favorite-list-icon.active {
-  color: #ffcc00; /* 즐겨찾기 상태일 때 */
+.tour-ticket-list th {
+  background: #1976d2;
+  color: white;
+  font-weight: bold;
 }
 
-.favorite-item-info {
-  margin-top: 10px;
+.tour-ticket-list tr:hover {
+  background-color: #f1f1f1;
+}
+
+.tour-ticket-list td:first-child,
+.tour-ticket-list th:first-child {
+  width: 50px;
+}
+
+.tour-ticket-list td:nth-child(2),
+.tour-ticket-list th:nth-child(2) {
+  width: 60px;
+}
+
+.tour-ticket-list td:nth-child(3),
+.tour-ticket-list th:nth-child(3) {
+  text-align: left;
+  padding-left: 15px;
+  width: auto;
+}
+
+.tour-ticket-list td:not(:nth-child(3)),
+.tour-ticket-list th:not(:nth-child(3)) {
   text-align: center;
 }
 
-.favorite-item-info h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
+.tour-ticket-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  transform: scale(1);
 }
 
-.favorite-item-info p {
-  font-size: 14px;
-  color: #555;
+.selected {
+  background-color: rgba(25, 118, 210, 0.1);
+}
+
+.mui-table-container {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  max-width: 1000px;
+  width: 100%;
+}
+
+.mui-table-row:hover {
+  background-color: #f0f0f0;
+  transition: background 0.2s ease-in-out;
+}
+
+.mui-pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
 }

@@ -75,15 +75,16 @@ const AccommodationCard = ({
         <Typography variant="body2" color="text.secondary" sx={{flexGrow: 1, mb: 1}}>
           {accommodation.description}
         </Typography>
-        {accommodation.rating ? (
-          <ReviewList
-            productId={accommodation._id}
-            setRatingInfo={setRatingInfo}
-            ratingInfo={ratingInfo[accommodation._id] || {avgRating: 0, reviewCount: 0}} // 해당 상품의 리뷰 정보만 전달
-            showOnlySummary={true}
-          />
-        ) : null}
-        <Typography variant="body1" color="primary">
+        <Typography variant="body2" color="text.secondary" sx={{flexGrow: 1, mb: 1}}>
+          {accommodation.address}
+        </Typography>
+        <ReviewList
+          productId={accommodation._id}
+          setRatingInfo={setRatingInfo}
+          ratingInfo={ratingInfo[accommodation._id] || {avgRating: 0, reviewCount: 0}} // 해당 상품의 리뷰 정보만 전달
+          showOnlySummary={true}
+        />
+        <Typography variant="body1" color="primary" sx={{mt: 1}}>
           <strong>최저가:</strong> {accommodation.minPrice?.toLocaleString()}원 / 박
         </Typography>
       </CardContent>

@@ -56,17 +56,17 @@ const BookingDetail = () => {
 
   return (
     <div className="container mt-3">
+      <AccommodationInfo booking={booking} />
+      <TourTicketInfo booking={booking} />
+      <TravelItemInfo booking={booking} />
+      <PackageInfo booking={booking} />
+      <Flightinfo booking={booking} />
       {/* translateType, translatePaymentStatus을 props로 전달 */}
       <PaymentInfo
         booking={booking}
         translateType={translateType}
         translatePaymentStatus={translatePaymentStatus}
       />
-      <AccommodationInfo booking={booking} />
-      <TourTicketInfo booking={booking} />
-      <TravelItemInfo booking={booking} />
-      <PackageInfo booking={booking} />
-      <Flightinfo booking={booking} />
       <ReservationInfo booking={booking} />
     </div>
   );
