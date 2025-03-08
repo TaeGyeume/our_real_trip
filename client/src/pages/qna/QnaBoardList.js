@@ -90,19 +90,19 @@ const StyledCard = styled(Card)(({theme}) => ({
 }));
 
 // QnA Accordion의 제목
-const TitleTypography = styled(Typography)({
-  fontSize: '1rem',
-  fontWeight: 'bold'
-});
+// const TitleTypography = styled(Typography)({
+//   fontSize: '1rem',
+//   fontWeight: 'bold'
+// });
 
 // QnA Accordion 호버 시 그림자
-const StyledAccordion = styled(Accordion)(({theme}) => ({
-  transition: 'transform 0.3s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme?.shadows ? theme.shadows[3] : '0 2px 6px rgba(0,0,0,0.1)'
-  }
-}));
+// const StyledAccordion = styled(Accordion)(({theme}) => ({
+//   transition: 'transform 0.3s ease-in-out',
+//   '&:hover': {
+//     transform: 'translateY(-2px)',
+//     boxShadow: theme?.shadows ? theme.shadows[3] : '0 2px 6px rgba(0,0,0,0.1)'
+//   }
+// }));
 
 /* -------------------------
    3) Drawer 메뉴 항목
@@ -122,7 +122,7 @@ const QnaBoardList = () => {
   const [user, setUser] = useState(null);
 
   const navigate = useNavigate();
-  const theme = useTheme();
+  // const theme = useTheme();
 
   /* -------------------------
      5) 사용자 + QnA 목록 로드
