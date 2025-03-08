@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {toggleFavorite} from '../../api/user/favoriteService';
 import './styles/styles.css';
 
-const FavoriteButton = ({itemId, itemType, initialFavoriteStatus}) => {
+const FavoriteButton = ({itemId, itemType, initialFavoriteStatus, sx = {}}) => {
   const [isFavorite, setIsFavorite] = useState(initialFavoriteStatus);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +39,8 @@ const FavoriteButton = ({itemId, itemType, initialFavoriteStatus}) => {
     <button
       onClick={handleFavoriteToggle}
       className={`favorite-button ${isFavorite ? 'favorite' : ''}`} // UI 업데이트
-      disabled={loading}>
+      disabled={loading}
+      style={sx}>
       <i className={isFavorite ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'} />
     </button>
   );

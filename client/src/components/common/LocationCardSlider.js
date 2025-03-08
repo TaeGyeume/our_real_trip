@@ -14,7 +14,7 @@ const LocationCardSlider = ({locations, onCardClick}) => {
     speed: 500,
     slidesToShow: 4,
     slidesToScroll: 2,
-    // 커스텀 화살표에 isHovered 전달
+    // 커스텀 화살표에 isHovered
     prevArrow: <PrevArrow isHovered={isHovered} />,
     nextArrow: <NextArrow isHovered={isHovered} />,
     responsive: [

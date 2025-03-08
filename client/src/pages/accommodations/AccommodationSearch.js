@@ -4,7 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import SearchBar from '../../components/accommodations/SearchBar';
 import AdBanner from '../../components/ad/AdBanner';
 import PopularAccommodations from '../../components/accommodations/PopularAccommodations';
-import {Box} from '@mui/material';
+import {Box, Divider} from '@mui/material';
 import {accommodationBannerData} from '../../data/bannerData';
 
 // 오늘 날짜를 YYYY-MM-DD 포맷으로 반환하는 함수
@@ -49,6 +49,16 @@ const AccommodationSearch = () => {
     <div className="container mt-3">
       <h2>숙소 검색</h2>
       <SearchBar onSearch={handleSearch} />
+
+      <Box
+        sx={{
+          width: '100%',
+          height: '2px',
+          backgroundColor: '#ccc',
+          mb: 2,
+          marginTop: '10px'
+        }}
+      />
 
       <AdBanner banners={accommodationBannerData} />
       <Box sx={{mt: 6}}>

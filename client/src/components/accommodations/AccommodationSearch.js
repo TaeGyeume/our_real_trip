@@ -53,7 +53,7 @@ const AccommodationSearch = ({
         zIndex: 1000,
         padding: '10px 20px',
         backgroundColor: 'white',
-        boxShadow: 3,
+        boxShadow: 0,
         borderRadius: '10px',
         maxWidth: '1300px', // 가로 크기 제한하여 정렬 개선
         margin: '0 auto' // 가운데 정렬
