@@ -3,6 +3,7 @@ import {useParams} from 'react-router-dom';
 import {Box, Typography, Button} from '@mui/material';
 import {locationData} from '../../data/locationData';
 import TourTicketList from '../../components/mainbodycard/TourTicketList';
+import {useNavigate} from 'react-router-dom';
 
 const LocationDetailPage = () => {
   const {id} = useParams();
@@ -10,6 +11,7 @@ const LocationDetailPage = () => {
 
   // 탭 상태: 기본값은 "투어·티켓" 탭이라고 가정
   const [activeTab, setActiveTab] = useState('tour');
+  const navigate = useNavigate();
 
   if (!locationInfo) {
     return (
@@ -71,7 +73,7 @@ const LocationDetailPage = () => {
         <Box
           sx={{
             display: 'flex',
-            gap: 2,
+            gap: 5,
             justifyContent: 'center',
             borderBottom: '1px solid #ddd',
             pb: 1,
@@ -89,7 +91,18 @@ const LocationDetailPage = () => {
               flexDirection: 'column',
               justifyContent: 'center',
               p: 0,
-              minWidth: 80
+              minWidth: 80,
+              position: 'relative',
+              '&:hover': {
+                backgroundColor: 'white'
+              },
+              '& .underline': {
+                opacity: activeTab === 'tour' ? 1 : 0,
+                transition: 'opacity 0.3s'
+              },
+              '&:hover .underline': {
+                opacity: 1
+              }
             }}>
             <Box
               component="img"
@@ -106,21 +119,48 @@ const LocationDetailPage = () => {
               }}>
               투어·티켓
             </Typography>
+            <Box
+              className="underline"
+              sx={{
+                position: 'absolute',
+                bottom: -8,
+                left: '-10%',
+                width: '120%',
+                height: '2px',
+                bgcolor: '#0288d1'
+              }}
+            />
           </Button>
 
           {/* 숙소 탭 */}
           <Button
             variant="text"
-            onClick={() => handleTabClick('hotel')}
+            onClick={() =>
+              navigate(
+                `/accommodations/results?city=${encodeURIComponent(locationInfo.title)}`
+              )
+            }
             sx={{
-              color: activeTab === 'hotel' ? '#0288d1' : 'black',
+              // activeTab 관련 스타일은 그대로 두거나 필요에 따라 조정
+              color: 'black',
               fontWeight: 'bold',
               display: 'flex',
               alignItems: 'center',
               flexDirection: 'column',
               justifyContent: 'center',
               p: 0,
-              minWidth: 80
+              minWidth: 80,
+              position: 'relative',
+              '&:hover': {
+                backgroundColor: 'white'
+              },
+              '& .underline': {
+                opacity: activeTab === 'hotel' ? 1 : 0,
+                transition: 'opacity 0.3s'
+              },
+              '&:hover .underline': {
+                opacity: 1
+              }
             }}>
             <Box
               component="img"
@@ -128,14 +168,20 @@ const LocationDetailPage = () => {
               alt="숙소아이콘"
               sx={{width: 48, height: 48, mb: 1}}
             />
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 'bold',
-                color: activeTab === 'hotel' ? '#0288d1' : 'inherit'
-              }}>
+            <Typography variant="body1" sx={{fontWeight: 'bold'}}>
               숙소
             </Typography>
+            <Box
+              className="underline"
+              sx={{
+                position: 'absolute',
+                bottom: -8,
+                left: '-10%',
+                width: '120%',
+                height: '2px',
+                bgcolor: '#0288d1'
+              }}
+            />
           </Button>
 
           {/* 항공권 탭 */}
@@ -150,7 +196,18 @@ const LocationDetailPage = () => {
               flexDirection: 'column',
               justifyContent: 'center',
               p: 0,
-              minWidth: 80
+              minWidth: 80,
+              position: 'relative',
+              '&:hover': {
+                backgroundColor: 'white'
+              },
+              '& .underline': {
+                opacity: activeTab === 'flight' ? 1 : 0,
+                transition: 'opacity 0.3s'
+              },
+              '&:hover .underline': {
+                opacity: 1
+              }
             }}>
             <Box
               component="img"
@@ -166,6 +223,17 @@ const LocationDetailPage = () => {
               }}>
               항공권
             </Typography>
+            <Box
+              className="underline"
+              sx={{
+                position: 'absolute',
+                bottom: -8,
+                left: '-10%',
+                width: '120%',
+                height: '2px',
+                bgcolor: '#0288d1'
+              }}
+            />
           </Button>
         </Box>
       </Box>
