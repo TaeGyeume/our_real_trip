@@ -17,7 +17,7 @@ import {
   Card,
   CardContent
 } from '@mui/material';
-import {styled, useTheme} from '@mui/system';
+import {styled} from '@mui/system';
 import {useNavigate} from 'react-router-dom';
 import {FaQuestionCircle, FaLightbulb, FaCog, FaUser} from 'react-icons/fa';
 import {MdExpandMore} from 'react-icons/md';

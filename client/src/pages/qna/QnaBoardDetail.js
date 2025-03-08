@@ -22,7 +22,11 @@ import {
 } from '../../api/qna/qnaBoardService';
 import {getUserProfile} from '../../api/user/user';
 
-const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000'
+    : 'https://ourrealtrip.shop/api';
 
 const QnaBoardDetail = () => {
   const {qnaBoardId} = useParams();

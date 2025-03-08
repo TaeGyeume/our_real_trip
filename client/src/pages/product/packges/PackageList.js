@@ -10,14 +10,18 @@ import {
   Grid,
   Box,
   Button,
-  Pagination,
-  Tooltip
+  Pagination
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
-const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000'
+    : 'https://ourrealtrip.shop/api';
 
 //  이미지 경로 정리 함수
 const normalizeImagePath = path => {

@@ -54,9 +54,9 @@ const Card = styled(MuiCard)(({theme}) => ({
 
 export default function SignInCard() {
   const [useridError, setUseridError] = React.useState(false);
-  const [useridErrorMessage, setUseridErrorMessage] = React.useState('');
+  // const [useridErrorMessage, setUseridErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+  // const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [formData, setFormData] = React.useState({userid: '', password: ''});
   const [rememberUserId, setRememberUserId] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState('');

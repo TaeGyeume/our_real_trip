@@ -309,11 +309,11 @@ const PackageBookingForm = () => {
       ? SERVER_URL + packageData.images[0]
       : '/default-image.jpg';
 
-  // 최종 결제 금액 (마일리지 사용 반영)
-  const payAmount = Math.max(finalPrice - usedMileage, 0);
+  // // 최종 결제 금액 (마일리지 사용 반영)
+  // const payAmount = Math.max(finalPrice - usedMileage, 0);
 
-  // 총 할인액 = 패키지할인 + 쿠폰할인 + 마일리지
-  const totalDiscount = packageDiscount + couponDiscount + usedMileage;
+  // // 총 할인액 = 패키지할인 + 쿠폰할인 + 마일리지
+  // const totalDiscount = packageDiscount + couponDiscount + usedMileage;
 
   return (
     <>
