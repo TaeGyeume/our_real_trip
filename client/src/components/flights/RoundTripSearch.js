@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useLocation} from 'react-router-dom';
 import moment from 'moment-timezone';
 import './styles/FlightSearch.css';
 import {searchFlights} from '../../api/flight/flights';
@@ -53,8 +53,11 @@ const INTERNATIONAL_AIRPORTS = {
 // const AIRPORT_LIST = Object.keys(AIRPORT_GROUPS);
 
 const RoundTripSearch = () => {
-  const [departure, setDeparture] = useState('');
-  const [arrival, setArrival] = useState('');
+  const locationState = useLocation().state;
+  const defaultDeparture = locationState?.useSeoul ? '서울' : '';
+  const defaultArrival = locationState?.arrival || '';
+  const [departure, setDeparture] = useState(defaultDeparture);
+  const [arrival, setArrival] = useState(defaultArrival);
   const [departureDate, setDepartureDate] = useState(new Date());
   const [returnDate, setReturnDate] = useState(new Date());
   const [passengers, setPassengers] = useState(1);
