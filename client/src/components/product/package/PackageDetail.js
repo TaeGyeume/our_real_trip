@@ -14,6 +14,9 @@ import {
   ListItemText
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+
+// 항공편 전체 조회 API
+import {fetchFlights} from '../../../api/flight/flights';
 import {getPackageById} from '../../../api/package/packageService';
 
 const SERVER_URL =
@@ -21,21 +24,46 @@ const SERVER_URL =
     ? 'http://localhost:5000'
     : 'https://ourrealtrip.shop/api';
 
-// 상단 배너 이미지 스타일
-// const BannerImage = styled('img')({
-//   width: '100%',
-//   height: '400px',
-//   objectFit: 'cover',
-//   objectPosition: 'center'
-// });
+// ★ 하드코딩된 더미데이터
+const defaultIncludedItems = [
+  '왕복 항공권',
+  '호텔 2박 숙박권',
+  '조식 2회 제공',
+  '공항 → 호텔 왕복 셔틀'
+];
 
-const PackageDetail = () => {
+const defaultExcludedItems = [
+  '개인 경비 (식비, 음료, 기념품 등)',
+  '여행자 보험',
+  '해외 로밍/와이파이 비용'
+];
+
+const defaultEssentialInfo = [
+  '여권/비자 발급 필수 (미소지 시 탑승 불가)',
+  '코로나19 방역 지침 준수',
+  '출발 전 현지 날씨 및 안전 정보 확인'
+];
+
+const defaultRefundPolicy = [
+  '출발 7일 전까지 전액 환불 가능',
+  '출발 3일 전까지 50% 환불 가능',
+  '출발 1일 전/당일 취소 시 환불 불가'
+];
+
+export default function PackageDetail() {
   const {id} = useParams();
   const navigate = useNavigate();
-  const [pkg, setPkg] = useState(null);
-  const [showAllImages, setShowAllImages] = useState(false); // "상품 소개 더보기" 상태
 
-  // 자주 묻는 질문(FAQ) (예시)
+  const [pkg, setPkg] = useState(null);
+  const [showAllImages, setShowAllImages] = useState(false);
+
+  // 항공편 전체 목록
+  const [, setAllFlights] = useState([]);
+
+  // 방 예약 날짜 정보: { roomId: { start, end } }
+  const [roomDates, setRoomDates] = useState({});
+
+  // FAQ 예시
   const [faqList] = useState([
     '카트비, 캐디피 / 미팅&샌딩비는 누구에게 지불하나요?',
     '현지에 오셔서 현지실장에게 지불 해주시면 됩니다^^',
@@ -48,7 +76,72 @@ const PackageDetail = () => {
   useEffect(() => {
     (async () => {
       try {
+        // 1) 모든 항공편 문서 조회
+        const flightDocs = await fetchFlights();
+        setAllFlights(flightDocs);
+
+        // 2) 특정 패키지 조회
         const data = await getPackageById(id);
+
+        // 3) pkg.flights를 순회하며 flightId를 실제 항공편 객체로 교체
+        if (data.flights && data.flights.length > 0) {
+          const updatedFlights = data.flights.map(flightObj => {
+            if (!flightObj.flightId) return flightObj;
+
+            let flightIdStr = '';
+            if (typeof flightObj.flightId === 'string') {
+              flightIdStr = flightObj.flightId;
+            } else if (typeof flightObj.flightId === 'object') {
+              flightIdStr = flightObj.flightId._id;
+            }
+
+            const foundDoc = flightDocs.find(doc => doc._id === flightIdStr);
+            if (!foundDoc) return flightObj;
+            return {
+              ...flightObj,
+              flightId: {...foundDoc}
+            };
+          });
+          data.flights = updatedFlights;
+        }
+
+        // 4) 방+날짜 (roomIds, startDates, endDates) 해석
+        if (
+          data.roomIds &&
+          data.startDates &&
+          data.endDates &&
+          data.roomIds.length === data.startDates.length &&
+          data.roomIds.length === data.endDates.length
+        ) {
+          const roomDateObj = {};
+          data.roomIds.forEach((roomIdValue, idx) => {
+            let rid =
+              typeof roomIdValue === 'object' && roomIdValue.$oid
+                ? roomIdValue.$oid
+                : roomIdValue.toString();
+
+            const startObj = data.startDates[idx];
+            const endObj = data.endDates[idx];
+
+            let startDateStr = '';
+            if (typeof startObj === 'string') {
+              startDateStr = new Date(startObj).toISOString().slice(0, 10);
+            } else if (startObj && startObj.$date) {
+              startDateStr = new Date(startObj.$date).toISOString().slice(0, 10);
+            }
+
+            let endDateStr = '';
+            if (typeof endObj === 'string') {
+              endDateStr = new Date(endObj).toISOString().slice(0, 10);
+            } else if (endObj && endObj.$date) {
+              endDateStr = new Date(endObj.$date).toISOString().slice(0, 10);
+            }
+
+            roomDateObj[rid] = {start: startDateStr, end: endDateStr};
+          });
+          setRoomDates(roomDateObj);
+        }
+
         setPkg(data);
       } catch (err) {
         console.error('패키지 조회 실패:', err);
@@ -60,17 +153,32 @@ const PackageDetail = () => {
     return <Typography>로딩 중...</Typography>;
   }
 
-  // 첫 번째 이미지를 상단 배너로 사용
-  const bannerImage =
-    pkg.images && pkg.images.length > 0
-      ? `${SERVER_URL}/${pkg.images[0]}`
-      : '/default-image.jpg';
-
   // 추가 이미지 (두 번째 이후)
-  const additionalImages = pkg.images && pkg.images.length > 1 ? pkg.images.slice(1) : [];
+  const additionalImages = pkg.images && pkg.images.length > 0 ? pkg.images.slice(0) : [];
 
   // 결제 혜택
   const {discountRate = 0, price = 0, finalPrice = 0} = pkg;
+
+  // ★ 만약 pkg에 값이 없다면(또는 빈 배열이면) 더미데이터 사용
+  const includedItems =
+    pkg.includedItems && pkg.includedItems.length > 0
+      ? pkg.includedItems
+      : defaultIncludedItems;
+
+  const excludedItems =
+    pkg.excludedItems && pkg.excludedItems.length > 0
+      ? pkg.excludedItems
+      : defaultExcludedItems;
+
+  const essentialInfo =
+    pkg.essentialInfo && pkg.essentialInfo.length > 0
+      ? pkg.essentialInfo
+      : defaultEssentialInfo;
+
+  const refundPolicy =
+    pkg.refundPolicy && pkg.refundPolicy.length > 0
+      ? pkg.refundPolicy
+      : defaultRefundPolicy;
 
   return (
     <Container maxWidth="md" sx={{py: 4}}>
@@ -101,45 +209,42 @@ const PackageDetail = () => {
       {/* "상품 소개 더보기" 버튼 -> 추가 이미지 */}
       {additionalImages.length > 0 && (
         <Box sx={{mb: 3}}>
-          {/* 상품 소개 더보기 버튼 -> 추가 이미지 */}
-          {additionalImages.length > 0 && (
-            <Box
-              sx={{
-                mb: 3,
-                position: 'relative',
-                overflow: 'hidden',
-                maxHeight: showAllImages ? 'none' : '400px'
-              }}>
-              <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
-                {additionalImages.map((img, index) => (
-                  <img
-                    key={index}
-                    src={`${SERVER_URL}/${img}`}
-                    alt={`추가 이미지 ${index}`}
-                    style={{
-                      width: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center'
-                    }}
-                  />
-                ))}
-              </Box>
-
-              {!showAllImages && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
+          <Box
+            sx={{
+              mb: 3,
+              position: 'relative',
+              overflow: 'hidden',
+              maxHeight: showAllImages ? 'none' : '400px'
+            }}>
+            <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+              {additionalImages.map((img, index) => (
+                <img
+                  key={index}
+                  src={`${SERVER_URL}/${img}`}
+                  alt={`추가 이미지 ${index}`}
+                  style={{
                     width: '100%',
-                    height: '150px',
-                    background:
-                      'linear-gradient(to bottom, rgba(255,255,255,0) 0%, white 100%)'
+                    objectFit: 'cover',
+                    objectPosition: 'center'
                   }}
                 />
-              )}
+              ))}
             </Box>
-          )}
+
+            {!showAllImages && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '150px',
+                  background:
+                    'linear-gradient(to bottom, rgba(255,255,255,0) 0%, white 100%)'
+                }}
+              />
+            )}
+          </Box>
 
           <Button
             type="button"
@@ -168,19 +273,28 @@ const PackageDetail = () => {
             항공
           </Typography>
           {pkg.flights.map((flightObj, idx) => {
-            const {flightId, seatsToUse} = flightObj;
-            if (!flightId) return null;
+            const flightDoc = flightObj.flightId;
+            if (!flightDoc) return null;
+
+            const seatsUsed = flightObj.seatsToUse || 1;
             return (
               <Box key={idx} sx={{ml: 2, mt: 1}}>
                 <Typography variant="body2">
-                  항공사: {flightId.airline} / 편명: {flightId.flightNumber}
+                  항공사: {flightDoc.airline} / 편명: {flightDoc.flightNumber}
                 </Typography>
                 <Typography variant="body2">
-                  항공 가격: {flightId.price?.toLocaleString()}원 / 좌석 수: {seatsToUse}
+                  항공 가격: {flightDoc.price?.toLocaleString()}원 / 좌석 수: {seatsUsed}
                 </Typography>
-                {flightId.departureDate && (
+                {flightDoc.departure?.city && (
                   <Typography variant="body2">
-                    출발일: {flightId.departureDate}
+                    출발: {flightDoc.departure.city}/{flightDoc.departure.airport} (
+                    {flightDoc.departure.date} {flightDoc.departure.time})
+                  </Typography>
+                )}
+                {flightDoc.arrival?.city && (
+                  <Typography variant="body2">
+                    도착: {flightDoc.arrival.city}/{flightDoc.arrival.airport} (
+                    {flightDoc.arrival.date} {flightDoc.arrival.time})
                   </Typography>
                 )}
               </Box>
@@ -202,12 +316,31 @@ const PackageDetail = () => {
                   {acc.name}
                 </Typography>
                 {acc.rooms && acc.rooms.length > 0 ? (
-                  acc.rooms.map(room => (
-                    <Typography key={room._id} variant="body2" sx={{ml: 2}}>
-                      - {room.name || '방 이름 없음'}:{' '}
-                      {room.pricePerNight?.toLocaleString()}원/박
-                    </Typography>
-                  ))
+                  acc.rooms.map(room => {
+                    // roomDates에 예약 날짜가 있는지 확인
+                    let checkIn = '';
+                    let checkOut = '';
+                    if (roomDates[room._id]) {
+                      checkIn = roomDates[room._id].start;
+                      checkOut = roomDates[room._id].end;
+                    }
+
+                    return (
+                      <Typography key={room._id} variant="body2" sx={{ml: 2, mt: 1}}>
+                        - {room.name || '방 이름 없음'}:{' '}
+                        {room.pricePerNight?.toLocaleString() ?? 0}원/박
+                        {checkIn && checkOut ? (
+                          <span style={{marginLeft: '8px', color: 'blue'}}>
+                            (예약 날짜: {checkIn} ~ {checkOut})
+                          </span>
+                        ) : (
+                          <span style={{marginLeft: '8px', color: 'gray'}}>
+                            (예약 날짜: 없음)
+                          </span>
+                        )}
+                      </Typography>
+                    );
+                  })
                 ) : (
                   <Typography variant="body2" sx={{ml: 2}}>
                     객실 정보 없음
@@ -219,7 +352,7 @@ const PackageDetail = () => {
         </Box>
       )}
 
-      {/* 투어 정보 (있다면) */}
+      {/* 투어 정보 */}
       {pkg.tours && pkg.tours.length > 0 && (
         <Box sx={{mb: 2}}>
           <Typography variant="h6" sx={{fontWeight: 'bold'}}>
@@ -233,20 +366,22 @@ const PackageDetail = () => {
           ))}
         </Box>
       )}
+
       <Divider sx={{my: 3}} />
 
       {/* 포함 / 불포함 사항 */}
       <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
         포함 · 불포함 사항
       </Typography>
-      {/* 포함 사항 */}
+
+      {/* ★ pkg.includedItems가 없거나 비어 있으면 defaultIncludedItems */}
       <Box sx={{mb: 3}}>
         <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
           포함되어 있어요
         </Typography>
-        {pkg.includedItems && pkg.includedItems.length > 0 ? (
+        {includedItems.length > 0 ? (
           <List sx={{ml: 2}}>
-            {pkg.includedItems.map((item, idx) => (
+            {includedItems.map((item, idx) => (
               <ListItem key={idx} disablePadding sx={{py: 0.5}}>
                 <ListItemIcon sx={{minWidth: '30px'}}>
                   <CheckCircleOutlineIcon fontSize="small" color="primary" />
@@ -261,14 +396,15 @@ const PackageDetail = () => {
           </Typography>
         )}
       </Box>
-      {/* 불포함 사항 */}
+
+      {/* ★ pkg.excludedItems가 없거나 비어 있으면 defaultExcludedItems */}
       <Box sx={{mb: 3}}>
         <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
           불포함되어 있어요
         </Typography>
-        {pkg.excludedItems && pkg.excludedItems.length > 0 ? (
+        {excludedItems.length > 0 ? (
           <List sx={{ml: 2}}>
-            {pkg.excludedItems.map((item, idx) => (
+            {excludedItems.map((item, idx) => (
               <ListItem key={idx} disablePadding sx={{py: 0.5}}>
                 <ListItemIcon sx={{minWidth: '30px'}}>
                   <CheckCircleOutlineIcon fontSize="small" color="disabled" />
@@ -286,15 +422,13 @@ const PackageDetail = () => {
 
       <Divider sx={{my: 3}} />
 
-      <Divider sx={{my: 3}} />
-
       {/* 필수 확인 사항 */}
       <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
         필수 확인 사항
       </Typography>
-      {pkg.essentialInfo && pkg.essentialInfo.length > 0 ? (
+      {essentialInfo.length > 0 ? (
         <Box sx={{ml: 2}}>
-          {pkg.essentialInfo.map((info, idx) => (
+          {essentialInfo.map((info, idx) => (
             <Typography key={idx} variant="body2" sx={{mb: 1}}>
               {info}
             </Typography>
@@ -312,9 +446,9 @@ const PackageDetail = () => {
       <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
         취소/환불 규정
       </Typography>
-      {pkg.refundPolicy && pkg.refundPolicy.length > 0 ? (
+      {refundPolicy.length > 0 ? (
         <Box sx={{ml: 2}}>
-          {pkg.refundPolicy.map((rule, idx) => (
+          {refundPolicy.map((rule, idx) => (
             <Typography key={idx} variant="body2" sx={{mb: 1}}>
               {rule}
             </Typography>
@@ -340,23 +474,22 @@ const PackageDetail = () => {
         ))}
       </Box>
 
-      {/* 예약 및 결제 정보 */}
+      {/* 예약 및 결제 정보 (오른쪽 고정) */}
       <Box
         sx={{
-          position: 'fixed', // 고정 배치
-          top: '50%', // 상단에서 50% 지점에 배치
-          right: '20px', // 오른쪽 여백
-          transform: 'translateY(-50%)', // 세로 중앙 정렬
-          width: '300px', // 너비
-          padding: '16px', // 패딩
-          backgroundColor: 'white', // 배경색
+          position: 'fixed',
+          top: '50%',
+          right: '20px',
+          transform: 'translateY(-50%)',
+          width: '300px',
+          padding: '16px',
+          backgroundColor: 'white',
           borderRadius: '10px',
           boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
           textAlign: 'center',
           zIndex: 1000,
           border: '1px solid #ddd'
         }}>
-        {/* 일반가 표시 */}
         <Typography
           variant="body2"
           color="text.secondary"
@@ -364,7 +497,6 @@ const PackageDetail = () => {
           일반가
         </Typography>
 
-        {/* 가격 정보 */}
         {discountRate > 0 ? (
           <Box>
             <Typography
@@ -403,7 +535,6 @@ const PackageDetail = () => {
           </Typography>
         )}
 
-        {/* 예약하기 버튼 */}
         <Button
           variant="contained"
           color="primary"
@@ -421,7 +552,6 @@ const PackageDetail = () => {
           ⚡ 예약하기
         </Button>
 
-        {/* 구매 후 즉시 확정 문구 */}
         <Typography
           variant="body2"
           sx={{
@@ -438,6 +568,4 @@ const PackageDetail = () => {
       </Box>
     </Container>
   );
-};
-
-export default PackageDetail;
+}

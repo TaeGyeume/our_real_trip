@@ -17,15 +17,18 @@ import './styles/TourTicketBookingForm.css';
 import {Typography, TextField, Snackbar, Alert, Button} from '@mui/material';
 
 // 서버 URL (이미지 경로)
-const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000/'
+    : 'https://ourrealtrip.shop/api';
 
-const PackageBookingForm = () => {
+export default function PackageBookingForm() {
   const {id} = useParams();
   const navigate = useNavigate();
 
   // 패키지 및 항공 데이터
   const [packageData, setPackageData] = useState(null);
-  const [flightsData, setFlightsData] = useState([]); // 실제 항공편 문서들
+  const [, setFlightsData] = useState([]); // 실제 항공편 문서들
 
   // 사용자 & 쿠폰
   const [user, setUser] = useState(null);
@@ -33,12 +36,12 @@ const PackageBookingForm = () => {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
 
   // 가격 상태
-  const [basePrice, setBasePrice] = useState(0); // 숙소+투어+항공(좌석수) 합
-  const [discountRate, setDiscountRate] = useState(0);
-  const [packageDiscount, setPackageDiscount] = useState(0);
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [finalPrice, setFinalPrice] = useState(0);
-  const [usedMileage, setUsedMileage] = useState(0);
+  const [basePrice, setBasePrice] = useState(0); // 숙소+투어+항공 합계
+  const [discountRate, setDiscountRate] = useState(0); // 패키지 할인율
+  const [packageDiscount, setPackageDiscount] = useState(0); // 패키지 할인액
+  const [couponDiscount, setCouponDiscount] = useState(0); // 쿠폰 할인액
+  const [finalPrice, setFinalPrice] = useState(0); // 최종 결제 금액
+  const [usedMileage, setUsedMileage] = useState(0); // 마일리지 사용
 
   // 예약자 정보
   const [reservationInfo, setReservationInfo] = useState({
@@ -47,124 +50,140 @@ const PackageBookingForm = () => {
     phone: ''
   });
 
-  // UI 상태
+  // 알림/수정 상태
   const [openAlert, setOpenAlert] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  // (옵션) 방 예약 날짜 정보: { roomId: { start, end } }
+  const [roomDates, setRoomDates] = useState({});
+
   /**
-   * 1) 패키지 데이터 & 항공편 데이터 로드
+   * 1) 패키지/항공 데이터 로드 + 가격 계산
    */
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // (1) 특정 패키지 조회
+        // 1) 특정 패키지 조회
         const pkg = await getPackageById(id);
-        setPackageData(pkg);
 
-        // (2) 모든 항공편 데이터 불러오기
+        // 2) 전체 항공편 조회
         const allFlights = await fetchFlights();
 
-        // (3) pkg.flights를 순회하며 실제 항공편 문서를 찾아서 flightsData에 저장
-        //     flightObj.flightId가 문자열인지 객체인지 확인
-        //     => 문자열이면 find(doc => doc._id === flightObj.flightId)
-        //     => 객체라면 find(doc => doc._id === flightObj.flightId._id)
-        const validFlights = pkg.flights
-          .map(flightObj => {
-            // flightObj: { flightId: "...", seatsToUse: 1 }
-            // 혹은 flightId: { _id: "...", airline: "...", price: ... }
-
+        // 3) pkg.flights를 순회 → flightId를 실제 Flight 객체로 교체
+        const validFlights =
+          pkg.flights?.map(fObj => {
             let flightIdStr = '';
-            if (typeof flightObj.flightId === 'string') {
-              // flightId가 문자열인 경우
-              flightIdStr = flightObj.flightId;
-            } else if (typeof flightObj.flightId === 'object') {
-              // flightId가 객체인 경우
-              flightIdStr = flightObj.flightId._id;
+            if (typeof fObj.flightId === 'string') {
+              flightIdStr = fObj.flightId;
+            } else if (typeof fObj.flightId === 'object') {
+              flightIdStr = fObj.flightId._id;
             }
-
-            // 항공편 문서 찾기
             const foundDoc = allFlights.find(doc => doc._id === flightIdStr);
-            return foundDoc || null;
-          })
-          .filter(Boolean);
+            return foundDoc ? {...fObj, flightId: {...foundDoc}} : fObj;
+          }) || [];
+        pkg.flights = validFlights;
 
+        setPackageData(pkg);
         setFlightsData(validFlights);
 
-        // ✅ 숙박 기간 계산 (체크인 ~ 체크아웃)
+        // 4) 숙소 체크인/체크아웃 날짜 파싱 (roomIds, startDates, endDates)
+        if (
+          pkg.roomIds &&
+          pkg.startDates &&
+          pkg.endDates &&
+          pkg.roomIds.length === pkg.startDates.length &&
+          pkg.roomIds.length === pkg.endDates.length
+        ) {
+          const rDates = {};
+          pkg.roomIds.forEach((roomVal, idx) => {
+            let rid =
+              typeof roomVal === 'object' && roomVal.$oid
+                ? roomVal.$oid
+                : roomVal.toString();
+
+            const startObj = pkg.startDates[idx];
+            const endObj = pkg.endDates[idx];
+
+            const startDateStr = parseDateValue(startObj);
+            const endDateStr = parseDateValue(endObj);
+
+            rDates[rid] = {
+              start: startDateStr,
+              end: endDateStr
+            };
+          });
+          setRoomDates(rDates);
+        }
+
+        // 5) 가격 계산
+        //   숙소(방) 가격(체크인~체크아웃 일수) + 투어 + 항공(좌석 수) + 패키지 할인
         const startDate = new Date(pkg.startDates?.[0]);
         const endDate = new Date(pkg.endDates?.[0]);
         const numberOfNights = Math.max((endDate - startDate) / (1000 * 60 * 60 * 24), 1);
 
-        // ✅ 숙소 가격 계산 (숙박일 수 반영)
+        // (A) 숙소(방) 가격
         const totalRoomPrice =
           pkg.accommodations?.reduce((sum, acc) => {
             if (!acc.rooms) return sum;
             return (
               sum +
-              acc.rooms.reduce((roomSum, room) => {
-                return roomSum + (room.pricePerNight || 0) * numberOfNights;
+              acc.rooms.reduce((rSum, room) => {
+                return rSum + (room.pricePerNight || 0) * numberOfNights;
               }, 0)
             );
           }, 0) || 0;
 
-        // (5) 투어/티켓 총합
+        // (B) 투어 가격
         const totalTourPrice =
-          pkg.tours?.length > 0
-            ? pkg.tours.reduce((sum, t) => sum + (t.price || 0), 0)
-            : 0;
+          pkg.tours?.reduce((sum, t) => sum + (t.price || 0), 0) || 0;
 
-        // (6) 항공편 총합 (좌석 수 seatsToUse 반영)
-        // pkg.flights: [{ flightId, seatsToUse }, ...]
-        // validFlights: 실제 항공편 문서
-        const totalFlightPrice = pkg.flights.reduce((acc, flightObj) => {
-          // flightObj 예: { flightId: "xxxx", seatsToUse: 2 }
-          // 또는 { flightId: { _id: "...", ... }, seatsToUse: 2 }
-          let flightIdStr = '';
-          if (typeof flightObj.flightId === 'string') {
-            flightIdStr = flightObj.flightId;
-          } else if (typeof flightObj.flightId === 'object') {
-            flightIdStr = flightObj.flightId._id;
-          }
+        // (C) 항공편 가격
+        const totalFlightPrice =
+          pkg.flights?.reduce((acc, fObj) => {
+            if (!fObj.flightId) return acc;
+            const seatsUsed = fObj.seatsToUse || 1;
+            const flightPrice = fObj.flightId.price || 0;
+            return acc + flightPrice * seatsUsed;
+          }, 0) || 0;
 
-          // 실제 항공편 문서 찾기
-          const flightDoc = validFlights.find(doc => doc._id === flightIdStr);
-          if (!flightDoc) {
-            console.log('항공편 문서를 찾지 못했습니다:', flightIdStr);
-            return acc;
-          }
-          const seatsUsed = flightObj.seatsToUse || 1;
-          const flightPrice = flightDoc.price || 0;
-          return acc + flightPrice * seatsUsed;
-        }, 0);
-
-        // (7) basePrice = 숙소 + 투어 + 항공
+        // basePrice
         const base = totalRoomPrice + totalTourPrice + totalFlightPrice;
         setBasePrice(base);
 
-        // (8) 패키지 자체 할인
+        // 패키지 할인
         const pDiscountRate = pkg.discountRate || 0;
         setDiscountRate(pDiscountRate);
         const pDiscountValue = Math.floor((base * pDiscountRate) / 100);
         setPackageDiscount(pDiscountValue);
 
-        // (9) (쿠폰 전) 최종 금액
+        // (쿠폰 전) final
         setFinalPrice(base - pDiscountValue);
 
-        // 디버그 로그
+        // 디버그
         console.log('[DEBUG] totalRoomPrice:', totalRoomPrice);
         console.log('[DEBUG] totalTourPrice:', totalTourPrice);
         console.log('[DEBUG] totalFlightPrice:', totalFlightPrice);
         console.log('[DEBUG] basePrice:', base);
         console.log('[DEBUG] packageDiscount:', pDiscountValue);
-      } catch (error) {
-        console.error('패키지 예약 데이터 로드 오류:', error);
+      } catch (err) {
+        console.error('패키지 로드 실패:', err);
       }
     };
     fetchData();
   }, [id]);
 
+  // 날짜 파싱 함수
+  const parseDateValue = val => {
+    if (typeof val === 'string') {
+      return new Date(val).toISOString().slice(0, 10);
+    } else if (val && val.$date) {
+      return new Date(val.$date).toISOString().slice(0, 10);
+    }
+    return '';
+  };
+
   /**
-   * 2) 사용자 정보 + 쿠폰 목록
+   * 2) 사용자 + 쿠폰
    */
   useEffect(() => {
     const loadUser = async () => {
@@ -172,7 +191,7 @@ const PackageBookingForm = () => {
         const userData = await authAPI.getUserProfile();
         setUser(userData);
 
-        // 예약자 기본 정보 초기값
+        // 예약자 기본 정보
         setReservationInfo({
           name: userData.username,
           email: userData.email,
@@ -182,8 +201,8 @@ const PackageBookingForm = () => {
         // 쿠폰 목록
         const coupons = await fetchUserCoupons(userData._id);
         setUserCoupons(coupons);
-      } catch (error) {
-        console.error('사용자 정보 로드 실패:', error);
+      } catch (err) {
+        console.error('사용자 정보 로드 실패:', err);
       }
     };
     loadUser();
@@ -196,9 +215,8 @@ const PackageBookingForm = () => {
     setSelectedCoupon(coupon);
     setCouponDiscount(discount);
 
-    // 패키지 할인 후 가격
+    // 패키지 할인 후 → 쿠폰 할인
     const afterPkgDiscount = basePrice - packageDiscount;
-    // 쿠폰 할인
     const newFinal = afterPkgDiscount - discount;
     setFinalPrice(newFinal < 0 ? 0 : newFinal);
   };
@@ -216,8 +234,6 @@ const PackageBookingForm = () => {
    */
   const handlePayment = async () => {
     if (!packageData || !user) return;
-
-    // 고유한 merchant_uid 생성 (예: package_유저이름_날짜...)
     const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
     const merchant_uid = `package_${user.username}_${now
       .toISOString()
@@ -225,7 +241,6 @@ const PackageBookingForm = () => {
       .replace(/[-T:]/g, '')}`;
 
     try {
-      // 1) 예약 생성
       const bookingRes = await createBooking({
         types: ['package'],
         productIds: [packageData._id],
@@ -243,15 +258,15 @@ const PackageBookingForm = () => {
       if (!bookingRes || !bookingRes.booking) {
         throw new Error('예약 생성 실패');
       }
-    } catch (error) {
+    } catch (err) {
       alert('예약 요청 중 오류가 발생했습니다.');
       return;
     }
 
-    // 2) 아임포트 결제
+    // 아임포트 결제
     const payAmount = Math.max(finalPrice - usedMileage, 0);
     const {IMP} = window;
-    IMP.init('imp22685348'); // 가맹점 식별코드
+    IMP.init('imp22685348');
     IMP.request_pay(
       {
         pg: 'html5_inicis.INIpayTest',
@@ -266,7 +281,6 @@ const PackageBookingForm = () => {
       async rsp => {
         if (rsp.success) {
           try {
-            // 결제 검증
             const verifyResponse = await verifyPayment({
               imp_uid: rsp.imp_uid,
               merchant_uid,
@@ -278,7 +292,7 @@ const PackageBookingForm = () => {
             if (verifyResponse.message === '결제 검증 성공') {
               setOpenAlert(true);
               setTimeout(() => {
-                navigate('/mypage/bookings');
+                navigate('/main');
               }, 2000);
             } else {
               alert(`결제 검증 실패: ${verifyResponse.message}`);
@@ -287,10 +301,8 @@ const PackageBookingForm = () => {
             alert('결제 검증 중 오류 발생했습니다.');
           }
         } else {
-          // 결제 실패
           alert(`결제 실패: ${rsp.error_msg}`);
           if (selectedCoupon) {
-            // 이미 예약 생성된 건 취소
             await cancelBooking(merchant_uid);
           }
         }
@@ -298,22 +310,15 @@ const PackageBookingForm = () => {
     );
   };
 
-  // 로딩 중
   if (!packageData || !user) {
     return <Typography>상품 정보를 불러오는 중...</Typography>;
   }
 
-  // 패키지 썸네일 (첫 번째 이미지)
+  // 첫 번째 이미지
   const thumbnail =
     packageData.images?.length > 0
       ? SERVER_URL + packageData.images[0]
       : '/default-image.jpg';
-
-  // 최종 결제 금액 (마일리지 사용 반영)
-  const payAmount = Math.max(finalPrice - usedMileage, 0);
-
-  // 총 할인액 = 패키지할인 + 쿠폰할인 + 마일리지
-  const totalDiscount = packageDiscount + couponDiscount + usedMileage;
 
   return (
     <>
@@ -330,9 +335,10 @@ const PackageBookingForm = () => {
             </div>
 
             <hr className="divider" />
+
+            {/* 패키지 상세 정보 */}
             <div className="package-info">
               <h4>패키지 포함</h4>
-
               {/* 포함/불포함 */}
               {packageData.includedItems?.length > 0 && (
                 <p>
@@ -355,35 +361,61 @@ const PackageBookingForm = () => {
                     {packageData.flights.map((flightObj, idx) => {
                       if (!flightObj.flightId) return null;
 
-                      // flightObj.flightId가 실제 flight 객체일 수도 있고, 그냥 _id일 수도 있음
                       let airline = '항공사명 없음';
                       let flightNumber = '편명 없음';
                       let flightPrice = 0;
                       let seatsUsed = flightObj.seatsToUse || 1;
 
-                      // 분기 처리
+                      let departureCity = '';
+                      let departureAirport = '';
+                      let departureDate = '';
+                      let departureTime = '';
+                      let arrivalCity = '';
+                      let arrivalAirport = '';
+                      let arrivalDate = '';
+                      let arrivalTime = '';
+
                       if (typeof flightObj.flightId === 'object') {
                         airline = flightObj.flightId.airline || airline;
                         flightNumber = flightObj.flightId.flightNumber || flightNumber;
                         flightPrice = flightObj.flightId.price || 0;
-                      }
-                      // flightId가 문자열이면 flightsData에서 찾아본다
-                      else if (typeof flightObj.flightId === 'string') {
-                        const flightDoc = flightsData.find(
-                          doc => doc._id === flightObj.flightId
-                        );
-                        if (flightDoc) {
-                          airline = flightDoc.airline || airline;
-                          flightNumber = flightDoc.flightNumber || flightNumber;
-                          flightPrice = flightDoc.price || 0;
+
+                        if (flightObj.flightId.departure) {
+                          departureCity = flightObj.flightId.departure.city || '';
+                          departureAirport = flightObj.flightId.departure.airport || '';
+                          departureDate = flightObj.flightId.departure.date || '';
+                          departureTime = flightObj.flightId.departure.time || '';
+                        }
+                        if (flightObj.flightId.arrival) {
+                          arrivalCity = flightObj.flightId.arrival.city || '';
+                          arrivalAirport = flightObj.flightId.arrival.airport || '';
+                          arrivalDate = flightObj.flightId.arrival.date || '';
+                          arrivalTime = flightObj.flightId.arrival.time || '';
                         }
                       }
 
                       const totalFlightCost = flightPrice * seatsUsed;
+
                       return (
                         <li key={idx}>
-                          {airline} / {flightNumber} / {seatsUsed}석 /{' '}
-                          {totalFlightCost.toLocaleString()}원
+                          <div>
+                            {airline} / {flightNumber} / {seatsUsed}석 /{' '}
+                            {totalFlightCost.toLocaleString()}원
+                          </div>
+                          {/* 출발 정보 */}
+                          {departureCity && (
+                            <div style={{fontSize: '0.9em', color: '#555'}}>
+                              출발: {departureCity}/{departureAirport} ({departureDate}{' '}
+                              {departureTime})
+                            </div>
+                          )}
+                          {/* 도착 정보 */}
+                          {arrivalCity && (
+                            <div style={{fontSize: '0.9em', color: '#555'}}>
+                              도착: {arrivalCity}/{arrivalAirport} ({arrivalDate}{' '}
+                              {arrivalTime})
+                            </div>
+                          )}
                         </li>
                       );
                     })}
@@ -391,7 +423,7 @@ const PackageBookingForm = () => {
                 </div>
               )}
 
-              {/* 숙소 정보 */}
+              {/* 숙소 정보 (체크인~체크아웃 기간) */}
               {packageData.accommodations?.length > 0 && (
                 <div style={{marginTop: '10px'}}>
                   <strong>숙소 정보</strong>
@@ -400,19 +432,34 @@ const PackageBookingForm = () => {
                       <li key={acc._id}>
                         <strong>{acc.name}</strong>
                         {acc.rooms && acc.rooms.length > 0 ? (
-                          <ul
-                            style={{
-                              marginLeft: '20px',
-                              marginTop: '5px'
-                            }}>
+                          <ul style={{marginLeft: '20px', marginTop: '5px'}}>
                             {acc.rooms.map((room, rIdx) => {
                               const roomDisplayName = room.name || '객실 이름 없음';
                               const priceText = room.pricePerNight
                                 ? `${room.pricePerNight.toLocaleString()}원/1박`
                                 : '가격 정보 없음';
+
+                              // roomDates에서 체크인/체크아웃
+                              const roomIdKey = room._id.toString();
+                              let checkIn = '';
+                              let checkOut = '';
+                              if (roomDates[roomIdKey]) {
+                                checkIn = roomDates[roomIdKey].start;
+                                checkOut = roomDates[roomIdKey].end;
+                              }
+
                               return (
                                 <li key={rIdx}>
-                                  - {roomDisplayName}: {priceText}
+                                  - {roomDisplayName}: {priceText}{' '}
+                                  {checkIn && checkOut ? (
+                                    <span style={{marginLeft: '8px', color: 'blue'}}>
+                                      (예약 날짜: {checkIn} ~ {checkOut})
+                                    </span>
+                                  ) : (
+                                    <span style={{marginLeft: '8px', color: 'gray'}}>
+                                      (예약 날짜: 없음)
+                                    </span>
+                                  )}
                                 </li>
                               );
                             })}
@@ -448,6 +495,7 @@ const PackageBookingForm = () => {
             </div>
 
             <hr className="divider" />
+
             {/* 쿠폰 선택 */}
             <div className="coupon-section">
               <h4>쿠폰 사용</h4>
@@ -490,7 +538,6 @@ const PackageBookingForm = () => {
                 fullWidth
                 margin="normal"
               />
-
               <TextField
                 label="이메일"
                 variant="outlined"
@@ -501,7 +548,6 @@ const PackageBookingForm = () => {
                 fullWidth
                 margin="normal"
               />
-
               <TextField
                 label="전화번호"
                 variant="outlined"
@@ -512,7 +558,6 @@ const PackageBookingForm = () => {
                 fullWidth
                 margin="normal"
               />
-
               {!isEditing ? (
                 <Button
                   variant="contained"
@@ -547,7 +592,6 @@ const PackageBookingForm = () => {
                 <p>쿠폰 할인: -{couponDiscount.toLocaleString()}원</p>
               )}
               {usedMileage > 0 && <p>마일리지 사용: -{usedMileage.toLocaleString()}원</p>}
-
               {/* 총 할인 */}
               {packageDiscount + couponDiscount + usedMileage > 0 && (
                 <p>
@@ -601,6 +645,4 @@ const PackageBookingForm = () => {
       </Snackbar>
     </>
   );
-};
-
-export default PackageBookingForm;
+}

@@ -154,7 +154,7 @@ const App = () => {
           <Route path="/facebook/callback" element={<FacebookLoginCallback />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/accommodations/search" element={<AccommodationSearch />} />
+          <Route path="/accommodations" element={<AccommodationSearch />} />
           <Route path="/accommodations/results" element={<AccommodationResults />} />
           <Route
             path="/accommodations/:accommodationId/detail"

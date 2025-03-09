@@ -103,7 +103,8 @@ const SearchBar = ({onSearch}) => {
           mx: 0, // 좌우 여백 제거
           p: 3,
           borderRadius: 0, // 둥근 모서리 제거하여 전체 너비 채우기
-          backgroundColor: '#f8f9fa'
+          backgroundColor: 'white',
+          boxShadow: 0
         }}>
         <Stack
           direction="row"

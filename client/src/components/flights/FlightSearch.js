@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useLocation} from 'react-router-dom';
 import moment from 'moment-timezone';
 import './styles/FlightSearch.css';
 import {searchFlights} from '../../api/flight/flights';
@@ -29,7 +29,6 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 const DOMESTIC_AIRPORTS = {
   서울: ['GMP', 'ICN'],
-  // 인천: ['ICN'],
   부산: ['PUS'],
   제주: ['CJU'],
   대구: ['TAE'],
@@ -51,10 +50,18 @@ const INTERNATIONAL_AIRPORTS = {
 };
 
 const FlightSearch = () => {
-  const [departure, setDeparture] = useState('');
-  const [arrival, setArrival] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [passengers, setPassengers] = useState(1);
+  const locationState = useLocation().state || {};
+  // 만약 departure 값이 존재하면 그대로 사용, 없으면 useSeoul 플래그에 따라 '서울'로 설정
+  const defaultDeparture =
+    locationState.departure || (locationState.useSeoul ? '서울' : '');
+  const defaultArrival = locationState.arrival || '';
+  const defaultDate = locationState.date ? new Date(locationState.date) : new Date();
+  const defaultPassengers = locationState.passengers || 1;
+
+  const [departure, setDeparture] = useState(defaultDeparture);
+  const [arrival, setArrival] = useState(defaultArrival);
+  const [date, setDate] = useState(defaultDate);
+  const [passengers, setPassengers] = useState(defaultPassengers);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -134,8 +141,11 @@ const FlightSearch = () => {
         setErrorMessage('');
         console.log('검색된 데이터:', searchResults);
         setTimeout(() => {
-          navigate('/flights/results', {state: {flights: searchResults, passengers}});
-        }, 500);
+          setLoading(false);
+          navigate('/flights/results', {
+            state: {flights: searchResults, passengers, departure, arrival, date}
+          });
+        }, 1000);
       }
     } catch (error) {
       console.error('검색 실패:', error);
@@ -209,15 +219,14 @@ const FlightSearch = () => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 height: '56px',
-                padding: '0 8px', // 내부 패딩 조정
+                padding: '0 8px',
                 borderRadius: '5px'
               }}
               startAdornment={
                 <IconButton
                   onClick={() => setPassengers(prev => Math.max(1, prev - 1))}
                   size="small"
-                  sx={{padding: '4px'}} // 버튼 크기 줄임
-                >
+                  sx={{padding: '4px'}}>
                   <Remove fontSize="small" />
                 </IconButton>
               }
@@ -225,8 +234,7 @@ const FlightSearch = () => {
                 <IconButton
                   onClick={() => setPassengers(prev => prev + 1)}
                   size="small"
-                  sx={{padding: '4px'}} // 버튼 크기 줄임
-                >
+                  sx={{padding: '4px'}}>
                   <Add fontSize="small" />
                 </IconButton>
               }
@@ -235,7 +243,7 @@ const FlightSearch = () => {
                   textAlign: 'center',
                   fontSize: '16px',
                   fontWeight: 'bold',
-                  width: '24px' // 숫자가 중앙 정렬되도록 조정
+                  width: '24px'
                 }
               }}
               value={passengers}
@@ -252,8 +260,7 @@ const FlightSearch = () => {
               height: '56px',
               backgroundColor: '#004d7a',
               color: 'primary.contrastText'
-            }} // 버튼 크기 맞춤
-          >
+            }}>
             검색
           </Button>
         </Stack>
@@ -310,7 +317,6 @@ const FlightSearch = () => {
         {/* 로딩 화면 */}
         {loading && <LoadingScreen />}
       </Paper>
-      {/* </Container> */}
     </LocalizationProvider>
   );
 };

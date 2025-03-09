@@ -47,8 +47,17 @@ const AccommodationSearch = () => {
 
   return (
     <div className="container mt-3">
-      <h2>숙소 검색</h2>
       <SearchBar onSearch={handleSearch} />
+
+      <Box
+        sx={{
+          width: '100%',
+          height: '2px',
+          backgroundColor: '#ccc',
+          mb: 2,
+          marginTop: '10px'
+        }}
+      />
 
       <AdBanner banners={accommodationBannerData} />
       <Box sx={{mt: 6}}>

@@ -13,7 +13,6 @@ import {
   ListItemText,
   CircularProgress
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import {useNotificationStore} from '../store/notificationStore';
 
 const NotificationMenu = () => {
@@ -82,8 +81,26 @@ const NotificationMenu = () => {
       <IconButton color="inherit" ref={notiRef} onClick={toggleNotiDropdown}>
         <Badge
           badgeContent={notifications.filter(noti => !noti.read).length}
-          color="error">
-          <NotificationsIcon />
+          color="error"
+          sx={{
+            '& .MuiBadge-badge': {
+              top: 9, // 뱃지의 상단 위치 조정 (원하는 값으로 조절)
+              right: 9, // 뱃지의 오른쪽 위치 조정 (원하는 값으로 조절)
+              fontSize: '0.75rem', // 숫자가 너무 크면 조절
+              height: 18, // 뱃지 크기 조절
+              minWidth: 18 // 뱃지 크기 조절
+            }
+          }}>
+          <img
+            src="/images/category/notification.png" // 원하는 경로의 PNG 파일
+            alt="알림"
+            style={{
+              width: 30,
+              height: 30,
+              display: 'block', // 이미지가 가운데 정렬되도록 설정
+              position: 'relative'
+            }} // 기존 아이콘 크기 유지
+          />
         </Badge>
       </IconButton>
 

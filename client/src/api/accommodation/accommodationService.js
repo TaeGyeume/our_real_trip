@@ -154,7 +154,7 @@ export const fetchAccommodationById = async accommodationId => {
     };
   } catch (error) {
     console.error('숙소 정보 불러오기 오류:', error);
-    throw new Error('숙소 정보를 불러오는 d중 오류 발생');
+    throw new Error('숙소 정보를 불러오는 중 오류 발생');
   }
 };
 

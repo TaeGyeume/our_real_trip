@@ -26,7 +26,6 @@ const MyCouponsPage = () => {
 
   return (
     <div>
-      <h1>내 쿠폰함</h1>
       <MyCoupons userId={userId} />
     </div>
   );

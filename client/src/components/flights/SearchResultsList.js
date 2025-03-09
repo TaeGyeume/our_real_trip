@@ -1,6 +1,9 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import FlightSearchCard from './FlightSearchCard';
+import AdBanner from '../ad/AdBanner';
+import {flightBannerData} from '../../data/bannerData';
+import {Box} from '@mui/material';
 
 const SearchResultsList = ({flights, passengers = 1}) => {
   const navigate = useNavigate();
@@ -13,7 +16,9 @@ const SearchResultsList = ({flights, passengers = 1}) => {
 
   return (
     <div className="container-md mt-4" style={{maxWidth: '900px'}}>
-      <h2 className="fw-bold mb-4 text-center">📋 검색된 항공편 리스트</h2>
+      {/* <Box sx={{mb: 3}}>
+        <AdBanner banners={flightBannerData} />
+      </Box> */}
       <div className="row justify-content-center">
         {flights.length === 0 ? (
           <p className="text-muted text-center">검색된 항공편이 없습니다.</p>
