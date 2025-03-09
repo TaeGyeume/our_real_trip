@@ -24,6 +24,32 @@ const SERVER_URL =
     ? 'http://localhost:5000'
     : 'https://ourrealtrip.shop/api';
 
+// ★ 하드코딩된 더미데이터
+const defaultIncludedItems = [
+  '왕복 항공권',
+  '호텔 2박 숙박권',
+  '조식 2회 제공',
+  '공항 → 호텔 왕복 셔틀'
+];
+
+const defaultExcludedItems = [
+  '개인 경비 (식비, 음료, 기념품 등)',
+  '여행자 보험',
+  '해외 로밍/와이파이 비용'
+];
+
+const defaultEssentialInfo = [
+  '여권/비자 발급 필수 (미소지 시 탑승 불가)',
+  '코로나19 방역 지침 준수',
+  '출발 전 현지 날씨 및 안전 정보 확인'
+];
+
+const defaultRefundPolicy = [
+  '출발 7일 전까지 전액 환불 가능',
+  '출발 3일 전까지 50% 환불 가능',
+  '출발 1일 전/당일 취소 시 환불 불가'
+];
+
 export default function PackageDetail() {
   const {id} = useParams();
   const navigate = useNavigate();
@@ -89,7 +115,6 @@ export default function PackageDetail() {
         ) {
           const roomDateObj = {};
           data.roomIds.forEach((roomIdValue, idx) => {
-            // roomIdValue가 { $oid: '...' } 혹은 string
             let rid =
               typeof roomIdValue === 'object' && roomIdValue.$oid
                 ? roomIdValue.$oid
@@ -129,10 +154,31 @@ export default function PackageDetail() {
   }
 
   // 추가 이미지 (두 번째 이후)
-  const additionalImages = pkg.images && pkg.images.length > 1 ? pkg.images.slice(1) : [];
+  const additionalImages = pkg.images && pkg.images.length > 0 ? pkg.images.slice(0) : [];
 
   // 결제 혜택
   const {discountRate = 0, price = 0, finalPrice = 0} = pkg;
+
+  // ★ 만약 pkg에 값이 없다면(또는 빈 배열이면) 더미데이터 사용
+  const includedItems =
+    pkg.includedItems && pkg.includedItems.length > 0
+      ? pkg.includedItems
+      : defaultIncludedItems;
+
+  const excludedItems =
+    pkg.excludedItems && pkg.excludedItems.length > 0
+      ? pkg.excludedItems
+      : defaultExcludedItems;
+
+  const essentialInfo =
+    pkg.essentialInfo && pkg.essentialInfo.length > 0
+      ? pkg.essentialInfo
+      : defaultEssentialInfo;
+
+  const refundPolicy =
+    pkg.refundPolicy && pkg.refundPolicy.length > 0
+      ? pkg.refundPolicy
+      : defaultRefundPolicy;
 
   return (
     <Container maxWidth="md" sx={{py: 4}}>
@@ -327,13 +373,15 @@ export default function PackageDetail() {
       <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
         포함 · 불포함 사항
       </Typography>
+
+      {/* ★ pkg.includedItems가 없거나 비어 있으면 defaultIncludedItems */}
       <Box sx={{mb: 3}}>
         <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
           포함되어 있어요
         </Typography>
-        {pkg.includedItems && pkg.includedItems.length > 0 ? (
+        {includedItems.length > 0 ? (
           <List sx={{ml: 2}}>
-            {pkg.includedItems.map((item, idx) => (
+            {includedItems.map((item, idx) => (
               <ListItem key={idx} disablePadding sx={{py: 0.5}}>
                 <ListItemIcon sx={{minWidth: '30px'}}>
                   <CheckCircleOutlineIcon fontSize="small" color="primary" />
@@ -348,13 +396,15 @@ export default function PackageDetail() {
           </Typography>
         )}
       </Box>
+
+      {/* ★ pkg.excludedItems가 없거나 비어 있으면 defaultExcludedItems */}
       <Box sx={{mb: 3}}>
         <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
           불포함되어 있어요
         </Typography>
-        {pkg.excludedItems && pkg.excludedItems.length > 0 ? (
+        {excludedItems.length > 0 ? (
           <List sx={{ml: 2}}>
-            {pkg.excludedItems.map((item, idx) => (
+            {excludedItems.map((item, idx) => (
               <ListItem key={idx} disablePadding sx={{py: 0.5}}>
                 <ListItemIcon sx={{minWidth: '30px'}}>
                   <CheckCircleOutlineIcon fontSize="small" color="disabled" />
@@ -376,9 +426,9 @@ export default function PackageDetail() {
       <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
         필수 확인 사항
       </Typography>
-      {pkg.essentialInfo && pkg.essentialInfo.length > 0 ? (
+      {essentialInfo.length > 0 ? (
         <Box sx={{ml: 2}}>
-          {pkg.essentialInfo.map((info, idx) => (
+          {essentialInfo.map((info, idx) => (
             <Typography key={idx} variant="body2" sx={{mb: 1}}>
               {info}
             </Typography>
@@ -396,9 +446,9 @@ export default function PackageDetail() {
       <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
         취소/환불 규정
       </Typography>
-      {pkg.refundPolicy && pkg.refundPolicy.length > 0 ? (
+      {refundPolicy.length > 0 ? (
         <Box sx={{ml: 2}}>
-          {pkg.refundPolicy.map((rule, idx) => (
+          {refundPolicy.map((rule, idx) => (
             <Typography key={idx} variant="body2" sx={{mb: 1}}>
               {rule}
             </Typography>
@@ -440,7 +490,6 @@ export default function PackageDetail() {
           zIndex: 1000,
           border: '1px solid #ddd'
         }}>
-        {/* 일반가 표시 */}
         <Typography
           variant="body2"
           color="text.secondary"
