@@ -17,7 +17,10 @@ import './styles/TourTicketBookingForm.css';
 import {Typography, TextField, Snackbar, Alert, Button} from '@mui/material';
 
 // 서버 URL (이미지 경로)
-const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000/'
+    : 'https://ourrealtrip.shop/api';
 
 const PackageBookingForm = () => {
   const {id} = useParams();

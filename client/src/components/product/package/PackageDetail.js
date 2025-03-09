@@ -14,6 +14,10 @@ import {
   ListItemText
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+
+// ★ 항공편 전체 조회 API
+import {fetchFlights} from '../../../api/flight/flights';
+
 import {getPackageById} from '../../../api/package/packageService';
 
 const SERVER_URL =
@@ -21,19 +25,17 @@ const SERVER_URL =
     ? 'http://localhost:5000'
     : 'https://ourrealtrip.shop/api';
 
-// 상단 배너 이미지 스타일
-// const BannerImage = styled('img')({
-//   width: '100%',
-//   height: '400px',
-//   objectFit: 'cover',
-//   objectPosition: 'center'
-// });
-
 const PackageDetail = () => {
   const {id} = useParams();
   const navigate = useNavigate();
+
+  // 패키지 상세 정보
   const [pkg, setPkg] = useState(null);
-  const [showAllImages, setShowAllImages] = useState(false); // "상품 소개 더보기" 상태
+  // "상품 소개 더보기" 상태
+  const [showAllImages, setShowAllImages] = useState(false);
+
+  // 항공편 전체 목록
+  const [, setAllFlights] = useState([]);
 
   // 자주 묻는 질문(FAQ) (예시)
   const [faqList] = useState([
@@ -48,7 +50,42 @@ const PackageDetail = () => {
   useEffect(() => {
     (async () => {
       try {
+        // (1) 모든 항공편 문서를 먼저 불러온다
+        const flightDocs = await fetchFlights();
+        setAllFlights(flightDocs);
+
+        // (2) 특정 패키지 조회
         const data = await getPackageById(id);
+
+        // (3) pkg.flights를 순회하며 flightId를 실제 항공편 객체로 매칭
+        if (data.flights && data.flights.length > 0) {
+          const updatedFlights = data.flights.map(flightObj => {
+            if (!flightObj.flightId) return flightObj;
+
+            let flightIdStr = '';
+            if (typeof flightObj.flightId === 'string') {
+              // flightId가 문자열인 경우
+              flightIdStr = flightObj.flightId;
+            } else if (typeof flightObj.flightId === 'object') {
+              // flightId가 객체인 경우
+              flightIdStr = flightObj.flightId._id;
+            }
+
+            // flightDocs에서 찾기
+            const foundDoc = flightDocs.find(doc => doc._id === flightIdStr);
+            if (!foundDoc) return flightObj; // 문서를 못 찾으면 그대로 반환
+
+            // flightObj.flightId를 foundDoc으로 교체
+            return {
+              ...flightObj,
+              flightId: {
+                ...foundDoc
+              }
+            };
+          });
+          data.flights = updatedFlights;
+        }
+
         setPkg(data);
       } catch (err) {
         console.error('패키지 조회 실패:', err);
@@ -59,12 +96,6 @@ const PackageDetail = () => {
   if (!pkg) {
     return <Typography>로딩 중...</Typography>;
   }
-
-  // 첫 번째 이미지를 상단 배너로 사용
-  // const bannerImage =
-  //   pkg.images && pkg.images.length > 0
-  //     ? `${SERVER_URL}/${pkg.images[0]}`
-  //     : '/default-image.jpg';
 
   // 추가 이미지 (두 번째 이후)
   const additionalImages = pkg.images && pkg.images.length > 1 ? pkg.images.slice(1) : [];
@@ -101,45 +132,42 @@ const PackageDetail = () => {
       {/* "상품 소개 더보기" 버튼 -> 추가 이미지 */}
       {additionalImages.length > 0 && (
         <Box sx={{mb: 3}}>
-          {/* 상품 소개 더보기 버튼 -> 추가 이미지 */}
-          {additionalImages.length > 0 && (
-            <Box
-              sx={{
-                mb: 3,
-                position: 'relative',
-                overflow: 'hidden',
-                maxHeight: showAllImages ? 'none' : '400px'
-              }}>
-              <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
-                {additionalImages.map((img, index) => (
-                  <img
-                    key={index}
-                    src={`${SERVER_URL}/${img}`}
-                    alt={`추가 이미지 ${index}`}
-                    style={{
-                      width: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center'
-                    }}
-                  />
-                ))}
-              </Box>
-
-              {!showAllImages && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
+          <Box
+            sx={{
+              mb: 3,
+              position: 'relative',
+              overflow: 'hidden',
+              maxHeight: showAllImages ? 'none' : '400px'
+            }}>
+            <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+              {additionalImages.map((img, index) => (
+                <img
+                  key={index}
+                  src={`${SERVER_URL}/${img}`}
+                  alt={`추가 이미지 ${index}`}
+                  style={{
                     width: '100%',
-                    height: '150px',
-                    background:
-                      'linear-gradient(to bottom, rgba(255,255,255,0) 0%, white 100%)'
+                    objectFit: 'cover',
+                    objectPosition: 'center'
                   }}
                 />
-              )}
+              ))}
             </Box>
-          )}
+
+            {!showAllImages && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '150px',
+                  background:
+                    'linear-gradient(to bottom, rgba(255,255,255,0) 0%, white 100%)'
+                }}
+              />
+            )}
+          </Box>
 
           <Button
             type="button"
@@ -168,19 +196,31 @@ const PackageDetail = () => {
             항공
           </Typography>
           {pkg.flights.map((flightObj, idx) => {
-            const {flightId, seatsToUse} = flightObj;
-            if (!flightId) return null;
+            // 이제 flightObj.flightId가 실제 항공편 객체
+            const flightDoc = flightObj.flightId;
+            if (!flightDoc) return null;
+
+            const seatsUsed = flightObj.seatsToUse || 1;
             return (
               <Box key={idx} sx={{ml: 2, mt: 1}}>
                 <Typography variant="body2">
-                  항공사: {flightId.airline} / 편명: {flightId.flightNumber}
+                  항공사: {flightDoc.airline} / 편명: {flightDoc.flightNumber}
                 </Typography>
                 <Typography variant="body2">
-                  항공 가격: {flightId.price?.toLocaleString()}원 / 좌석 수: {seatsToUse}
+                  항공 가격: {flightDoc.price?.toLocaleString()}원 / 좌석 수: {seatsUsed}
                 </Typography>
-                {flightId.departureDate && (
+                {/* 출발 정보 */}
+                {flightDoc.departure?.city && (
                   <Typography variant="body2">
-                    출발일: {flightId.departureDate}
+                    출발: {flightDoc.departure.city}/{flightDoc.departure.airport} (
+                    {flightDoc.departure.date} {flightDoc.departure.time})
+                  </Typography>
+                )}
+                {/* 도착 정보 */}
+                {flightDoc.arrival?.city && (
+                  <Typography variant="body2">
+                    도착: {flightDoc.arrival.city}/{flightDoc.arrival.airport} (
+                    {flightDoc.arrival.date} {flightDoc.arrival.time})
                   </Typography>
                 )}
               </Box>
@@ -219,7 +259,7 @@ const PackageDetail = () => {
         </Box>
       )}
 
-      {/* 투어 정보 (있다면) */}
+      {/* 투어 정보 */}
       {pkg.tours && pkg.tours.length > 0 && (
         <Box sx={{mb: 2}}>
           <Typography variant="h6" sx={{fontWeight: 'bold'}}>
@@ -233,6 +273,7 @@ const PackageDetail = () => {
           ))}
         </Box>
       )}
+
       <Divider sx={{my: 3}} />
 
       {/* 포함 / 불포함 사항 */}
@@ -283,8 +324,6 @@ const PackageDetail = () => {
           </Typography>
         )}
       </Box>
-
-      <Divider sx={{my: 3}} />
 
       <Divider sx={{my: 3}} />
 
@@ -340,16 +379,16 @@ const PackageDetail = () => {
         ))}
       </Box>
 
-      {/* 예약 및 결제 정보 */}
+      {/* 예약 및 결제 정보 (오른쪽 고정) */}
       <Box
         sx={{
-          position: 'fixed', // 고정 배치
-          top: '50%', // 상단에서 50% 지점에 배치
-          right: '20px', // 오른쪽 여백
-          transform: 'translateY(-50%)', // 세로 중앙 정렬
-          width: '300px', // 너비
-          padding: '16px', // 패딩
-          backgroundColor: 'white', // 배경색
+          position: 'fixed',
+          top: '50%',
+          right: '20px',
+          transform: 'translateY(-50%)',
+          width: '300px',
+          padding: '16px',
+          backgroundColor: 'white',
           borderRadius: '10px',
           boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
           textAlign: 'center',
