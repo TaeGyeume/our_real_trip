@@ -4,6 +4,8 @@ import {Box, Typography, Button} from '@mui/material';
 import {locationData} from '../../data/locationData';
 import TourTicketList from '../../components/mainbodycard/TourTicketList';
 import {useNavigate} from 'react-router-dom';
+import AdBanner from '../../components/ad/AdBanner';
+import {tourticketBannerData} from '../../data/bannerData';
 
 const LocationDetailPage = () => {
   const {id} = useParams();
@@ -131,7 +133,6 @@ const LocationDetailPage = () => {
               }}
             />
           </Button>
-
           {/* 숙소 탭 */}
           <Button
             variant="text"
@@ -183,11 +184,64 @@ const LocationDetailPage = () => {
               }}
             />
           </Button>
-
           {/* 항공권 탭 */}
-          <Button
+          {/* <Button
             variant="text"
             onClick={() => handleTabClick('flight')}
+            sx={{
+              color: activeTab === 'flight' ? '#0288d1' : 'black',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              p: 0,
+              minWidth: 80,
+              position: 'relative',
+              '&:hover': {
+                backgroundColor: 'white'
+              },
+              '& .underline': {
+                opacity: activeTab === 'flight' ? 1 : 0,
+                transition: 'opacity 0.3s'
+              },
+              '&:hover .underline': {
+                opacity: 1
+              }
+            }}>
+            <Box
+              component="img"
+              src="/images/category/flight.png"
+              alt="항공아이콘"
+              sx={{width: 48, height: 48, mb: 1}}
+            />
+            <Typography
+              variant="body1"
+              sx={{
+                fontWeight: 'bold',
+                color: activeTab === 'flight' ? '#0288d1' : 'inherit'
+              }}>
+              항공권
+            </Typography>
+            <Box
+              className="underline"
+              sx={{
+                position: 'absolute',
+                bottom: -8,
+                left: '-10%',
+                width: '120%',
+                height: '2px',
+                bgcolor: '#0288d1'
+              }}
+            />
+          </Button> */}
+          <Button
+            variant="text"
+            onClick={() =>
+              navigate('/flights', {
+                state: {arrival: locationInfo.title, useSeoul: true}
+              })
+            }
             sx={{
               color: activeTab === 'flight' ? '#0288d1' : 'black',
               fontWeight: 'bold',
@@ -242,13 +296,14 @@ const LocationDetailPage = () => {
       <Box sx={{p: 2, mt: 3}}>
         {activeTab === 'tour' && (
           <Box>
-            <Typography variant="h6" sx={{mb: 2}}>
-              투어·티켓 상품 목록
+            <AdBanner banners={tourticketBannerData} />
+            <Typography variant="h6" fontWeight="bold" sx={{mb: 2, mt: 5}}>
+              {locationInfo.title}의 투어·티켓 상품 목록
             </Typography>
             {/* 투어·티켓 관련 컴포넌트 or 데이터 */}
-            <Typography variant="body2">
+            <Box sx={{mt: 2}}>
               <TourTicketList location={locationInfo.title} />
-            </Typography>
+            </Box>
           </Box>
         )}
 

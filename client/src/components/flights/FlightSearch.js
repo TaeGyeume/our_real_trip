@@ -26,10 +26,10 @@ import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {ko} from 'date-fns/locale';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import {useLocation} from 'react-router-dom';
 
 const DOMESTIC_AIRPORTS = {
   서울: ['GMP', 'ICN'],
-  // 인천: ['ICN'],
   부산: ['PUS'],
   제주: ['CJU'],
   대구: ['TAE'],
@@ -51,8 +51,11 @@ const INTERNATIONAL_AIRPORTS = {
 };
 
 const FlightSearch = () => {
-  const [departure, setDeparture] = useState('');
-  const [arrival, setArrival] = useState('');
+  const locationState = useLocation().state;
+  const defaultDeparture = locationState?.useSeoul ? '서울' : '';
+  const defaultArrival = locationState?.arrival || '';
+  const [departure, setDeparture] = useState(defaultDeparture || '');
+  const [arrival, setArrival] = useState(defaultArrival || '');
   const [date, setDate] = useState(new Date());
   const [passengers, setPassengers] = useState(1);
   const [errorMessage, setErrorMessage] = useState('');
