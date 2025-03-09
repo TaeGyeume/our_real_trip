@@ -5,7 +5,10 @@ import {
 } from '../../../api/tourTicket/tourTicketService';
 import {useParams, useNavigate} from 'react-router-dom';
 import './styles/TourTicketDetail.css';
-import ReviewList from '../../review/ReviewList';
+import {Typography, Button, IconButton} from '@mui/material';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosNewIcon from '@mui/icons-material/ArrowForwardIos';
+import {FaMapMarkerAlt} from 'react-icons/fa';
 
 const TourTicketDetail = () => {
   const {id} = useParams();
@@ -75,49 +78,140 @@ const TourTicketDetail = () => {
   };
 
   return (
-    <div className="tour-ticket-detail">
-      <h1>{ticket.title}</h1>
+    <div className="user-detail-tour-ticket-container">
+      {/* 왼쪽 상세 정보 영역 */}
+      <div className="user-detail-tour-ticket-detail">
+        <div className="user-detail-ticket-header">
+          <div className="user-detail-ticket-location">
+            <FaMapMarkerAlt />
+            &nbsp;
+            <span>{ticket.location}</span>
+          </div>
 
-      <div className="image-slider">
-        <img
-          src={`${SERVER_URL}${ticket.images[currentIndex]}`}
-          alt={ticket.title}
-          className="slider-image"
-        />
+          <h1 className="user-detail-ticket-title">{ticket.title}</h1>
+        </div>
 
-        {ticket.images.length > 1 && (
-          <>
-            <button className="prev-btn" onClick={handlePrev}>
-              &lt;
-            </button>
-            <button className="next-btn" onClick={handleNext}>
-              &gt;
-            </button>
-          </>
-        )}
+        <hr className="user-detail-sun" />
 
-        <div className="dots-container">
-          {ticket.images.map((_, index) => (
-            <span
-              key={index}
-              className={`dot ${index === currentIndex ? 'active' : ''}`}
-              onClick={() => handleDotClick(index)}
-            />
+        <Typography variant="body1" className="user-detail-ticket-description">
+          {ticket.description.split('\n').map((line, index) => (
+            <React.Fragment key={index}>
+              {line}
+              <br />
+            </React.Fragment>
           ))}
+        </Typography>
+        <p className="user-detail-instant-confirmation"></p>
+
+        <div className="image-slider">
+          <img
+            src={`${SERVER_URL}${ticket.images[currentIndex]}`}
+            alt={ticket.title}
+            className="slider-image"
+          />
+
+          {/* {ticket.images.length > 1 && (
+            <>
+              <button className="prev-btn" onClick={handlePrev}>
+                &lt;
+              </button>
+              <button className="next-btn" onClick={handleNext}>
+                &gt;
+              </button>
+            </>
+          )} */}
+
+          {ticket.images.length > 1 && (
+            <>
+              <IconButton
+                className="prev-btn"
+                onClick={handlePrev}
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '15px',
+                  transform: 'translateY(-50%)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  '&:hover': {backgroundColor: 'rgba(0, 0, 0, 0.8)'},
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  zIndex: 2
+                }}>
+                <ArrowBackIosNewIcon fontSize="small" />
+              </IconButton>
+
+              <IconButton
+                className="next-btn"
+                onClick={handleNext}
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '15px',
+                  transform: 'translateY(-50%)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  '&:hover': {backgroundColor: 'rgba(0, 0, 0, 0.8)'},
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  zIndex: 2
+                }}>
+                <ArrowForwardIosNewIcon fontSize="small" />
+              </IconButton>
+            </>
+          )}
+
+          <div className="dots-container">
+            {ticket.images.map((_, index) => (
+              <span
+                key={index}
+                className={`dot ${index === currentIndex ? 'active' : ''}`}
+                onClick={() => handleDotClick(index)}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
-      <p>설명: {ticket.description}</p>
-      <p>가격: {ticket.price.toLocaleString()}원</p>
-      <p>재고: {ticket.stock}개</p>
-
-      <button onClick={handleDelete} className="confirm-delete-btn">
-        삭제하기
-      </button>
-      <button onClick={() => navigate(`/product/tourTicket/modify/${id}`)}>
-        수정하기
-      </button>
-      <button onClick={() => navigate('/product/tourTicket/list')}>상품 목록</button>
+      <div className="user-detail-empty-space">
+        <div className="user-detail-right-space">
+          <div className="user-detail-price-info">
+            <p className="user-detail-original-price">
+              {ticket.price.toLocaleString()}원 / {ticket.stock}개
+            </p>
+          </div>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleDelete}
+            sx={{backgroundColor: 'rgb(216, 65, 27)', color: 'white'}}>
+            삭제
+          </Button>
+          &nbsp;
+          <Button
+            variant="outlined"
+            onClick={() => navigate(`/product/tourTicket/modify/${id}`)}
+            sx={{backgroundColor: 'rgb(38, 136, 202)', color: 'white'}}>
+            수정
+          </Button>
+          &nbsp;
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/product/tourTicket/list')}
+            sx={{backgroundColor: 'rgb(24, 160, 90)', color: 'white'}}>
+            목록 이동
+          </Button>
+          <p className="user-detail-instant-confirmation"></p>
+        </div>
+      </div>
     </div>
   );
 };
