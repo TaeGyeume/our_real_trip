@@ -18,9 +18,7 @@ import {
   Card,
   CardContent,
   CardMedia,
-  IconButton,
-  Stack,
-  Chip
+  IconButton
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
@@ -139,9 +137,9 @@ export default function PackageCreate() {
     setPackageImages(prev => [...prev, ...Array.from(e.target.files)]);
   };
 
-  const handleRemoveImage = index => {
-    setPackageImages(prev => prev.filter((_, i) => i !== index));
-  };
+  // const handleRemoveImage = index => {
+  //   setPackageImages(prev => prev.filter((_, i) => i !== index));
+  // };
 
   // 모달 열기/닫기 핸들러
   const handleOpenAccommodationModal = () => setOpenAccommodationModal(true);
