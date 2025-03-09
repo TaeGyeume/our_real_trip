@@ -8,7 +8,6 @@ import {
   Box,
   Typography,
   CircularProgress,
-  Paper,
   Link,
   FormControlLabel,
   Checkbox
@@ -23,7 +22,7 @@ import SignInCard from './style/components/SignInCard';
 
 const Login = () => {
   const location = useLocation();
-  const [errorMessage, setErrorMessage] = useState('');
+  const [, setErrorMessage] = useState('');
   const navigate = useNavigate();
   const {fetchUserProfile} = useAuthStore();
   const [formData, setFormData] = useState({userid: '', password: ''});
