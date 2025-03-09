@@ -90,12 +90,12 @@ const PackageBookingForm = () => {
 
         setFlightsData(validFlights);
 
-        // ✅ 숙박 기간 계산 (체크인 ~ 체크아웃)
+        //  숙박 기간 계산 (체크인 ~ 체크아웃)
         const startDate = new Date(pkg.startDates?.[0]);
         const endDate = new Date(pkg.endDates?.[0]);
         const numberOfNights = Math.max((endDate - startDate) / (1000 * 60 * 60 * 24), 1);
 
-        // ✅ 숙소 가격 계산 (숙박일 수 반영)
+        //  숙소 가격 계산 (숙박일 수 반영)
         const totalRoomPrice =
           pkg.accommodations?.reduce((sum, acc) => {
             if (!acc.rooms) return sum;
@@ -309,11 +309,11 @@ const PackageBookingForm = () => {
       ? SERVER_URL + packageData.images[0]
       : '/default-image.jpg';
 
-  // 최종 결제 금액 (마일리지 사용 반영)
-  const payAmount = Math.max(finalPrice - usedMileage, 0);
+  // // 최종 결제 금액 (마일리지 사용 반영)
+  // const payAmount = Math.max(finalPrice - usedMileage, 0);
 
-  // 총 할인액 = 패키지할인 + 쿠폰할인 + 마일리지
-  const totalDiscount = packageDiscount + couponDiscount + usedMileage;
+  // // 총 할인액 = 패키지할인 + 쿠폰할인 + 마일리지
+  // const totalDiscount = packageDiscount + couponDiscount + usedMileage;
 
   return (
     <>

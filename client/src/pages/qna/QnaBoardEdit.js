@@ -27,7 +27,11 @@ import {
 } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css'; // (선택 사항: Bootstrap을 사용한다면)
 
-const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000'
+    : 'https://ourrealtrip.shop/api';
 
 const QnaBoardEdit = () => {
   const {qnaBoardId} = useParams();
@@ -323,7 +327,7 @@ const QnaBoardEdit = () => {
                 <CardMedia
                   component="img"
                   height="100"
-                  image={`http://localhost:5000${path}`}
+                  image={`${SERVER_URL}${path}`}
                   alt="기존 이미지"
                 />
                 <CardActions>

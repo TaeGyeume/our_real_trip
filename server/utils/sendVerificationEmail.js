@@ -42,7 +42,7 @@ const sendVerificationEmail = async (email, verificationCode) => {
 
     console.log(' [이메일 전송] 메일 옵션 생성 완료, 전송 시작...'); //  메일 옵션 확인
 
-    // ✅ 이메일 전송
+    //  이메일 전송
     const info = await transporter.sendMail(mailOptions);
     console.log(` [이메일 전송 성공] 전송 응답: ${info.response}`);
   } catch (error) {

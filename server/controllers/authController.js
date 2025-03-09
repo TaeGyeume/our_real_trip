@@ -89,10 +89,10 @@ exports.login = async (req, res) => {
   } catch (error) {
     console.error('로그인 오류:', error.message);
 
-    // ❌ 기존: 400 에러 응답 → 클라이언트 콘솔에 Bad Request 표시됨
+    //  기존: 400 에러 응답 → 클라이언트 콘솔에 Bad Request 표시됨
     // res.status(400).json({ message: '아이디 또는 비밀번호를 확인해주세요.' });
 
-    // ✅ 변경: 200 OK 응답, but success: false 로 로그인 실패 처리
+    //  변경: 200 OK 응답, but success: false 로 로그인 실패 처리
     return res
       .status(200)
       .json({success: false, message: '아이디 또는 비밀번호를 확인해주세요.'});
@@ -242,7 +242,7 @@ exports.refreshToken = async (req, res) => {
 
     return res.status(200).json({message: '토큰 갱신 성공', accessToken: newAccessToken});
   } catch (error) {
-    console.error('❌ 리프레시 토큰 검증 실패:', error.message);
+    console.error(' 리프레시 토큰 검증 실패:', error.message);
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
@@ -260,13 +260,13 @@ exports.refreshToken = async (req, res) => {
 exports.verifyCode = async (req, res) => {
   try {
     const {email, code} = req.body;
-    console.log('🔍 [서버] 인증 코드 검증 요청:', email, code);
+    console.log(' [서버] 인증 코드 검증 요청:', email, code);
 
     const result = await authService.verifyCodeAndFindUserId(email, code);
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('❌ [서버] 인증 코드 검증 실패:', error.message);
+    console.error('[서버] 인증 코드 검증 실패:', error.message);
     res.status(500).json({message: '인증 코드 확인 중 오류 발생', error: error.message});
   }
 };
