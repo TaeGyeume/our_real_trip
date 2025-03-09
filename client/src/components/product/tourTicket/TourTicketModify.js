@@ -57,7 +57,7 @@ const TourTicketModify = () => {
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [description, setDescription] = useState('');
-  const [regionType, setRegionType] = useState('domestic'); // 국내/해외 구분
+  const [regionType, setRegionType] = useState('domestic');
   const [location, setLocation] = useState('');
   const [newImages, setNewImages] = useState([]);
   const [deleteImages, setDeleteImages] = useState([]);
@@ -89,16 +89,16 @@ const TourTicketModify = () => {
     fetchTicket();
   }, [id]);
 
-  useEffect(() => {
-    if (regionType === 'domestic' && !domesticLocations.includes(location)) {
-      setLocation(domesticLocations[0]);
-    } else if (
-      regionType === 'international' &&
-      !internationalLocations.includes(location)
-    ) {
-      setLocation(internationalLocations[0]);
-    }
-  }, [regionType]);
+  // useEffect(() => {
+  //   if (regionType === 'domestic' && !domesticLocations.includes(location)) {
+  //     setLocation(domesticLocations[0]);
+  //   } else if (
+  //     regionType === 'international' &&
+  //     !internationalLocations.includes(location)
+  //   ) {
+  //     setLocation(internationalLocations[0]);
+  //   }
+  // }, [regionType]);
 
   const handleImageUpload = e => {
     const files = Array.from(e.target.files);
