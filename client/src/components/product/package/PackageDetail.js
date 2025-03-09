@@ -15,9 +15,8 @@ import {
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
-// ★ 항공편 전체 조회 API
+// 항공편 전체 조회 API
 import {fetchFlights} from '../../../api/flight/flights';
-
 import {getPackageById} from '../../../api/package/packageService';
 
 const SERVER_URL =
@@ -25,19 +24,20 @@ const SERVER_URL =
     ? 'http://localhost:5000'
     : 'https://ourrealtrip.shop/api';
 
-const PackageDetail = () => {
+export default function PackageDetail() {
   const {id} = useParams();
   const navigate = useNavigate();
 
-  // 패키지 상세 정보
   const [pkg, setPkg] = useState(null);
-  // "상품 소개 더보기" 상태
   const [showAllImages, setShowAllImages] = useState(false);
 
   // 항공편 전체 목록
   const [, setAllFlights] = useState([]);
 
-  // 자주 묻는 질문(FAQ) (예시)
+  // 방 예약 날짜 정보: { roomId: { start, end } }
+  const [roomDates, setRoomDates] = useState({});
+
+  // FAQ 예시
   const [faqList] = useState([
     '카트비, 캐디피 / 미팅&샌딩비는 누구에게 지불하나요?',
     '현지에 오셔서 현지실장에게 지불 해주시면 됩니다^^',
@@ -50,40 +50,71 @@ const PackageDetail = () => {
   useEffect(() => {
     (async () => {
       try {
-        // (1) 모든 항공편 문서를 먼저 불러온다
+        // 1) 모든 항공편 문서 조회
         const flightDocs = await fetchFlights();
         setAllFlights(flightDocs);
 
-        // (2) 특정 패키지 조회
+        // 2) 특정 패키지 조회
         const data = await getPackageById(id);
 
-        // (3) pkg.flights를 순회하며 flightId를 실제 항공편 객체로 매칭
+        // 3) pkg.flights를 순회하며 flightId를 실제 항공편 객체로 교체
         if (data.flights && data.flights.length > 0) {
           const updatedFlights = data.flights.map(flightObj => {
             if (!flightObj.flightId) return flightObj;
 
             let flightIdStr = '';
             if (typeof flightObj.flightId === 'string') {
-              // flightId가 문자열인 경우
               flightIdStr = flightObj.flightId;
             } else if (typeof flightObj.flightId === 'object') {
-              // flightId가 객체인 경우
               flightIdStr = flightObj.flightId._id;
             }
 
-            // flightDocs에서 찾기
             const foundDoc = flightDocs.find(doc => doc._id === flightIdStr);
-            if (!foundDoc) return flightObj; // 문서를 못 찾으면 그대로 반환
-
-            // flightObj.flightId를 foundDoc으로 교체
+            if (!foundDoc) return flightObj;
             return {
               ...flightObj,
-              flightId: {
-                ...foundDoc
-              }
+              flightId: {...foundDoc}
             };
           });
           data.flights = updatedFlights;
+        }
+
+        // 4) 방+날짜 (roomIds, startDates, endDates) 해석
+        if (
+          data.roomIds &&
+          data.startDates &&
+          data.endDates &&
+          data.roomIds.length === data.startDates.length &&
+          data.roomIds.length === data.endDates.length
+        ) {
+          const roomDateObj = {};
+          data.roomIds.forEach((roomIdValue, idx) => {
+            // roomIdValue가 { $oid: '...' } 혹은 string
+            let rid =
+              typeof roomIdValue === 'object' && roomIdValue.$oid
+                ? roomIdValue.$oid
+                : roomIdValue.toString();
+
+            const startObj = data.startDates[idx];
+            const endObj = data.endDates[idx];
+
+            let startDateStr = '';
+            if (typeof startObj === 'string') {
+              startDateStr = new Date(startObj).toISOString().slice(0, 10);
+            } else if (startObj && startObj.$date) {
+              startDateStr = new Date(startObj.$date).toISOString().slice(0, 10);
+            }
+
+            let endDateStr = '';
+            if (typeof endObj === 'string') {
+              endDateStr = new Date(endObj).toISOString().slice(0, 10);
+            } else if (endObj && endObj.$date) {
+              endDateStr = new Date(endObj.$date).toISOString().slice(0, 10);
+            }
+
+            roomDateObj[rid] = {start: startDateStr, end: endDateStr};
+          });
+          setRoomDates(roomDateObj);
         }
 
         setPkg(data);
@@ -196,7 +227,6 @@ const PackageDetail = () => {
             항공
           </Typography>
           {pkg.flights.map((flightObj, idx) => {
-            // 이제 flightObj.flightId가 실제 항공편 객체
             const flightDoc = flightObj.flightId;
             if (!flightDoc) return null;
 
@@ -209,14 +239,12 @@ const PackageDetail = () => {
                 <Typography variant="body2">
                   항공 가격: {flightDoc.price?.toLocaleString()}원 / 좌석 수: {seatsUsed}
                 </Typography>
-                {/* 출발 정보 */}
                 {flightDoc.departure?.city && (
                   <Typography variant="body2">
                     출발: {flightDoc.departure.city}/{flightDoc.departure.airport} (
                     {flightDoc.departure.date} {flightDoc.departure.time})
                   </Typography>
                 )}
-                {/* 도착 정보 */}
                 {flightDoc.arrival?.city && (
                   <Typography variant="body2">
                     도착: {flightDoc.arrival.city}/{flightDoc.arrival.airport} (
@@ -242,12 +270,31 @@ const PackageDetail = () => {
                   {acc.name}
                 </Typography>
                 {acc.rooms && acc.rooms.length > 0 ? (
-                  acc.rooms.map(room => (
-                    <Typography key={room._id} variant="body2" sx={{ml: 2}}>
-                      - {room.name || '방 이름 없음'}:{' '}
-                      {room.pricePerNight?.toLocaleString()}원/박
-                    </Typography>
-                  ))
+                  acc.rooms.map(room => {
+                    // roomDates에 예약 날짜가 있는지 확인
+                    let checkIn = '';
+                    let checkOut = '';
+                    if (roomDates[room._id]) {
+                      checkIn = roomDates[room._id].start;
+                      checkOut = roomDates[room._id].end;
+                    }
+
+                    return (
+                      <Typography key={room._id} variant="body2" sx={{ml: 2, mt: 1}}>
+                        - {room.name || '방 이름 없음'}:{' '}
+                        {room.pricePerNight?.toLocaleString() ?? 0}원/박
+                        {checkIn && checkOut ? (
+                          <span style={{marginLeft: '8px', color: 'blue'}}>
+                            (예약 날짜: {checkIn} ~ {checkOut})
+                          </span>
+                        ) : (
+                          <span style={{marginLeft: '8px', color: 'gray'}}>
+                            (예약 날짜: 없음)
+                          </span>
+                        )}
+                      </Typography>
+                    );
+                  })
                 ) : (
                   <Typography variant="body2" sx={{ml: 2}}>
                     객실 정보 없음
@@ -280,7 +327,6 @@ const PackageDetail = () => {
       <Typography variant="h5" sx={{fontWeight: 'bold', mb: 2}}>
         포함 · 불포함 사항
       </Typography>
-      {/* 포함 사항 */}
       <Box sx={{mb: 3}}>
         <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
           포함되어 있어요
@@ -302,7 +348,6 @@ const PackageDetail = () => {
           </Typography>
         )}
       </Box>
-      {/* 불포함 사항 */}
       <Box sx={{mb: 3}}>
         <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
           불포함되어 있어요
@@ -403,7 +448,6 @@ const PackageDetail = () => {
           일반가
         </Typography>
 
-        {/* 가격 정보 */}
         {discountRate > 0 ? (
           <Box>
             <Typography
@@ -442,7 +486,6 @@ const PackageDetail = () => {
           </Typography>
         )}
 
-        {/* 예약하기 버튼 */}
         <Button
           variant="contained"
           color="primary"
@@ -460,7 +503,6 @@ const PackageDetail = () => {
           ⚡ 예약하기
         </Button>
 
-        {/* 구매 후 즉시 확정 문구 */}
         <Typography
           variant="body2"
           sx={{
@@ -477,6 +519,4 @@ const PackageDetail = () => {
       </Box>
     </Container>
   );
-};
-
-export default PackageDetail;
+}
