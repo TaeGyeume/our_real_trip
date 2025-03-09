@@ -165,9 +165,6 @@ exports.getTravelItemById = async itemId => {
     if (!travelItem) {
       throw new Error('해당 상품을 찾을 수 없습니다.');
     }
-
-    console.log('조회된 상품 데이터 (조회수 증가 적용됨):', travelItem); // 로그 출력
-
     return travelItem;
   } catch (error) {
     throw new Error('상품을 가져오는 중 오류 발생: ' + error.message);

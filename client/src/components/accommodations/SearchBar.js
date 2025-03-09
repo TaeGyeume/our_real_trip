@@ -11,8 +11,7 @@ import {
   InputLabel,
   OutlinedInput,
   Stack,
-  Paper,
-  Divider
+  Paper
 } from '@mui/material';
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
