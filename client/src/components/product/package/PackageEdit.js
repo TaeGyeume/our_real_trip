@@ -102,7 +102,12 @@ const normalizeImagePath = path => {
 export default function PackageEdit() {
   const {id} = useParams();
   const navigate = useNavigate();
-  const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  // const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const SERVER_URL =
+    process.env.REACT_APP_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://ourrealtrip.shop/api';
 
   const [loading, setLoading] = useState(false);
 
@@ -326,10 +331,10 @@ export default function PackageEdit() {
   const handleCancelTourModal = () => setOpenTourModal(false);
 
   // 모달 "확인" 누를 때 최종 반영
-  const handleCloseTourModal = () => {
-    setSelectedTourTickets([...tempTourTickets]);
-    setOpenTourModal(false);
-  };
+  // const handleCloseTourModal = () => {
+  //   setSelectedTourTickets([...tempTourTickets]);
+  //   setOpenTourModal(false);
+  // };
 
   // ------------------------------
   // 5) 항공
@@ -343,10 +348,10 @@ export default function PackageEdit() {
   };
   const handleCancelFlightModal = () => setOpenFlightModal(false);
 
-  const handleCloseFlightModal = () => {
-    setSelectedFlights([...tempFlights]);
-    setOpenFlightModal(false);
-  };
+  // const handleCloseFlightModal = () => {
+  //   setSelectedFlights([...tempFlights]);
+  //   setOpenFlightModal(false);
+  // };
 
   const toggleFlightSelectionTemp = flight => {
     setTempFlights(prev => {
@@ -369,8 +374,8 @@ export default function PackageEdit() {
   };
 
   // 선택된 항공 중 해당 ID 찾기
-  const findSelectedFlightTemp = flightId =>
-    tempFlights.find(f => f.flightId === flightId);
+  // const findSelectedFlightTemp = flightId =>
+  //   tempFlights.find(f => f.flightId === flightId);
 
   // 항공 취소
   const handleRemoveFlight = flightId => {

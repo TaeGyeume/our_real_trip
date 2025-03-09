@@ -65,7 +65,7 @@ const socialLoginCallback = async (
     });
     if (existingUserBySocialId) {
       // 이미 같은 소셜ID로 가입된 사용자
-      console.log(`✅ 기존 ${provider} 사용자 (소셜ID 중복) 로그인`);
+      console.log(` 기존 ${provider} 사용자 (소셜ID 중복) 로그인`);
       return done(null, existingUserBySocialId);
     }
 
@@ -74,11 +74,11 @@ const socialLoginCallback = async (
     if (existingUserByEmail) {
       // 같은 provider로 가입된 이메일이면 그대로 로그인
       if (existingUserByEmail.provider === provider) {
-        console.log(`✅ 기존 ${provider} 사용자 (이메일 중복) 로그인`);
+        console.log(` 기존 ${provider} 사용자 (이메일 중복) 로그인`);
         return done(null, existingUserByEmail);
       }
       // 다른 provider로 가입된 이메일
-      console.warn(`❌ 이미 ${existingUserByEmail.provider}로 가입된 이메일입니다.`);
+      console.warn(` 이미 ${existingUserByEmail.provider}로 가입된 이메일입니다.`);
       return done(null, false, {
         message: `이미 가입된 이메일입니다.`
       });
@@ -104,10 +104,10 @@ const socialLoginCallback = async (
     }
 
     await newUser.save();
-    console.log(`🚀 새 ${provider} 사용자 생성 완료!`);
+    console.log(` 새 ${provider} 사용자 생성 완료!`);
     return done(null, newUser);
   } catch (err) {
-    console.error(`🚨 ${provider} 로그인 중 오류 발생:`, err);
+    console.error(` ${provider} 로그인 중 오류 발생:`, err);
     return done(err, false);
   }
 };

@@ -61,10 +61,10 @@ const PackageDetail = () => {
   }
 
   // 첫 번째 이미지를 상단 배너로 사용
-  const bannerImage =
-    pkg.images && pkg.images.length > 0
-      ? `${SERVER_URL}/${pkg.images[0]}`
-      : '/default-image.jpg';
+  // const bannerImage =
+  //   pkg.images && pkg.images.length > 0
+  //     ? `${SERVER_URL}/${pkg.images[0]}`
+  //     : '/default-image.jpg';
 
   // 추가 이미지 (두 번째 이후)
   const additionalImages = pkg.images && pkg.images.length > 1 ? pkg.images.slice(1) : [];

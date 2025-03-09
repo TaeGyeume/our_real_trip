@@ -10,16 +10,20 @@ import {
   Grid,
   Box,
   Button,
-  Pagination,
-  Tooltip
+  Pagination
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
-const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// ✅ 이미지 경로 정리 함수
+const SERVER_URL =
+  process.env.REACT_APP_ENV === 'development'
+    ? 'http://localhost:5000'
+    : 'https://ourrealtrip.shop/api';
+
+//  이미지 경로 정리 함수
 const normalizeImagePath = path => {
   let newPath = path.replace(/\\/g, '/');
   if (!newPath.startsWith('/')) {
@@ -97,7 +101,7 @@ const PackageList = () => {
             📦 패키지 목록
           </Typography>
 
-          {/* ✅ 현재 경로가 '/product/packages/list'일 때만 '패키지 생성' 버튼 표시 */}
+          {/*  현재 경로가 '/product/packages/list'일 때만 '패키지 생성' 버튼 표시 */}
           {location.pathname === '/product/packages/list' && (
             <Button
               variant="contained"
@@ -151,7 +155,7 @@ const PackageList = () => {
                       </Typography>
                     </CardContent>
 
-                    {/* ✅ 수정 & 삭제 버튼 유지 */}
+                    {/*  수정 & 삭제 버튼 유지 */}
                     <Box
                       sx={{
                         display: 'flex',
