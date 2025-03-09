@@ -30,11 +30,19 @@ export const AIRLINE_LOGOS = {
 export const FLIGHT_IMAGES = {
   제주: '/images/flightscard/jeju.jpg',
   부산: '/images/flightscard/busan.jpg',
-  대구: '/images/flightscard/daegu.jpg',
   광주: '/images/flightscard/gwangju.jpg',
-  청주: '/images/flightscard/cheongju.jpg',
   여수: '/images/flightscard/yeosu.jpg',
-  도쿄: '/images/locationcard/tokyo2.jpg'
+  대구: '/images/flightscard/daegu.jpg',
+  청주: '/images/flightscard/cheongju.jpg',
+
+  도쿄: '/images/flightscard/tokyo.jpg',
+  런던: '/images/flightscard/london.jpg',
+  뉴욕: '/images/flightscard/newyork.jpg',
+  파리: '/images/flightscard/paris.jpg',
+  베이징: '/images/flightscard/beijing.jpg',
+  타이베이: '/images/flightscard/taipei.jpg',
+  방콕: '/images/flightscard/bangkok.jpg',
+  시드니: '/images/flightscard/sydney.jpg'
 };
 
 export const AIRPORT_NAMES = {
@@ -44,7 +52,13 @@ export const AIRPORT_NAMES = {
   TAE: '대구', // 대구공항 → 대구
   KWJ: '광주', // 광주공항 → 광주
   CJJ: '청주', // 청주공항 → 청주
-  RSU: '여수' // 여수공항 → 여수
-  // HND: '도쿄', // 하네다공항 → 도쿄
-  // NRT: '도쿄' // 나리타공항 → 도쿄
+  RSU: '여수', // 여수공항 → 여수
+  HND: '도쿄', // 하네다공항 → 도쿄
+  JFK: '뉴욕',
+  CDG: '파리',
+  PEK: '베이징',
+  TSA: '타이베이',
+  LHR: '런던',
+  SYD: '시드니',
+  BKK: '방콕'
 };

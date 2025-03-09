@@ -72,7 +72,7 @@ const AIRLINES = [
   {code: '9C', name: '춘추항공'}
 ];
 
-const SEAT_CLASS_OPTIONS = ['이코노미석', '프리미엄 이코노미석', '비즈니스석'];
+const SEAT_CLASS_OPTIONS = ['특가석', '이코노미석', '비즈니스석'];
 
 const WEEKDAYS = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
 const getTodayWeekday = () => {

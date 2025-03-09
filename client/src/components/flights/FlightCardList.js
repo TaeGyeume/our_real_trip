@@ -1,45 +1,97 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Slider from 'react-slick';
+import {Box, Typography, IconButton} from '@mui/material';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import {FLIGHT_IMAGES, AIRPORT_NAMES} from '../../data/airline';
+import {ChevronLeft, ChevronRight} from '@mui/icons-material';
+import {searchFlights} from '../../api/flight/flights';
 
-// 공항별 대표 이미지 매핑
-// const FLIGHT_IMAGES = {
-//   제주: '/images/flightscard/jeju.jpg',
-//   부산: '/images/flightscard/busan.jpg',
-//   대구: '/images/flightscard/daegu.jpg',
-//   광주: '/images/flightscard/gwangju.jpg',
-//   청주: '/images/flightscard/cheongju.jpg',
-//   여수: '/images/flightscard/yeosu.jpg'
-// };
-
-// IATA 코드 → 한글 도시명 변환
-// const AIRPORT_NAMES = {
-//   GMP: '서울', // 김포공항 → 서울
-//   PUS: '부산', // 김해공항 → 부산
-//   CJU: '제주', // 제주공항 → 제주
-//   TAE: '대구', // 대구공항 → 대구
-//   KWJ: '광주', // 광주공항 → 광주
-//   CJJ: '청주', // 청주공항 → 청주
-//   RSU: '여수' // 여수공항 → 여수
-// };
-
-const FlightCardList = ({flights}) => {
+const FlightCardList = ({flights, type = 'domestic'}) => {
   const navigate = useNavigate();
+  const [isHovered, setIsHovered] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleCardClick = flight => {
-    navigate('/flights/results', {state: {selectedFlight: flight}});
+  // 클릭 시, 해당 항공편의 정보를 검색 조건으로 API 호출 후 결과 페이지로 이동
+  const handleCardClick = async flight => {
+    setLoading(true);
+    try {
+      // 출발지, 도착지, 날짜, 인원수(기본 1)를 검색 조건으로 지정
+      const deptCodes = [flight.departure.airport];
+      const arrCodes = [flight.arrival.airport];
+      const formattedDate = new Date(flight.departure.date).toLocaleDateString('en-CA'); // YYYY-MM-DD 형식
+
+      let searchResults = [];
+      for (const deptCode of deptCodes) {
+        for (const arrCode of arrCodes) {
+          const results = await searchFlights(deptCode, arrCode, formattedDate, 1);
+          searchResults = [...searchResults, ...results];
+        }
+      }
+
+      if (searchResults.length === 0) {
+        alert('검색 조건에 맞는 항공편이 없습니다.');
+        setLoading(false);
+      } else {
+        const departureName = AIRPORT_NAMES[deptCodes] || deptCodes;
+        const arrivalName = AIRPORT_NAMES[arrCodes] || arrCodes;
+        navigate('/flights/results', {
+          state: {
+            flights: searchResults,
+            passengers: 1,
+            departure: departureName,
+            arrival: arrivalName,
+            date: flight.departure.date
+          }
+        });
+      }
+    } catch (error) {
+      console.error('검색 실패:', error);
+      alert('검색 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 김포공항 출발 & 각 도착 공항별 가장 저렴한 항공편 선택
+  const domesticArrivalAirports = [
+    'ICN',
+    'CJU',
+    'PUS',
+    'TAE',
+    'KWJ',
+    'CJJ',
+    'RSU',
+    'MWX'
+  ];
+  const internationalArrivalAirports = [
+    'HND',
+    'JFK',
+    'CDG',
+    'PEK',
+    'TSA',
+    'LHR',
+    'SYD',
+    'BKK'
+  ];
+
+  // type에 따라 필터 조건 적용
+  const filteredFlights = flights
+    .filter(flight => flight.departure.airport === 'GMP')
+    .filter(flight => {
+      if (type === 'domestic') {
+        return domesticArrivalAirports.includes(flight.arrival.airport);
+      } else if (type === 'international') {
+        return internationalArrivalAirports.includes(flight.arrival.airport);
+      }
+      return true;
+    });
+
+  // 각 도착 공항별 가장 저렴한 항공편만 선택 (중복 제거)
   const uniqueFlights = [];
   const seenAirports = new Set();
-
-  flights
-    .filter(flight => flight.departure.airport === 'GMP') // 김포공항 출발 필터링
-    .sort((a, b) => a.price - b.price) // 가격 기준 정렬 (저렴한 것 우선)
+  filteredFlights
+    .sort((a, b) => a.price - b.price)
     .forEach(flight => {
       if (!seenAirports.has(flight.arrival.airport)) {
         seenAirports.add(flight.arrival.airport);
@@ -47,79 +99,36 @@ const FlightCardList = ({flights}) => {
       }
     });
 
-  // 슬라이더 설정
   const settings = {
     dots: false,
     infinite: true,
     speed: 500,
-    slidesToShow: 4, // 한 번에 보이는 카드 수
-    slidesToScroll: 2, // 한 번에 넘어가는 카드 수
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />
+    slidesToShow: 4,
+    slidesToScroll: 2,
+    nextArrow: <NextArrow isHovered={isHovered} />,
+    prevArrow: <PrevArrow isHovered={isHovered} />,
+    responsive: [
+      {breakpoint: 1200, settings: {slidesToShow: 3}},
+      {breakpoint: 800, settings: {slidesToShow: 2}},
+      {breakpoint: 480, settings: {slidesToShow: 1}}
+    ]
   };
 
   return (
-    //   <div className="container mt-4">
-    //     <h2 className="fw-bold mb-3 text-center">
-    //       🧸 나를 위한 리셋, 마음을 담은 국내 여행 💕 🧳
-    //     </h2>
+    <Box sx={{mt: 4, px: 2}}>
+      <Typography variant="h5" align="center" sx={{mb: 3, fontWeight: 'bold'}}>
+        {type === 'domestic'
+          ? '🧸 나를 위한 리셋, 마음을 담은 국내 여행 💕 🧳'
+          : '🎈언제나 꿈꾸던 그 곳, 핫플레이스로 떠나볼까요🧡🍒⛱️'}
+      </Typography>
 
-    //     {/* 슬라이더를 감싸는 div에 position: relative 추가 */}
-    //     <div className="position-relative">
-    //       <Slider {...settings}>
-    //         {uniqueFlights.map(flight => {
-    //           const departureName = AIRPORT_NAMES[flight.departure.airport] || '출발지';
-    //           const arrivalName = AIRPORT_NAMES[flight.arrival.airport] || '도착지';
-    //           const flightImage =
-    //             FLIGHT_IMAGES[arrivalName] || '/images/flights/default.jpg';
-
-    //           return (
-    //             <div key={flight._id} className="px-2">
-    //               <div
-    //                 className="card shadow-sm border-0 rounded-lg"
-    //                 onClick={() => handleCardClick(flight)}
-    //                 style={{cursor: 'pointer'}}>
-    //                 <img
-    //                   src={flightImage}
-    //                   className="card-img-top"
-    //                   alt={arrivalName}
-    //                   style={{height: '150px', objectFit: 'cover'}}
-    //                 />
-    //                 <div className="card-body">
-    //                   <h5 className="fw-bold">{arrivalName}</h5>
-    //                   <p className="text-muted">
-    //                     {departureName} → {arrivalName}
-    //                   </p>
-    //                   <p className="text-muted">
-    //                     {new Date(flight.departure.date).toLocaleDateString('ko-KR', {
-    //                       month: 'long',
-    //                       day: 'numeric'
-    //                     })}{' '}
-    //                     -{' '}
-    //                     {new Date(flight.arrival.date).toLocaleDateString('ko-KR', {
-    //                       month: 'long',
-    //                       day: 'numeric'
-    //                     })}
-    //                   </p>
-    //                   <p className="fw-bold">{flight.price.toLocaleString()}원 ~</p>
-    //                 </div>
-    //               </div>
-    //             </div>
-    //           );
-    //         })}
-    //       </Slider>
-    //     </div>
-    //   </div>
-    // );
-
-    <div className="container mt-4">
-      <h2 className="fw-bold mb-3 text-center">
-        🧸 나를 위한 리셋, 마음을 담은 국내 여행 💕 🧳
-      </h2>
-
-      {/* uniqueFlights가 3개 이상일 때만 Slider 렌더링 */}
-      {uniqueFlights.length >= 3 ? (
-        <div className="position-relative">
+      {uniqueFlights.length > 0 ? (
+        <Box
+          sx={{
+            position: 'relative'
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}>
           <Slider {...settings}>
             {uniqueFlights.map(flight => {
               const departureName = AIRPORT_NAMES[flight.departure.airport] || '출발지';
@@ -128,23 +137,34 @@ const FlightCardList = ({flights}) => {
                 FLIGHT_IMAGES[arrivalName] || '/images/flights/default.jpg';
 
               return (
-                <div key={flight._id} className="px-2">
-                  <div
-                    className="card shadow-sm border-0 rounded-lg"
+                <Box key={flight._id} sx={{px: 1}}>
+                  <Box
                     onClick={() => handleCardClick(flight)}
-                    style={{cursor: 'pointer'}}>
-                    <img
+                    sx={{
+                      cursor: 'pointer',
+                      borderRadius: 2,
+                      boxShadow: 2,
+                      overflow: 'hidden',
+                      bgcolor: '#fff'
+                    }}>
+                    <Box
+                      component="img"
                       src={flightImage}
-                      className="card-img-top"
                       alt={arrivalName}
-                      style={{height: '150px', objectFit: 'cover'}}
+                      sx={{
+                        height: 150,
+                        width: '100%',
+                        objectFit: 'cover'
+                      }}
                     />
-                    <div className="card-body">
-                      <h5 className="fw-bold">{arrivalName}</h5>
-                      <p className="text-muted">
+                    <Box sx={{p: 2}}>
+                      <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+                        {arrivalName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
                         {departureName} → {arrivalName}
-                      </p>
-                      <p className="text-muted">
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
                         {new Date(flight.departure.date).toLocaleDateString('ko-KR', {
                           month: 'long',
                           day: 'numeric'
@@ -154,31 +174,31 @@ const FlightCardList = ({flights}) => {
                           month: 'long',
                           day: 'numeric'
                         })}
-                      </p>
-                      <p className="fw-bold">{flight.price.toLocaleString()}원 ~</p>
-                    </div>
-                  </div>
-                </div>
+                      </Typography>
+                      <Typography variant="body1" sx={{fontWeight: 'bold'}}>
+                        {flight.price.toLocaleString()}원 ~
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
               );
             })}
           </Slider>
-        </div>
+        </Box>
       ) : (
-        // 3개 미만일 때는 "항공편이 부족합니다" 등 다른 UI를 노출
-        <div className="text-center py-5">
-          <p>표시할 항공편이 충분하지 않습니다.</p>
-        </div>
+        <Box sx={{textAlign: 'center', py: 5}}>
+          <Typography variant="body1">표시할 항공편이 충분하지 않습니다.</Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
-// 커스텀 화살표 (Next)
-const NextArrow = ({onClick}) => (
-  <div
-    className="slick-arrow slick-next"
+const NextArrow = ({onClick, isHovered, style}) => (
+  <IconButton
     onClick={onClick}
-    style={{
+    sx={{
+      ...style,
       position: 'absolute',
       right: '-35px',
       top: '50%',
@@ -186,25 +206,26 @@ const NextArrow = ({onClick}) => (
       zIndex: 10,
       fontSize: '24px',
       cursor: 'pointer',
-      background: '#fff',
+      backgroundColor: '#fff',
       borderRadius: '50%',
-      width: '40px',
-      height: '40px',
+      width: 40,
+      height: 40,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)'
+      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+      userSelect: 'none',
+      opacity: isHovered ? 1 : 0
     }}>
-    ➡️
-  </div>
+    <ChevronRight sx={{fontSize: '1.5rem'}} />
+  </IconButton>
 );
 
-// 커스텀 화살표 (Prev)
-const PrevArrow = ({onClick}) => (
-  <div
-    className="slick-arrow slick-prev"
+const PrevArrow = ({onClick, isHovered, style}) => (
+  <IconButton
     onClick={onClick}
-    style={{
+    sx={{
+      ...style,
       position: 'absolute',
       left: '-35px',
       top: '50%',
@@ -212,17 +233,19 @@ const PrevArrow = ({onClick}) => (
       zIndex: 10,
       fontSize: '24px',
       cursor: 'pointer',
-      background: '#fff',
+      backgroundColor: '#fff',
       borderRadius: '50%',
-      width: '40px',
-      height: '40px',
+      width: 40,
+      height: 40,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)'
+      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+      userSelect: 'none',
+      opacity: isHovered ? 1 : 0
     }}>
-    ⬅️
-  </div>
+    <ChevronLeft sx={{fontSize: '1.5rem'}} />
+  </IconButton>
 );
 
 export default FlightCardList;

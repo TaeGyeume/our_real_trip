@@ -150,9 +150,9 @@ const Flights = () => {
 
       <AdBanner banners={flightBannerData} />
 
-      <FlightCardList flights={flights} />
-      <FlightCardList flights={flights} />
-      <FlightCardList flights={flights} />
+      <FlightCardList flights={flights} type="domestic" />
+      <FlightCardList flights={flights} type="international" />
+      {/* <FlightCardList flights={flights} /> */}
     </div>
   );
 };
