@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import {Link, useLocation, useNavigate} from 'react-router-dom';
 import {useAuthStore} from '../store/authStore';
 import NotificationMenu from './NotificationMenu';
 import {
@@ -20,13 +20,11 @@ import {
   MenuItem
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FlightIcon from '@mui/icons-material/Flight';
 import HomeIcon from '@mui/icons-material/Home';
 import HotelIcon from '@mui/icons-material/Hotel';
 import TourIcon from '@mui/icons-material/CardTravel';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
@@ -34,11 +32,47 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const Header = () => {
+  const location = useLocation();
   const {user, isAuthenticated, fetchUserProfile, logout} = useAuthStore();
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navItems = [
+    {label: '메인', path: '/main', imgSrc: '/images/category/main.png'},
+    {label: '항공권', path: '/flights', imgSrc: '/images/category/flight.png'},
+    {
+      label: '숙소',
+      path: '/accommodations',
+      imgSrc: '/images/category/accommodation.png'
+    },
+    {
+      label: '투어·티켓',
+      path: '/tourTicket/list',
+      imgSrc: '/images/category/tourticket.png'
+    },
+    {label: '여행 용품', path: '/travelItems', imgSrc: '/images/category/travelitem.png'},
+    {label: '패키지', path: '/packages', imgSrc: '/images/category/package.png'},
+    {label: '고객 문의', path: '/qna', imgSrc: '/images/category/qna.png'}
+  ];
+
+  const membershipImages = {
+    길초보: '/images/category/beginner.png',
+    길잡이: '/images/category/guide.png',
+    모험왕: '/images/category/adventure.png'
+  };
+
+  // 사용자의 멤버십 이미지 결정
+  const membershipImage =
+    membershipImages[user?.membershipLevel] || '/images/membership/default.png';
+
+  if (user?.roles.includes('admin')) {
+    navItems.push({
+      label: '관리자',
+      path: '/product',
+      imgSrc: '/images/category/admin.png'
+    });
+  }
 
   // 로그인된 경우에만 프로필 불러오기
   useEffect(() => {
@@ -80,11 +114,11 @@ const Header = () => {
       <AppBar
         position="sticky"
         sx={{
-          backgroundImage:
-            'linear-gradient(90deg, rgb(0, 181, 204) 0%, rgb(0, 51, 102) 100%)',
-          boxShadow: 3
+          backgroundColor: '#FFFFFF', // 흰색 배경 적용
+          boxShadow: 1, // 살짝 떠있는 효과
+          color: 'black'
         }}>
-        <Toolbar>
+        <Toolbar sx={{justifyContent: 'space-between'}}>
           {/* 모바일 햄버거 메뉴 버튼 */}
           <IconButton
             edge="start"
@@ -100,174 +134,148 @@ const Header = () => {
             component={Link}
             to="/main"
             sx={{
-              flexGrow: 0,
               textDecoration: 'none',
-              color: 'white',
+              color: 'black',
               fontWeight: 'bold',
-              mr: 3
+              fontFamily: '"Pacifico", cursive',
+              fontSize: '24px'
             }}>
             Our Real Trip
           </Typography>
 
           {/* 네비게이션 메뉴 */}
-          <Box sx={{flexGrow: 1, display: 'flex', justifyContent: 'center', gap: 0.5}}>
-            <Button
-              component={Link}
-              to="/main"
-              startIcon={<HomeIcon />}
-              variant="contained"
-              color="#74b9ff"
-              sx={{whiteSpace: 'nowrap'}}>
-              메인
-            </Button>
-            <Button
-              component={Link}
-              to="/flights"
-              startIcon={<FlightIcon />}
-              variant="contained"
-              color="#74b9ff"
-              sx={{whiteSpace: 'nowrap'}}>
-              항공
-            </Button>
-            <Button
-              component={Link}
-              to="/accommodations/search"
-              startIcon={<HotelIcon />}
-              variant="contained"
-              color="#74b9ff"
-              sx={{whiteSpace: 'nowrap'}}>
-              숙소 검색
-            </Button>
-            <Button
-              component={Link}
-              to="/tourTicket/list"
-              startIcon={<TourIcon />}
-              variant="contained"
-              color="#74b9ff"
-              sx={{whiteSpace: 'nowrap'}}>
-              투어/티켓
-            </Button>
-            <Button
-              component={Link}
-              to="/travelItems"
-              startIcon={<ShoppingBagIcon />}
-              variant="contained"
-              color="#74b9ff"
-              sx={{whiteSpace: 'nowrap'}}>
-              여행 용품
-            </Button>
-            <Button
-              component={Link}
-              to="/packages"
-              startIcon={<TravelExploreIcon />}
-              variant="contained"
-              color="#74b9ff"
-              sx={{whiteSpace: 'nowrap'}}>
-              패키지
-            </Button>
-            <Button
-              component={Link}
-              to="/qna"
-              startIcon={<QuestionAnswerIcon />}
-              variant="contained"
-              color="#74b9ff"
-              sx={{whiteSpace: 'nowrap'}}>
-              고객 문의
-            </Button>
-            {user?.roles.includes('admin') && (
-              <Button
-                component={Link}
-                to="/product"
-                startIcon={<AdminPanelSettingsIcon />}
-                variant="contained"
-                color="error"
-                sx={{whiteSpace: 'nowrap'}}>
-                관리자
-              </Button>
-            )}
+          <Box sx={{display: 'flex', gap: 4}}>
+            {navItems.map(({label, path, icon, imgSrc}) => {
+              const isActive = location.pathname.startsWith(path); // 현재 URL과 비교
+
+              return (
+                <Button
+                  key={path}
+                  component={Link}
+                  to={path}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center', // 중앙 정렬 추가
+                    color: isActive ? 'primary.main' : 'black',
+                    fontWeight: isActive ? 'bold' : 'normal',
+                    borderBottom: isActive ? '3px solid' : 'none', // 활성 메뉴 밑줄 표시
+                    borderBottomColor: isActive ? 'primary.main' : 'transparent',
+                    borderRadius: 0,
+                    py: 1,
+                    minWidth: '80px' // 버튼 크기 조정 (아이콘과 텍스트 정렬 개선)
+                  }}>
+                  {/* 아이콘 대신 이미지 사용 가능하도록 조건 추가 */}
+                  <Box
+                    sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                    {imgSrc ? (
+                      <img
+                        src={imgSrc}
+                        alt={label}
+                        style={{width: '30px', height: '30px'}}
+                      />
+                    ) : (
+                      icon
+                    )}
+                    <Typography variant="body2" sx={{mt: 0.5}}>
+                      {label}
+                    </Typography>
+                  </Box>
+                </Button>
+              );
+            })}
           </Box>
 
           {/* 로그인 여부에 따른 UI 변경 */}
-          {isAuthenticated && user ? (
-            <>
-              <NotificationMenu />
-              {/* 알림 드롭다운 */}
-              <IconButton color="inherit" onClick={toggleDropdown} ref={dropdownRef}>
-                <AccountCircleIcon />
-              </IconButton>
-
-              {/* 프로필 드롭다운 */}
-              {isDropdownOpen && (
-                <ClickAwayListener onClickAway={handleClickAway}>
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 50,
-                      right: 20,
-                      zIndex: 10,
-                      minWidth: 180
-                    }}>
-                    <Paper sx={{boxShadow: 3, borderRadius: 1}}>
-                      <MenuList>
-                        <MenuItem
-                          component={Link}
-                          to="/profile"
-                          onClick={handleClickAway}>
-                          내 프로필
-                        </MenuItem>
-                        <MenuItem
-                          component={Link}
-                          to="/booking/my?status=completed"
-                          onClick={handleClickAway}>
-                          내 예약 목록
-                        </MenuItem>
-                        <MenuItem
-                          component={Link}
-                          to="/coupons/my"
-                          onClick={handleClickAway}>
-                          내 쿠폰함
-                        </MenuItem>
-                        <MenuItem
-                          component={Link}
-                          to="/mileage"
-                          onClick={handleClickAway}>
-                          내 마일리지
-                        </MenuItem>
-                        <MenuItem
-                          component={Link}
-                          to="/favorite-list"
-                          onClick={handleClickAway}>
-                          즐겨찾기
-                        </MenuItem>
-                        <Divider />
-                        <MenuItem onClick={handleLogout}>
-                          <LogoutIcon sx={{marginRight: 1}} />
-                          로그아웃
-                        </MenuItem>
-                      </MenuList>
-                    </Paper>
-                  </Box>
-                </ClickAwayListener>
-              )}
-            </>
-          ) : (
-            <>
-              <Button
-                component={Link}
-                to="/login"
-                startIcon={<LoginIcon />}
-                color="inherit">
-                로그인
-              </Button>
-              <Button
-                component={Link}
-                to="/register"
-                startIcon={<PersonAddIcon />}
-                color="inherit">
-                회원가입
-              </Button>
-            </>
-          )}
+          <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+            {isAuthenticated && user ? (
+              <>
+                <NotificationMenu />
+                <IconButton color="inherit" onClick={toggleDropdown} ref={dropdownRef}>
+                  <img
+                    src={membershipImage} // 멤버십 레벨에 따른 이미지 표시
+                    alt="멤버십 등급"
+                    style={{
+                      width: 32, // 아이콘 크기 맞춤
+                      height: 32,
+                      borderRadius: '50%', // 원형 유지
+                      objectFit: 'cover'
+                    }}
+                  />
+                </IconButton>
+                {isDropdownOpen && (
+                  <ClickAwayListener onClickAway={handleClickAway}>
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 50,
+                        right: 20,
+                        zIndex: 10,
+                        minWidth: 180
+                      }}>
+                      <Paper sx={{boxShadow: 3, borderRadius: 1}}>
+                        <MenuList>
+                          <MenuItem
+                            component={Link}
+                            to="/profile"
+                            onClick={handleClickAway}>
+                            내 프로필
+                          </MenuItem>
+                          <MenuItem
+                            component={Link}
+                            to="/booking/my?status=completed"
+                            onClick={handleClickAway}>
+                            내 예약 목록
+                          </MenuItem>
+                          <MenuItem
+                            component={Link}
+                            to="/coupons/my"
+                            onClick={handleClickAway}>
+                            내 쿠폰함
+                          </MenuItem>
+                          <MenuItem
+                            component={Link}
+                            to="/mileage"
+                            onClick={handleClickAway}>
+                            내 마일리지
+                          </MenuItem>
+                          <MenuItem
+                            component={Link}
+                            to="/favorite-list"
+                            onClick={handleClickAway}>
+                            즐겨찾기
+                          </MenuItem>
+                          <Divider />
+                          <MenuItem onClick={handleLogout}>
+                            <LogoutIcon sx={{marginRight: 1}} />
+                            로그아웃
+                          </MenuItem>
+                        </MenuList>
+                      </Paper>
+                    </Box>
+                  </ClickAwayListener>
+                )}
+              </>
+            ) : (
+              <>
+                <Button
+                  component={Link}
+                  to="/login"
+                  startIcon={<LoginIcon />}
+                  color="inherit">
+                  로그인
+                </Button>
+                <Button
+                  component={Link}
+                  to="/register"
+                  startIcon={<PersonAddIcon />}
+                  color="inherit">
+                  회원가입
+                </Button>
+              </>
+            )}
+          </Box>
         </Toolbar>
       </AppBar>
 
@@ -298,7 +306,7 @@ const Header = () => {
             </ListItem>
             <ListItem
               component={Link}
-              to="/accommodations/search"
+              to="/accommodations"
               sx={{textDecoration: 'none', color: 'inherit'}}>
               <HotelIcon sx={{marginRight: 1}} />
               <ListItemText primary="숙소 검색" />
