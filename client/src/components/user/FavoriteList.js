@@ -19,7 +19,7 @@ const FavoriteList = () => {
       await authAPI.getUserProfile(); //  로그인한 사용자 정보 요청
       setIsLoggedIn(true); // 로그인 성공
     } catch (error) {
-      console.warn('⚠️ [클라이언트] 로그인하지 않은 사용자 → 즐겨찾기 조회 안 함.');
+      console.warn('️ [클라이언트] 로그인하지 않은 사용자 → 즐겨찾기 조회 안 함.');
       setIsLoggedIn(false); // 로그인 안 됨
     }
   };
@@ -104,7 +104,7 @@ const FavoriteList = () => {
         <div className="favorite-list">
           {favorites.length > 0 ? (
             favorites.map(item => {
-              // console.log('🛠 즐겨찾기 아이템:', item);
+              // console.log(' 즐겨찾기 아이템:', item);
 
               return (
                 <div
