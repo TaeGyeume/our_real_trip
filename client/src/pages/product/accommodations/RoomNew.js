@@ -108,7 +108,7 @@ const RoomNew = () => {
         newRoomData.append('images', image);
       });
     } else {
-      console.log('업로드할 새 이미지 없음!');
+      // console.log('업로드할 새 이미지 없음!');
     }
 
     try {
@@ -141,14 +141,14 @@ const RoomNew = () => {
       </Typography>
 
       <Stack spacing={2} component="form" onSubmit={handleSubmit}>
-        <TextField
+        {/* <TextField
           label="숙소 ID"
           fullWidth
           name="accommodation"
           value={formData.accommodation}
           onChange={handleChange}
           required
-        />
+        /> */}
         <TextField
           label="객실명"
           fullWidth

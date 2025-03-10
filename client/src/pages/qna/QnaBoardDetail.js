@@ -234,7 +234,9 @@ const QnaBoardDetail = () => {
             </Typography>
           </Box>
           <Divider sx={{mb: 3}} />
-          <Typography variant="body1" sx={{mb: 60, lineHeight: 1.8, fontSize: '1.1rem'}}>
+          <Typography
+            variant="body1"
+            sx={{mb: 38, lineHeight: 1.8, fontSize: '1.1rem', whiteSpace: 'pre-line'}}>
             {qnaBoard.content}
           </Typography>
 
@@ -353,7 +355,7 @@ const QnaBoardDetail = () => {
               </Box>
               {/* 댓글 내용 */}
               <Paper sx={{p: 2, borderRadius: 2, backgroundColor: '#f9f9f9'}}>
-                <Typography variant="body1" sx={{mb: 1}}>
+                <Typography variant="body1" sx={{mb: 1, whiteSpace: 'pre-line'}}>
                   {comment.content}
                 </Typography>
                 {user &&

@@ -211,8 +211,8 @@ exports.createPackage = async (req, res) => {
           } else if (flight.flightId instanceof mongoose.Types.ObjectId) {
             return flight;
           } else {
-            console.error(`🚨 [ERROR] 유효하지 않은 Flight ID: ${flight.flightId}`);
-            throw new Error(`🚨 유효하지 않은 Flight ID: ${flight.flightId}`);
+            console.error(` [ERROR] 유효하지 않은 Flight ID: ${flight.flightId}`);
+            throw new Error(` 유효하지 않은 Flight ID: ${flight.flightId}`);
           }
         })
       : [];
@@ -227,7 +227,7 @@ exports.createPackage = async (req, res) => {
       ? new mongoose.Types.ObjectId(createdBy)
       : req.user?._id;
     if (!createdById) {
-      console.error(`🚨 [ERROR] 유효하지 않은 createdBy ID: ${createdBy}`);
+      console.error(` [ERROR] 유효하지 않은 createdBy ID: ${createdBy}`);
       return res.status(400).json({message: '유효하지 않은 createdBy ID입니다.'});
     }
 
@@ -407,7 +407,7 @@ exports.updatePackage = async (req, res) => {
     }
 
     const {id} = req.params;
-    console.log('🔍 [DEBUG] 요청 데이터:', req.body);
+    console.log(' [DEBUG] 요청 데이터:', req.body);
 
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({message: '업데이트할 데이터가 없습니다.'});

@@ -1,12 +1,30 @@
 import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {createQnaBoard} from '../../api/qna/qnaBoardService';
-import './styles/QnaBoardWrite.css';
+
+// MUI 관련 import
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardMedia,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+  CircularProgress,
+  IconButton,
+  Stack
+} from '@mui/material';
+import {AttachFile, Image as ImageIcon, Delete as DeleteIcon} from '@mui/icons-material';
 
 const QnaBoardWrite = () => {
   const navigate = useNavigate();
 
-  //  폼 상태 관리
+  // 폼 상태
   const [formData, setFormData] = useState({
     category: '',
     title: '',
@@ -15,11 +33,11 @@ const QnaBoardWrite = () => {
     attachments: []
   });
 
-  const [imagePreviews, setImagePreviews] = useState([]); //  이미지 미리보기
-  const [fileNames, setFileNames] = useState([]); //  첨부파일 리스트
+  const [imagePreviews, setImagePreviews] = useState([]); // 이미지 미리보기
+  const [fileNames, setFileNames] = useState([]); // 첨부파일 이름 리스트
   const [loading, setLoading] = useState(false);
 
-  //  카테고리 옵션
+  // 카테고리 옵션
   const categories = [
     '회원 정보 문의',
     '회원 가입 문의',
@@ -33,12 +51,12 @@ const QnaBoardWrite = () => {
     '기타 문의'
   ];
 
-  //  입력 변경 핸들러
+  // 입력 변경 핸들러
   const handleChange = e => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
 
-  //  파일 업로드 핸들러
+  // 파일 업로드 핸들러
   const handleFileChange = e => {
     const {name, files} = e.target;
     const fileArray = Array.from(files);
@@ -56,10 +74,18 @@ const QnaBoardWrite = () => {
     setFormData({...formData, [name]: fileArray});
   };
 
+  // 이미지 삭제 핸들러: 미리보기와 formData.images 모두에서 제거
+  const handleRemoveImage = index => {
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  // 폼 제출 핸들러
   const handleSubmit = async e => {
     e.preventDefault();
-
-    // console.log(' 업로드 데이터:', formData);
 
     if (!formData.category.trim() || !formData.title.trim() || !formData.content.trim()) {
       alert('카테고리, 제목, 내용을 입력하세요.');
@@ -72,12 +98,12 @@ const QnaBoardWrite = () => {
       let requestData = new FormData();
       let isMultipart = false;
 
-      //  문자열 데이터 추가 (FormData 사용)
+      // 문자열 데이터
       requestData.append('category', formData.category.trim());
       requestData.append('title', formData.title.trim());
       requestData.append('content', formData.content.trim());
 
-      //  파일이 존재하는지 확인 후 추가
+      // 파일이 존재한다면 FormData에 추가
       if (formData.images.length > 0 || formData.attachments.length > 0) {
         isMultipart = true;
         formData.images.forEach(file => {
@@ -93,19 +119,13 @@ const QnaBoardWrite = () => {
         });
       }
 
-      //  디버깅: FormData 확인
-      // console.log(' 최종 전송할 FormData 내용:');
-      // for (let [key, value] of requestData.entries()) {
-      //   console.log(` ${key}:`, value);
-      // }
-
-      //  게시글 생성 요청
+      // 서버에 게시글 생성 요청
       await createQnaBoard(requestData, isMultipart);
 
       alert('게시글이 성공적으로 등록되었습니다!');
       navigate('/qna');
     } catch (error) {
-      console.error(' QnA 게시글 작성 오류:', error);
+      console.error('QnA 게시글 작성 오류:', error);
       alert('게시글 작성에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -113,87 +133,150 @@ const QnaBoardWrite = () => {
   };
 
   return (
-    <div className="qna-write-container">
-      <h2>QnA 게시글 작성</h2>
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
-        {/* 카테고리 선택 */}
-        <label>카테고리</label>
-        <select
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        maxWidth: 800,
+        margin: '0 auto',
+        mt: 4
+      }}
+      encType="multipart/form-data">
+      <Typography variant="h4" component="h2" gutterBottom>
+        QnA 게시글 작성
+      </Typography>
+
+      {/* 카테고리 선택 */}
+      <FormControl fullWidth>
+        <InputLabel id="category-label">카테고리</InputLabel>
+        <Select
+          labelId="category-label"
+          label="카테고리"
           name="category"
           value={formData.category}
           onChange={handleChange}
           required>
-          <option value="">카테고리를 선택하세요</option>
+          <MenuItem value="">
+            <em>카테고리를 선택하세요</em>
+          </MenuItem>
           {categories.map((category, index) => (
-            <option key={index} value={category}>
+            <MenuItem key={index} value={category}>
               {category}
-            </option>
+            </MenuItem>
           ))}
-        </select>
+        </Select>
+      </FormControl>
 
-        {/* 제목 입력 */}
-        <label>제목</label>
-        <input
-          type="text"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          required
-        />
+      {/* 제목 입력 */}
+      <TextField
+        label="제목"
+        name="title"
+        value={formData.title}
+        onChange={handleChange}
+        required
+      />
 
-        {/* 내용 입력 */}
-        <label>내용</label>
-        <textarea
-          name="content"
-          value={formData.content}
-          onChange={handleChange}
-          required></textarea>
+      {/* 내용 입력 */}
+      <TextField
+        label="내용"
+        name="content"
+        value={formData.content}
+        onChange={handleChange}
+        required
+        multiline
+        minRows={5}
+      />
 
-        {/* 이미지 업로드 */}
-        <label>이미지 업로드 (최대 3개)</label>
-        <input
-          type="file"
-          name="images"
-          multiple
-          accept="image/*"
-          onChange={handleFileChange}
-        />
-
-        {/* 이미지 미리보기 */}
-        <div className="image-preview-container">
-          {imagePreviews.map((src, index) => (
-            <img
-              key={index}
-              src={src}
-              alt={`미리보기-${index}`}
-              className="image-preview"
+      {/* 이미지 업로드 */}
+      <Box>
+        <Typography variant="body1" sx={{mb: 1}}>
+          이미지 업로드 (최대 3개)
+        </Typography>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Button variant="contained" component="label" startIcon={<ImageIcon />}>
+            이미지 선택
+            <input
+              type="file"
+              name="images"
+              multiple
+              accept="image/*"
+              hidden
+              onChange={handleFileChange}
             />
+          </Button>
+          {imagePreviews.length > 0 && (
+            <Typography variant="body2">{imagePreviews.length}장 선택됨</Typography>
+          )}
+        </Stack>
+        {/* 이미지 미리보기 및 삭제 버튼 */}
+        <Stack direction="row" spacing={2} sx={{mt: 2, flexWrap: 'wrap'}}>
+          {imagePreviews.map((src, index) => (
+            <Card key={index} sx={{width: 120, position: 'relative'}}>
+              <CardMedia
+                component="img"
+                height="80"
+                image={src}
+                alt={`미리보기-${index}`}
+              />
+              <CardActions sx={{p: 0, justifyContent: 'flex-end'}}>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleRemoveImage(index)}>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </CardActions>
+            </Card>
           ))}
-        </div>
+        </Stack>
+      </Box>
 
-        {/* 첨부파일 업로드 */}
-        <label>첨부파일 업로드 (PDF, DOCX 등)</label>
-        <input
-          type="file"
-          name="attachments"
-          multiple
-          accept=".pdf, .doc, .docx"
-          onChange={handleFileChange}
-        />
-
+      {/* 첨부파일 업로드 */}
+      <Box>
+        <Typography variant="body1" sx={{mb: 1}}>
+          첨부파일 업로드 (PDF, DOCX 등)
+        </Typography>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Button variant="contained" component="label" startIcon={<AttachFile />}>
+            파일 선택
+            <input
+              type="file"
+              name="attachments"
+              multiple
+              accept=".pdf, .doc, .docx"
+              hidden
+              onChange={handleFileChange}
+            />
+          </Button>
+          {fileNames.length > 0 && (
+            <Typography variant="body2">{fileNames.length}개 파일 선택됨</Typography>
+          )}
+        </Stack>
         {/* 첨부파일 리스트 */}
-        <ul className="file-list">
-          {fileNames.map((file, index) => (
-            <li key={index}>{file}</li>
-          ))}
-        </ul>
+        {fileNames.length > 0 && (
+          <ul style={{marginTop: '8px'}}>
+            {fileNames.map((file, index) => (
+              <li key={index}>{file}</li>
+            ))}
+          </ul>
+        )}
+      </Box>
 
-        {/* 제출 버튼 */}
-        <button type="submit" disabled={loading}>
+      {/* 제출 버튼 */}
+      <Box sx={{display: 'flex', justifyContent: 'flex-end'}}>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          startIcon={loading && <CircularProgress size={20} />}>
           {loading ? '작성 중...' : '게시글 작성'}
-        </button>
-      </form>
-    </div>
+        </Button>
+      </Box>
+    </Box>
   );
 };
 

@@ -49,7 +49,7 @@ const AccommodationSearch = ({
     <Box
       sx={{
         position: 'sticky',
-        top: 70,
+        top: 77,
         zIndex: 1000,
         padding: '10px 20px',
         backgroundColor: 'white',

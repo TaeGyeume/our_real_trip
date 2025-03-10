@@ -2,7 +2,7 @@ const bookingService = require('../services/bookingService');
 
 exports.createBooking = async (req, res) => {
   try {
-    console.log('==== createBooking ====', req.body);
+    // console.log('==== createBooking ====', req.body);
     const {
       types,
       productIds,
@@ -37,7 +37,7 @@ exports.createBooking = async (req, res) => {
       usedMileage
     };
 
-    console.log('[서버] 변환된 데이터:', bookingData);
+    // console.log('[서버] 변환된 데이터:', bookingData);
     const result = await bookingService.createBooking(bookingData);
 
     if (result.status === 200 && result.booking) {
@@ -53,7 +53,7 @@ exports.createBooking = async (req, res) => {
 
 exports.verifyPayment = async (req, res) => {
   try {
-    console.log('[서버] 결제 검증 요청 도착:', req.body);
+    // console.log('[서버] 결제 검증 요청 도착:', req.body);
     const {imp_uid, merchant_uid, couponId, userId, usedMileage} = req.body;
 
     if (!imp_uid || !merchant_uid) {
