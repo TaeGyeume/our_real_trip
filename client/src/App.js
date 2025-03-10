@@ -76,7 +76,6 @@ import PackageCreate from './components/product/package/PackageCreate';
 import PackageBookingForm from './components/booking/PackageBookingForm';
 import AdminPackageList from './pages/product/packges/PackageList';
 import Modal from 'react-modal';
-// import FlightList from './components/flights/FlightList';
 import LocationDetailPage from './pages/location/LocationDetailPage';
 
 const App = () => {
@@ -178,7 +177,6 @@ const App = () => {
           {/* 인증된 사용자만 접근 가능 */}
           <Route element={<PrivateRoute />}>
             <Route path="/package/booking/:id" element={<PackageBookingForm />} />
-            {/* <Route path="/reservation/:flightId" element={<Reservation />} /> */}
             <Route path="/profile" element={<UserPages.Profile />} />
             <Route path="/profile/update" element={<EditProfile />} />
             {/* <Route path="/:type/booking/:id" element={<TourTicektBookingPage />} /> */}
