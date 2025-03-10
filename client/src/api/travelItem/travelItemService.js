@@ -167,7 +167,6 @@ export const updateSubCategory = async (subCategoryId, updateData) => {
 export const deleteCategory = async categoryId => {
   try {
     await api.delete(`/travelItems/category/${categoryId}`);
-    console.log(`카테고리 삭제 완료: ${categoryId}`);
   } catch (error) {
     console.error('하위 카테고리 삭제 실패:', error);
     throw new Error('하위 카테고리 삭제 중 오류가 발생했습니다.');

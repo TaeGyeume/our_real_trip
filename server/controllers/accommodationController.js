@@ -179,20 +179,20 @@ exports.searchAccommodationsByName = async (req, res) => {
   try {
     const {name, page = 1, limit = 6} = req.query;
 
-    console.log('검색어:', name, '페이지:', page, '개수:', limit);
+    // console.log('검색어:', name, '페이지:', page, '개수:', limit);
 
     if (!name) {
       return res.status(400).json({message: '검색할 숙소 이름을 입력해주세요.'});
     }
 
-    console.log('검색 요청 수행');
+    // console.log('검색 요청 수행');
     const accommodationsData = await accommodationService.getAccommodationsByName(
       name,
       page,
       limit
     );
 
-    console.log('검색 결과:', accommodationsData);
+    // console.log('검색 결과:', accommodationsData);
     res.status(200).json(accommodationsData);
   } catch (error) {
     res.status(500).json({message: '숙소 이름 검색 중 오류 발생', error: error.message});
@@ -202,7 +202,7 @@ exports.searchAccommodationsByName = async (req, res) => {
 exports.getAccommodationById = async (req, res) => {
   try {
     const {accommodationId} = req.params;
-    console.log('숙소 ID 조회 요청:', accommodationId);
+    // console.log('숙소 ID 조회 요청:', accommodationId);
 
     // 숙소 조회
     const accommodation =

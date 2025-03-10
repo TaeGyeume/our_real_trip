@@ -248,7 +248,6 @@ exports.getAvailableRoomsByAccommodation = async ({
 
     // **검색 조건이 없을 경우 모든 객실 반환**
     if (!startDate || !endDate || !adults) {
-      console.log('검색 조건이 없으므로 모든 객실 반환');
       const allRooms = await Room.find({accommodation: accommodationId}).select(
         'name pricePerNight images maxGuests amenities availableCount reservedDates checkInTime checkOutTime'
       );
@@ -364,8 +363,6 @@ exports.deleteAccommodation = async accommodationId => {
       throw new Error('숙소를 찾을 수 없습니다.');
     }
 
-    console.log(`숙소 삭제 시작: ${accommodationId}`);
-
     // 해당 숙소에 속한 모든 객실(Room) 찾기
     const rooms = await Room.find({accommodation: accommodationId});
 
@@ -381,7 +378,6 @@ exports.deleteAccommodation = async accommodationId => {
 
           if (fs.existsSync(absoluteFilePath)) {
             fs.unlinkSync(absoluteFilePath); // 동기 방식으로 삭제
-            console.log(`객실 이미지 삭제 성공: ${absoluteFilePath}`);
           } else {
             console.warn(`객실 이미지 파일이 존재하지 않음: ${absoluteFilePath}`);
           }
@@ -400,7 +396,6 @@ exports.deleteAccommodation = async accommodationId => {
 
         if (fs.existsSync(absoluteFilePath)) {
           fs.unlinkSync(absoluteFilePath); // 동기 방식으로 삭제
-          console.log(`숙소 이미지 삭제 성공: ${absoluteFilePath}`);
         } else {
           console.warn(`숙소 이미지 파일이 존재하지 않음: ${absoluteFilePath}`);
         }
@@ -412,8 +407,6 @@ exports.deleteAccommodation = async accommodationId => {
 
     // 숙소 삭제
     await Accommodation.findByIdAndDelete(accommodationId);
-
-    console.log(`숙소 및 관련 데이터 삭제 완료: ${accommodationId}`);
 
     return {message: '숙소 및 해당 숙소의 모든 객실과 이미지가 삭제되었습니다.'};
   } catch (error) {
@@ -585,7 +578,7 @@ exports.deleteImage = async (accommodationId, imageUrl) => {
         if (err) {
           console.error('이미지 파일 삭제 오류:', err);
         } else {
-          console.log('이미지 파일 삭제 성공:', absoluteFilePath);
+          // console.log('이미지 파일 삭제 성공:', absoluteFilePath);
         }
       });
     } else {
@@ -641,7 +634,6 @@ exports.updateAccommodationRating = async productId => {
     // 숙소 문서 업데이트
     await Accommodation.findByIdAndUpdate(productId, {rating: avgRating});
 
-    console.log(`숙소(${productId}) 평점 업데이트 완료: ${avgRating}`);
     return avgRating;
   } catch (error) {
     console.error('숙소 평점 업데이트 중 오류 발생:', error);

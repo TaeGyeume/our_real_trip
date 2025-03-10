@@ -2,16 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {useParams, useSearchParams, useNavigate} from 'react-router-dom';
 import {getRoomById} from '../../api/room/roomService';
 import RoomImageGallery from '../../components/accommodations/RoomImageGallery';
-import {
-  Box,
-  Typography,
-  Paper,
-  Divider,
-  Button,
-  Chip,
-  Grid,
-  ListItemText
-} from '@mui/material';
+import {Box, Typography, Paper, Divider, Button} from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const RoomDetail = () => {

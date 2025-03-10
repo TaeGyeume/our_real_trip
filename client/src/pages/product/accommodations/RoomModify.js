@@ -185,7 +185,6 @@ const RoomModify = () => {
           {deletedImages: formattedDeletedImages},
           {headers: {'Content-Type': 'application/json'}}
         );
-        console.log('이미지 삭제 완료!');
       }
 
       const updatedRoomData = new FormData();
@@ -215,7 +214,7 @@ const RoomModify = () => {
           updatedRoomData.append('images', image);
         });
       } else {
-        console.log('업로드할 새 이미지 없음!');
+        // console.log('업로드할 새 이미지 없음!');
       }
 
       await axios.patch(`/rooms/${roomId}`, updatedRoomData, {
