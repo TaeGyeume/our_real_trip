@@ -20,7 +20,7 @@ import {Typography, TextField, Snackbar, Alert, Button} from '@mui/material';
 const SERVER_URL =
   process.env.REACT_APP_ENV === 'development'
     ? 'http://localhost:5000/'
-    : 'https://ourrealtrip.shop/api';
+    : 'https://ourrealtrip.shop/api/';
 
 export default function PackageBookingForm() {
   const {id} = useParams();
