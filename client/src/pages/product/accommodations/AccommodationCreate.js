@@ -4,7 +4,6 @@ import AccommodationForm from '../../../components/product/accommodations/Accomm
 const AccommodationCreate = () => {
   return (
     <div className="container mt-3">
-      <h2>숙소 등록</h2>
       <AccommodationForm />
     </div>
   );
