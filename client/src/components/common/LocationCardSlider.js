@@ -1,4 +1,3 @@
-// src/components/common/LocationCardSlider.jsx
 import React, {useState} from 'react';
 import Slider from 'react-slick';
 import {Box} from '@mui/material';

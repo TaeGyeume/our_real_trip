@@ -1,6 +1,6 @@
 import React, {useState, useMemo, useEffect} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
-import {Box, Button, Typography} from '@mui/material';
+import {Box, Typography} from '@mui/material';
 import FlightList from '../../components/flights/FlightList';
 import LoadingScreen from '../../components/flights/LoadingScreen';
 import RoundTripSearch from '../../components/flights/RoundTripSearch';

@@ -44,7 +44,6 @@ const FlightBookingCard = ({flight}) => (
         <p className="fw-semibold text-success mb-0">{flight.seatClass || '등급 미정'}</p>
         <small className="text-muted">{flight.seatsAvailable || '정보 없음'}석</small>
       </div>
-      {/* 가격 부분은 FlightBookingCard에서는 제외 */}
     </div>
   </div>
 );

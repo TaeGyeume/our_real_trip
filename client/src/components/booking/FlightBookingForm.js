@@ -1,20 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {createBooking, verifyPayment} from '../../api/booking/bookingService';
 import {authAPI} from '../../api/auth/index';
-import {fetchUserCoupons} from '../../api/coupon/couponService';
 import MileageInput from '../mileage/MileageInput';
-import CouponSelector from './CouponSelector';
 import {Button, TextField, Alert, Snackbar} from '@mui/material';
-import './styles/TourTicketBookingForm.css'; // 스타일링 (TourTicketBookingForm과 유사한 클래스 사용)
-import FlightCard from '../../components/flights/FlightCard';
+import './styles/TourTicketBookingForm.css';
 import FlightBookingCard from '../flights/FlightBookingCard';
 
 const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
   const [user, setUser] = useState(null);
   const [usedMileage, setUsedMileage] = useState(0);
-  const [userCoupons, setUserCoupons] = useState([]);
-  const [selectedCoupon, setSelectedCoupon] = useState(null);
-  const [discountAmount, setDiscountAmount] = useState(0);
   const [reservationInfo, setReservationInfo] = useState({
     name: '',
     email: '',
@@ -45,31 +39,7 @@ const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
   const totalPrice =
     selectedFlights.reduce((sum, flight) => sum + flight.price, 0) * passengers;
   // 쿠폰 할인과 마일리지 차감을 반영한 최종 결제 금액
-  const finalPrice = totalPrice - discountAmount - usedMileage;
-
-  // 사용자 쿠폰 조회 (총 예약 금액 기준 사용 가능한 쿠폰 필터링)
-  useEffect(() => {
-    const fetchCoupons = async () => {
-      if (user) {
-        try {
-          const coupons = await fetchUserCoupons(user._id);
-          const validCoupons = coupons.filter(
-            coupon => !coupon.isUsed && coupon.coupon.minPurchaseAmount <= totalPrice
-          );
-          setUserCoupons(validCoupons);
-        } catch (error) {
-          console.error('쿠폰 정보를 가져오는 중 오류 발생:', error);
-        }
-      }
-    };
-    fetchCoupons();
-  }, [user, totalPrice]);
-
-  // CouponSelector 에서 쿠폰 선택 시 호출되는 핸들러
-  const handleCouponSelect = (coupon, discount) => {
-    setSelectedCoupon(coupon);
-    setDiscountAmount(discount);
-  };
+  const finalPrice = totalPrice - usedMileage;
 
   // 예약자 정보 입력값 변경 핸들러
   const handleReservationChange = e => {
@@ -92,14 +62,13 @@ const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
       productIds: selectedFlights.map(flight => flight._id),
       counts: Array(selectedFlights.length).fill(passengers),
       totalPrice,
-      discountAmount,
+
       usedMileage,
       userId: user._id,
       reservationInfo,
       merchant_uid,
       startDates: selectedFlights[0].departure.date,
-      endDates: selectedFlights[selectedFlights.length - 1].arrival.date,
-      couponId: selectedCoupon ? selectedCoupon._id : null
+      endDates: selectedFlights[selectedFlights.length - 1].arrival.date
     };
 
     try {
@@ -132,8 +101,7 @@ const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
               imp_uid: rsp.imp_uid,
               merchant_uid,
               userId: user._id,
-              usedMileage,
-              couponId: selectedCoupon ? selectedCoupon._id : null
+              usedMileage
             });
             if (verifyResponse.message === '결제 검증 성공') {
               setOpenAlert(true);
@@ -181,7 +149,6 @@ const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
               <MileageInput
                 userMileage={user.mileage}
                 totalPrice={totalPrice}
-                discountAmount={discountAmount}
                 onMileageChange={setUsedMileage}
               />
             </div>
@@ -255,7 +222,6 @@ const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
                   원
                 </span>
               </p>
-              {/* <p>쿠폰 할인: {discountAmount.toLocaleString()} 원</p> */}
               <p>
                 마일리지 <span>{usedMileage.toLocaleString()}원</span>
               </p>

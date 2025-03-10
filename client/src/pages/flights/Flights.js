@@ -51,10 +51,6 @@ const Flights = () => {
 
   return (
     <div className="container mt-4">
-      {/* <Typography variant="h5" fontWeight="bold" gutterBottom sx={{textAlign: 'center'}}>
-        항공편 검색
-      </Typography> */}
-
       {/* 편도/왕복 선택 버튼 */}
       <Box sx={{display: 'flex', justifyContent: 'left', gap: '10px', mb: 2}}>
         <ToggleButton
@@ -152,7 +148,6 @@ const Flights = () => {
 
       <FlightCardList flights={flights} type="domestic" />
       <FlightCardList flights={flights} type="international" />
-      {/* <FlightCardList flights={flights} /> */}
     </div>
   );
 };

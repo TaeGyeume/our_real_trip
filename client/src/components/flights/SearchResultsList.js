@@ -1,9 +1,6 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import FlightSearchCard from './FlightSearchCard';
-import AdBanner from '../ad/AdBanner';
-import {flightBannerData} from '../../data/bannerData';
-import {Box} from '@mui/material';
 
 const SearchResultsList = ({flights, passengers = 1}) => {
   const navigate = useNavigate();

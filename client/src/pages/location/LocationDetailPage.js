@@ -185,56 +185,6 @@ const LocationDetailPage = () => {
             />
           </Button>
           {/* 항공권 탭 */}
-          {/* <Button
-            variant="text"
-            onClick={() => handleTabClick('flight')}
-            sx={{
-              color: activeTab === 'flight' ? '#0288d1' : 'black',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              p: 0,
-              minWidth: 80,
-              position: 'relative',
-              '&:hover': {
-                backgroundColor: 'white'
-              },
-              '& .underline': {
-                opacity: activeTab === 'flight' ? 1 : 0,
-                transition: 'opacity 0.3s'
-              },
-              '&:hover .underline': {
-                opacity: 1
-              }
-            }}>
-            <Box
-              component="img"
-              src="/images/category/flight.png"
-              alt="항공아이콘"
-              sx={{width: 48, height: 48, mb: 1}}
-            />
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 'bold',
-                color: activeTab === 'flight' ? '#0288d1' : 'inherit'
-              }}>
-              항공권
-            </Typography>
-            <Box
-              className="underline"
-              sx={{
-                position: 'absolute',
-                bottom: -8,
-                left: '-10%',
-                width: '120%',
-                height: '2px',
-                bgcolor: '#0288d1'
-              }}
-            />
-          </Button> */}
           <Button
             variant="text"
             onClick={() =>
