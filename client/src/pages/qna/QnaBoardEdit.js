@@ -29,8 +29,8 @@ import {
   Delete as DeleteIcon,
   Image as ImageIcon,
   AttachFile as AttachFileIcon,
-  InsertDriveFile as FileIcon,
-  UploadFile as UploadFileIcon
+  InsertDriveFile as FileIcon
+  // UploadFileIcon 제거: 사용되지 않음
 } from '@mui/icons-material';
 
 // 환경에 따른 서버 URL
