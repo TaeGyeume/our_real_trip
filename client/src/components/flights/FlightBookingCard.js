@@ -1,0 +1,52 @@
+import React from 'react';
+import {AIRLINE_LOGOS} from '../../data/airline';
+
+const formatTime = timeString => {
+  if (!timeString || typeof timeString !== 'string' || timeString.length !== 4) {
+    return '시간 미정';
+  }
+  return `${timeString.substr(0, 2)}:${timeString.substr(2, 2)}`;
+};
+
+const FlightBookingCard = ({flight}) => (
+  <div className="col-12 mb-3">
+    <div
+      className="card p-3 shadow-sm d-flex flex-row align-items-center"
+      style={{minHeight: '80px'}}>
+      <div className="d-flex align-items-center me-3" style={{flexBasis: '200px'}}>
+        <img
+          src={`/images/logos/${AIRLINE_LOGOS[flight.airline] || 'default.png'}`}
+          alt={flight.airline}
+          className="img-fluid"
+          style={{width: '40px', height: '40px'}}
+        />
+        <div className="ms-2">
+          <h6 className="mb-1">{flight.airline}</h6>
+          <small className="text-muted">{flight.flightNumber}</small>
+        </div>
+      </div>
+
+      <div className="text-start" style={{flexBasis: '150px'}}>
+        <p className="fs-5 fw-bold mb-0">{formatTime(flight.departure.time)}</p>
+        <small className="text-muted">{flight.departure.airport}</small>
+      </div>
+
+      <div className="fs-5 text-muted mx-2" style={{width: '100px'}}>
+        →
+      </div>
+
+      <div className="text-start" style={{flexBasis: '150px'}}>
+        <p className="fs-5 fw-bold mb-0">{formatTime(flight.arrival.time)}</p>
+        <small className="text-muted">{flight.arrival.airport}</small>
+      </div>
+
+      <div className="text-center" style={{flexBasis: '120px'}}>
+        <p className="fw-semibold text-success mb-0">{flight.seatClass || '등급 미정'}</p>
+        <small className="text-muted">{flight.seatsAvailable || '정보 없음'}석</small>
+      </div>
+      {/* 가격 부분은 FlightBookingCard에서는 제외 */}
+    </div>
+  </div>
+);
+
+export default FlightBookingCard;

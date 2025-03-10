@@ -1,35 +1,33 @@
 import React, {useState} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import moment from 'moment-timezone';
-import './styles/FlightSearch.css';
-import {searchFlights} from '../../api/flight/flights';
-import LoadingScreen from './LoadingScreen';
 import {
   Paper,
-  Typography,
   FormControl,
   InputLabel,
-  Button,
   OutlinedInput,
   TextField,
   IconButton,
-  Alert,
+  Button,
   Stack,
   Popover,
+  Box,
+  Alert,
+  Typography,
   List,
   ListItemButton,
-  ListItemText,
-  Box
+  ListItemText
 } from '@mui/material';
 import {LocalizationProvider, DatePicker} from '@mui/x-date-pickers';
 import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {ko} from 'date-fns/locale';
 import {Add, Remove} from '@mui/icons-material';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import {searchFlights} from '../../api/flight/flights';
+import LoadingScreen from './LoadingScreen';
 
 const DOMESTIC_AIRPORTS = {
   서울: ['GMP', 'ICN'],
-  // 인천: ['ICN'],
   부산: ['PUS'],
   제주: ['CJU'],
   대구: ['TAE'],
@@ -50,20 +48,19 @@ const INTERNATIONAL_AIRPORTS = {
   방콕: ['BKK']
 };
 
-// const AIRPORT_LIST = Object.keys(AIRPORT_GROUPS);
-
-const RoundTripSearch = () => {
-  const locationState = useLocation().state;
-  const defaultDeparture = locationState?.useSeoul ? '서울' : '';
-  const defaultArrival = locationState?.arrival || '';
-  const [departure, setDeparture] = useState(defaultDeparture);
-  const [arrival, setArrival] = useState(defaultArrival);
-  const [departureDate, setDepartureDate] = useState(new Date());
-  const [returnDate, setReturnDate] = useState(new Date());
-  const [passengers, setPassengers] = useState(1);
+const RoundTripSearch = ({initialData}) => {
+  const navigate = useNavigate();
+  const [departure, setDeparture] = useState(initialData?.departure || '');
+  const [arrival, setArrival] = useState(initialData?.arrival || '');
+  const [departureDate, setDepartureDate] = useState(
+    initialData?.departureDate ? new Date(initialData.departureDate) : new Date()
+  );
+  const [returnDate, setReturnDate] = useState(
+    initialData?.returnDate ? new Date(initialData.returnDate) : new Date()
+  );
+  const [passengers, setPassengers] = useState(initialData?.passengers || 1);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedField, setSelectedField] = useState('');
 
@@ -87,20 +84,15 @@ const RoundTripSearch = () => {
   };
 
   const handleSearch = async () => {
-    console.log('왕복 검색 요청:', {
-      departure,
-      arrival,
-      departureDate,
-      returnDate,
-      passengers
-    });
-
     if (!departure || !arrival || !departureDate || !returnDate || passengers < 1) {
       setErrorMessage('출발지, 도착지, 출발 날짜, 오는 날짜, 인원수를 입력해주세요.');
       return;
     }
+    if (departure === arrival) {
+      setErrorMessage('출발지와 도착지는 같을 수 없습니다.');
+      return;
+    }
 
-    // 출발 & 도착지를 여러 개의 공항 코드 배열로 변환
     const deptCodes = DOMESTIC_AIRPORTS[departure] ||
       INTERNATIONAL_AIRPORTS[departure] || [departure];
     const arrCodes = DOMESTIC_AIRPORTS[arrival] ||
@@ -119,10 +111,7 @@ const RoundTripSearch = () => {
     setLoading(true);
 
     try {
-      console.log(`출발편 검색 날짜: ${formattedDepartureDate}`);
       let departureFlights = [];
-
-      // 출발편 검색 (모든 공항 조합)
       for (const deptCode of deptCodes) {
         for (const arrCode of arrCodes) {
           const searchData = await searchFlights(
@@ -134,7 +123,6 @@ const RoundTripSearch = () => {
           departureFlights = [...departureFlights, ...searchData];
         }
       }
-
       if (!departureFlights.length) {
         setErrorMessage(
           `출발편 (${formattedDepartureDate})에 운항하는 항공편이 없습니다.`
@@ -142,11 +130,6 @@ const RoundTripSearch = () => {
         setLoading(false);
         return;
       }
-
-      console.log('출발편 검색 완료:', departureFlights);
-      setErrorMessage('');
-
-      // 복귀편 검색 (출발/도착 공항 반대로)
       let returnFlights = [];
       for (const arrCode of arrCodes) {
         for (const deptCode of deptCodes) {
@@ -159,29 +142,27 @@ const RoundTripSearch = () => {
           returnFlights = [...returnFlights, ...searchData];
         }
       }
-
       if (!returnFlights.length) {
         setErrorMessage(`복귀편 (${formattedReturnDate})에 운항하는 항공편이 없습니다.`);
         setLoading(false);
         return;
       }
-
-      console.log('복귀편 검색 완료:', returnFlights);
-
-      // 검색 완료 후 페이지 이동
+      setErrorMessage('');
       setTimeout(() => {
         setLoading(false);
         navigate('/flights/roundtrip-departure', {
           state: {
             departureFlights,
             returnFlights,
+            departure,
+            arrival,
+            departureDate: formattedDepartureDate,
             returnDate: formattedReturnDate,
             passengers
           }
         });
-      }, 500);
+      }, 1000);
     } catch (error) {
-      console.error('검색 실패:', error);
       setErrorMessage('검색 중 오류가 발생했습니다.');
       setLoading(false);
     }
@@ -190,9 +171,7 @@ const RoundTripSearch = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
       <Paper elevation={0} sx={{p: 1, mt: 1}}>
-        {/* 입력 필드 배치 (수평 정렬) */}
         <Stack direction="row" spacing={2} alignItems="center">
-          {/* 출발 공항 */}
           <FormControl sx={{flex: 1, minWidth: '150px'}} variant="outlined">
             <InputLabel shrink={Boolean(departure)}>출발지가 어디인가요?</InputLabel>
             <OutlinedInput
@@ -205,8 +184,6 @@ const RoundTripSearch = () => {
               sx={{backgroundColor: 'white'}}
             />
           </FormControl>
-
-          {/* 공항 변경 버튼 */}
           <IconButton
             onClick={() => {
               const temp = departure;
@@ -215,22 +192,18 @@ const RoundTripSearch = () => {
             }}>
             <SwapHorizIcon />
           </IconButton>
-
-          {/* 도착 공항 */}
           <FormControl sx={{flex: 1, minWidth: '150px'}} variant="outlined">
             <InputLabel shrink={Boolean(arrival)}>도착지가 어디인가요?</InputLabel>
             <OutlinedInput
               value={arrival}
               onChange={e => setArrival(e.target.value)}
               onClick={e => handlePopoverOpen(e, 'arrival')}
-              label="도착지가 어디인가요?"
               readOnly
+              label="도착지가 어디인가요?"
               notched={Boolean(arrival)}
               sx={{backgroundColor: 'white'}}
             />
           </FormControl>
-
-          {/* 출발 날짜 */}
           <DatePicker
             label="가는 날"
             value={departureDate}
@@ -238,8 +211,6 @@ const RoundTripSearch = () => {
             sx={{width: '180px'}}
             renderInput={params => <TextField {...params} fullWidth />}
           />
-
-          {/* 도착 날짜 */}
           <DatePicker
             label="오는 날"
             value={returnDate}
@@ -247,8 +218,6 @@ const RoundTripSearch = () => {
             sx={{width: '179px'}}
             renderInput={params => <TextField {...params} fullWidth />}
           />
-
-          {/* 인원 선택 */}
           <FormControl sx={{flex: 1, minWidth: '160px'}}>
             <InputLabel shrink htmlFor="passengers">
               인원수
@@ -262,15 +231,14 @@ const RoundTripSearch = () => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 height: '56px',
-                padding: '0 8px', // 내부 패딩 조정
+                padding: '0 8px',
                 borderRadius: '5px'
               }}
               startAdornment={
                 <IconButton
                   onClick={() => setPassengers(prev => Math.max(1, prev - 1))}
                   size="small"
-                  sx={{padding: '4px'}} // 버튼 크기 줄임
-                >
+                  sx={{padding: '4px'}}>
                   <Remove fontSize="small" />
                 </IconButton>
               }
@@ -278,8 +246,7 @@ const RoundTripSearch = () => {
                 <IconButton
                   onClick={() => setPassengers(prev => prev + 1)}
                   size="small"
-                  sx={{padding: '4px'}} // 버튼 크기 줄임
-                >
+                  sx={{padding: '4px'}}>
                   <Add fontSize="small" />
                 </IconButton>
               }
@@ -288,15 +255,13 @@ const RoundTripSearch = () => {
                   textAlign: 'center',
                   fontSize: '16px',
                   fontWeight: 'bold',
-                  width: '24px' // 숫자가 중앙 정렬되도록 조정
+                  width: '24px'
                 }
               }}
               value={passengers}
               readOnly
             />
           </FormControl>
-
-          {/* 검색 버튼 */}
           <Button
             variant="contained"
             color="primary"
@@ -310,12 +275,13 @@ const RoundTripSearch = () => {
             검색
           </Button>
         </Stack>
-
-        {/* 공항 선택 Popover */}
         <Popover
           open={Boolean(anchorEl)}
           anchorEl={anchorEl}
-          onClose={handlePopoverClose}
+          onClose={() => {
+            setAnchorEl(null);
+            setSelectedField('');
+          }}
           anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
           transformOrigin={{vertical: 'top', horizontal: 'center'}}
           sx={{
@@ -338,7 +304,6 @@ const RoundTripSearch = () => {
               ))}
             </List>
           </Box>
-
           <Box sx={{flex: 1, p: 1}}>
             <Typography variant="subtitle1" fontWeight="bold" sx={{mb: 1}}>
               해외
@@ -352,15 +317,11 @@ const RoundTripSearch = () => {
             </List>
           </Box>
         </Popover>
-
-        {/* 에러 메시지 */}
         {errorMessage && (
           <Alert severity="error" sx={{mt: 2}}>
             {errorMessage}
           </Alert>
         )}
-
-        {/* 로딩 화면 */}
         {loading && <LoadingScreen />}
       </Paper>
     </LocalizationProvider>

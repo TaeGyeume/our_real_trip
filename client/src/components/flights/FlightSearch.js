@@ -30,7 +30,8 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 const DOMESTIC_AIRPORTS = {
   서울: ['GMP', 'ICN'],
   부산: ['PUS'],
-  제주: ['CJU'],
+  // 제주: ['CJU'],
+  제주도: ['CJU'],
   대구: ['TAE'],
   광주: ['KWJ'],
   청주: ['CJJ'],
