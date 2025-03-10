@@ -277,7 +277,12 @@ const TourTicketModify = () => {
         <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
           {newImages.map((image, index) => (
             <Box key={index} display="flex" flexDirection="column" alignItems="center">
-              <img src={image} alt="새 이미지" width="100" style={{borderRadius: 8}} />
+              <img
+                src={`${SERVER_URL}${image}`}
+                alt="새 이미지"
+                width="100"
+                style={{borderRadius: 8}}
+              />
             </Box>
           ))}
         </Box>
