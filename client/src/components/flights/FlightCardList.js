@@ -11,11 +11,9 @@ import {searchFlights} from '../../api/flight/flights';
 const FlightCardList = ({flights, type = 'domestic'}) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   // 클릭 시, 해당 항공편의 정보를 검색 조건으로 API 호출 후 결과 페이지로 이동
   const handleCardClick = async flight => {
-    setLoading(true);
     try {
       // 출발지, 도착지, 날짜, 인원수(기본 1)를 검색 조건으로 지정
       const deptCodes = [flight.departure.airport];
@@ -32,7 +30,6 @@ const FlightCardList = ({flights, type = 'domestic'}) => {
 
       if (searchResults.length === 0) {
         alert('검색 조건에 맞는 항공편이 없습니다.');
-        setLoading(false);
       } else {
         const departureName = AIRPORT_NAMES[deptCodes] || deptCodes;
         const arrivalName = AIRPORT_NAMES[arrCodes] || arrCodes;
@@ -50,7 +47,6 @@ const FlightCardList = ({flights, type = 'domestic'}) => {
       console.error('검색 실패:', error);
       alert('검색 중 오류가 발생했습니다.');
     } finally {
-      setLoading(false);
     }
   };
 

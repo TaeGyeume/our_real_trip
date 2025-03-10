@@ -47,15 +47,15 @@ export const FLIGHT_IMAGES = {
 };
 
 export const AIRPORT_NAMES = {
-  GMP: '서울', // 김포공항 → 서울
+  GMP: '서울',
   ICN: '서울',
-  PUS: '부산', // 김해공항 → 부산
-  CJU: '제주', // 제주공항 → 제주
-  TAE: '대구', // 대구공항 → 대구
-  KWJ: '광주', // 광주공항 → 광주
-  CJJ: '청주', // 청주공항 → 청주
-  RSU: '여수', // 여수공항 → 여수
-  HND: '도쿄', // 하네다공항 → 도쿄
+  PUS: '부산',
+  CJU: '제주',
+  TAE: '대구',
+  KWJ: '광주',
+  CJJ: '청주',
+  RSU: '여수',
+  HND: '도쿄',
   JFK: '뉴욕',
   CDG: '파리',
   PEK: '베이징',

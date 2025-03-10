@@ -311,7 +311,7 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
                 }
                 product.seatsAvailable -= counts[index];
                 await product.save();
-                // console.log(`항공편(${productId}) 좌석 ${counts[index]}석 감소 완료`);
+
                 break;
               }
               case 'accommodation': {
@@ -381,9 +381,7 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
         } else if (user.membershipLevel === '모험왕') {
           mileageRate = 0.05;
         }
-        // console.log(
-        //   `[서버] 유저 등급: ${user.membershipLevel}, 마일리지 적립률: ${mileageRate * 100}%`
-        // );
+
         const earnedMileage = Math.floor(booking.totalPrice * mileageRate);
         await userMileageService.addMileageWithHistory(
           userId,
@@ -410,26 +408,11 @@ exports.verifyPayment = async ({imp_uid, merchant_uid, couponId = null, userId})
       userId,
       expectedFinalAmount
     );
-    // console.log(
-    //   `[서버] 유저 등급 업데이트 완료: ${updatedUser.membershipLevel}, 총 결제 금액: ${updatedUser.totalSpent}원`
-    // );
-    // console.log('[서버] 결제 검증 성공');
+
     return {status: 200, message: '결제 검증 성공'};
   } catch (error) {
     console.error('결제 검증 오류:', error);
-    // const bookings = await Booking.find({merchant_uid});
-    // await Promise.all(
-    //   bookings.map(async booking => {
-    //     if (booking.usedMileage > 0 && booking.paymentStatus !== 'CANCELED') {
-    //       await userMileageService.addMileageWithHistory(
-    //         booking.userId,
-    //         booking.usedMileage,
-    //         `결제 실패로 마일리지 환불 (${booking.usedMileage.toLocaleString()}P)`
-    //       );
-    //       console.log(`[서버] 마일리지 복구 완료: ${booking.usedMileage}P`);
-    //     }
-    //   })
-    // );
+
     const booking = await Booking.findOne({merchant_uid});
     if (booking && booking.userCouponId) {
       console.warn(
@@ -639,22 +622,6 @@ exports.cancelBooking = async bookingIds => {
         } catch (error) {
           console.error(`[서버] 마일리지 차감 오류: ${error.message}`);
         }
-
-        // // 적립된 마일리지 차감 (중복 방지)
-        // const earnedMileage = Math.floor(totalPrice * 0.01); // 적립된 마일리지 계산
-        // if (earnedMileage > 0) {
-        //   try {
-        //     await userMileageService.useMileage(
-        //       userId,
-        //       earnedMileage,
-        //       `예약 취소로 마일리지 적립 취소 (${earnedMileage.toLocaleString()}P)`
-        //     );
-        //   } catch (mileageError) {
-        //     console.error(
-        //       `[서버] 적립된 마일리지 차감 중 오류 발생: ${mileageError.message}`
-        //     );
-        //   }
-        // }
 
         booking.paymentStatus = 'CANCELED';
 

@@ -1,4 +1,3 @@
-// src/components/common/CustomArrows.jsx
 import React from 'react';
 import {IconButton} from '@mui/material';
 import {ChevronLeft, ChevronRight} from '@mui/icons-material';

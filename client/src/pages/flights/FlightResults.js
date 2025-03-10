@@ -10,7 +10,9 @@ import {flightBannerData} from '../../data/bannerData';
 const FlightResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const flights = location.state?.flights || [];
+  const flights = useMemo(() => {
+    return location.state?.flights ?? [];
+  }, [location.state?.flights]);
   const departure = location.state?.departure || '';
   const arrival = location.state?.arrival || '';
   const date = location.state?.date || new Date();

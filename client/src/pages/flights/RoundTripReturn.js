@@ -1,34 +1,3 @@
-// import React from 'react';
-// import {useLocation, useNavigate} from 'react-router-dom';
-// import FlightList from '../../components/flights/FlightList';
-
-// const RoundTripReturn = () => {
-//   const location = useLocation();
-//   const navigate = useNavigate();
-//   const {selectedDeparture, returnFlights, passengers} = location.state || {};
-
-//   if (!selectedDeparture) {
-//     return (
-//       <p className="text-center text-danger">🚫 출발 항공편이 선택되지 않았습니다.</p>
-//     );
-//   }
-
-//   const handleSelectReturn = flight => {
-//     navigate('/flights/roundtrip-confirm', {
-//       state: {selectedDeparture, selectedReturn: flight, passengers, isRoundTrip: true}
-//     });
-//   };
-
-//   return (
-//     <div className="container-md mt-4" style={{maxWidth: '900px'}}>
-//       <h2 className="fw-bold mb-4 text-center">🛬 돌아오는 항공편 선택</h2>
-//       <FlightList flights={returnFlights} onSelect={handleSelectReturn} />
-//     </div>
-//   );
-// };
-
-// export default RoundTripReturn;
-
 import React, {useState, useMemo, useEffect} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import {Box, Typography, Paper} from '@mui/material';
@@ -36,7 +5,6 @@ import RoundTripSearch from '../../components/flights/RoundTripSearch';
 import FilterPanel from '../../components/flights/Filterpanel';
 import FlightList from '../../components/flights/FlightList';
 import LoadingScreen from '../../components/flights/LoadingScreen';
-import {searchFlights} from '../../api/flight/flights';
 import AdBanner from '../../components/ad/AdBanner';
 import {flightBannerData} from '../../data/bannerData';
 import {AIRPORT_NAMES, AIRLINE_LOGOS} from '../../data/airline';
@@ -45,9 +13,8 @@ const RoundTripReturn = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ 훅은 조건문 밖(최상위)에서 호출
-  const [errorMessage, setErrorMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  // 훅은 조건문 밖(최상위)에서 호출
+  const [loading] = useState(false);
 
   const {
     selectedDeparture,
@@ -117,7 +84,7 @@ const RoundTripReturn = () => {
     });
   };
 
-  // ✅ 훅 호출이 끝난 뒤에야, JSX를 조건부로 반환
+  // 훅 호출이 끝난 뒤에야, JSX를 조건부로 반환
   // 만약 selectedDeparture가 없다면, 훅 호출은 이미 끝난 상태이므로 안전
   if (!selectedDeparture) {
     return (
@@ -140,9 +107,6 @@ const RoundTripReturn = () => {
   const arrivalTime = selectedDeparture?.arrival?.time || '00:00';
   const flightAirline = selectedDeparture?.airline || '항공사 정보 없음';
   const flightNumber = selectedDeparture?.flightNumber || '편명 없음';
-  const departureDateObj = selectedDeparture?.departure?.date
-    ? new Date(selectedDeparture.departure.date)
-    : new Date();
 
   const flightSeatClass = selectedDeparture?.seatClass || '정보 없음';
   const flightPrice = selectedDeparture?.price
@@ -209,12 +173,6 @@ const RoundTripReturn = () => {
           </Typography>
         </Box>
       </Paper>
-
-      {errorMessage && (
-        <Typography variant="body1" color="error" sx={{mb: 3}}>
-          {errorMessage}
-        </Typography>
-      )}
 
       {loading ? (
         <LoadingScreen />
