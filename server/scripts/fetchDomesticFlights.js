@@ -3,6 +3,7 @@ require('dotenv').config({path: require('path').resolve(__dirname, '../.env')});
 const mongoose = require('mongoose');
 const axios = require('axios');
 const moment = require('moment-timezone');
+// const pLimit = require('p-limit'); // 필요 시 동시성 제어용
 const Flight = require('../models/Flight');
 
 const {DB_URI, SERVICE_KEY} = process.env;
@@ -41,6 +42,31 @@ const AIRPORT_NAMES = {
   BKK: '방콕공항'
 };
 
+// 공항별 좌표 (예시, 필요한 공항 추가)
+const AIRPORT_COORDS = {
+  GMP: {lat: 37.5583, lng: 126.7906},
+  ICN: {lat: 37.4602, lng: 126.4407},
+  PUS: {lat: 35.1796, lng: 128.9382},
+  CJU: {lat: 33.5104, lng: 126.492},
+  TAE: {lat: 35.901, lng: 128.6086},
+  KWJ: {lat: 35.1595, lng: 126.8526},
+
+  CJJ: {lat: 36.717, lng: 127.491},
+  RSU: {lat: 34.758, lng: 127.662},
+  MWX: {lat: 34.991, lng: 126.382},
+
+  HND: {lat: 35.5494, lng: 139.7798},
+  NRT: {lat: 35.7767, lng: 140.3183},
+  JFK: {lat: 40.6413, lng: -73.7781},
+  CDG: {lat: 49.0097, lng: 2.5479},
+  PEK: {lat: 40.0801, lng: 116.5846},
+  PKX: {lat: 39.509, lng: 116.41},
+  TSA: {lat: 25.0697, lng: 121.5528},
+  LHR: {lat: 51.47, lng: -0.4543},
+  SYD: {lat: -33.9399, lng: 151.1753},
+  BKK: {lat: 13.69, lng: 100.7501}
+};
+
 // 운항 요일 변환 함수 (국내선/국제선 공통)
 const getOperatingDays = flight => {
   return [
@@ -54,6 +80,61 @@ const getOperatingDays = flight => {
   ].filter(Boolean);
 };
 
+// 거리 계산 함수 (Haversine 공식)
+function toRad(value) {
+  return (value * Math.PI) / 180;
+}
+
+function calculateDistance(coord1, coord2) {
+  if (!coord1 || !coord2) return 0;
+  const R = 6371; // 지구 반지름 (km)
+  const dLat = toRad(coord2.lat - coord1.lat);
+  const dLng = toRad(coord2.lng - coord1.lng);
+  const lat1 = toRad(coord1.lat);
+  const lat2 = toRad(coord2.lat);
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // km
+}
+
+// 거리 기반 기본 가격 계산 함수
+function getBasePriceByDistance(distance, isInternational) {
+  if (isInternational) {
+    // 국제선: 장거리에서는 가격 상승폭을 완화하기 위해 제곱근 함수를 사용
+    return Math.sqrt(distance) * 5000 + Math.random() * 50000;
+  } else {
+    // 국내선: 기존 선형 방식
+    return distance * 100 + Math.random() * 20000;
+  }
+}
+
+// 노선별 가격 산정: 거리 기반 기본 가격에 좌석 등급 가중치 적용
+function getRandomSeatAndPrice(deptCode, arrCode, isInternational) {
+  const coordDept = AIRPORT_COORDS[deptCode];
+  const coordArr = AIRPORT_COORDS[arrCode];
+  const distance = calculateDistance(coordDept, coordArr);
+  let basePrice = getBasePriceByDistance(distance, isInternational);
+
+  // 좌석 등급 결정: 확률 (특가 10%, 이코노미 70%, 비즈니스 20%)
+  const rand = Math.random();
+  let seatClass;
+  if (rand < 0.1) {
+    seatClass = '특가석';
+    basePrice *= 0.7; // 할인 적용
+  } else if (rand < 0.8) {
+    seatClass = '이코노미석';
+    // 기본 가격 그대로
+  } else {
+    seatClass = '비즈니스석';
+    basePrice *= 1.5; // 추가 비용 적용
+  }
+  const price = Math.floor(basePrice);
+  return {seatClass, price};
+}
+
+// 데이터 저장 함수 (국내선 & 국제선 공용)
+// dayOffset: 오늘부터 몇 일 후인지 (0: 오늘, 1: 내일 등)
 const saveFlightToDB = async (flight, deptCode, arrCode, isInternational, dayOffset) => {
   const airline = flight.airlineKorean || 'Unknown Airline';
   const flightNumber =
@@ -78,7 +159,7 @@ const saveFlightToDB = async (flight, deptCode, arrCode, isInternational, dayOff
 
   const operatingDays = getOperatingDays(flight);
   const seatsAvailable = Math.floor(Math.random() * 10) + 1;
-  const {seatClass, price} = getRandomSeatAndPrice(isInternational);
+  const {seatClass, price} = getRandomSeatAndPrice(deptCode, arrCode, isInternational);
 
   await Flight.updateOne(
     {flightNumber, 'departure.date': departureDate},
@@ -114,64 +195,35 @@ const saveFlightToDB = async (flight, deptCode, arrCode, isInternational, dayOff
   );
 };
 
-// 이 함수 안에서 등급과 가격을 결정 (isInternational 값에 따라 다르게 처리)
-function getRandomSeatAndPrice(isInternational) {
-  const rand = Math.random();
-  let seatClass, price;
-
-  if (!isInternational) {
-    // 국내선 가격 범위
-    if (rand < 0.1) {
-      // 10% 확률: 특가석 (30,000원 이상 50,000원 미만)
-      seatClass = '특가석';
-      price = Math.floor(Math.random() * (50000 - 30000)) + 30000;
-    } else if (rand < 0.8) {
-      // 70% 확률: 이코노미석 (50,000원 이상 70,000원 미만)
-      seatClass = '이코노미석';
-      price = Math.floor(Math.random() * (70000 - 50000)) + 50000;
-    } else {
-      // 20% 확률: 비즈니스석 (70,000원 이상 130,000원 미만)
-      seatClass = '비즈니스석';
-      price = Math.floor(Math.random() * (130000 - 70000)) + 70000;
-    }
-  } else {
-    // 국제선 가격 범위
-    if (rand < 0.1) {
-      // 10% 확률: 특가석 (100,000원 이상 200,000원 미만)
-      seatClass = '특가석';
-      price = Math.floor(Math.random() * (200000 - 100000)) + 100000;
-    } else if (rand < 0.8) {
-      // 70% 확률: 이코노미석 (200,000원 이상 500,000원 미만)
-      seatClass = '이코노미석';
-      price = Math.floor(Math.random() * (500000 - 200000)) + 200000;
-    } else {
-      // 20% 확률: 비즈니스석 (700,000원 이상 2,000,000원 미만)
-      seatClass = '비즈니스석';
-      price = Math.floor(Math.random() * (2000000 - 700000)) + 700000;
-    }
-  }
-
-  return {seatClass, price};
-}
-
 // 국내선 데이터 수집
 const fetchDomesticFlights = async () => {
   console.log('국내선 데이터 수집 시작...');
 
-  // "오늘부터 10일 뒤"까지 반복
+  // "오늘부터 10일 뒤"까지 반복 (테스트를 위해 0일만 사용)
   for (let i = 0; i <= 10; i++) {
-    // i일 뒤 날짜 (YYYYMMDD 포맷)
     const dateStr = moment().tz('Asia/Seoul').add(i, 'days').format('YYYYMMDD');
     console.log(`-- ${dateStr} 기준 국내선 데이터 수집`);
 
-    for (const deptCity of Object.keys(AIRPORT_NAMES)) {
-      for (const arrCity of Object.keys(AIRPORT_NAMES)) {
+    // 국내선은 DOMESTIC_CODES 배열만 사용
+    const DOMESTIC_CODES = [
+      'GMP',
+      'ICN',
+      'PUS',
+      'CJU',
+      'TAE',
+      'KWJ',
+      'CJJ',
+      'RSU',
+      'MWX'
+    ];
+    for (const deptCity of DOMESTIC_CODES) {
+      for (const arrCity of DOMESTIC_CODES) {
         if (deptCity === arrCity) continue;
 
         const url = `http://openapi.airport.co.kr/service/rest/FlightScheduleList/getDflightScheduleList`;
         const params = {
           serviceKey: SERVICE_KEY,
-          schDate: dateStr, // ← 날짜 파라미터에 dateStr 사용
+          schDate: dateStr,
           schDeptCityCode: deptCity,
           schArrvCityCode: arrCity,
           schAirLine: '',
@@ -188,10 +240,8 @@ const fetchDomesticFlights = async () => {
           const flights = response.data?.response?.body?.items?.item || [];
 
           for (const flight of flights) {
-            // DB에 저장할 때도 i일 뒤 날짜를 넘겨줌
             await saveFlightToDB(flight, deptCity, arrCity, false, i);
           }
-          // 데이터가 없으면 짧은 대기, 있으면 1초 대기
           const delayTime = flights.length === 0 ? 100 : 1000;
           await new Promise(resolve => setTimeout(resolve, delayTime));
         } catch (error) {
@@ -201,7 +251,6 @@ const fetchDomesticFlights = async () => {
           );
         }
 
-        // 실패 시에도 짧은 대기
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
@@ -212,12 +261,14 @@ const fetchDomesticFlights = async () => {
 const fetchInternationalFlights = async () => {
   console.log('🌍 국제선 데이터 수집 시작...');
 
+  // 국제선은 전체 공항 코드를 사용
+  const internationalCodes = Object.keys(AIRPORT_NAMES);
   for (let i = 0; i <= 10; i++) {
     const dateStr = moment().tz('Asia/Seoul').add(i, 'days').format('YYYYMMDD');
     console.log(`-- ${dateStr} 기준 국제선 데이터 수집`);
 
-    for (const deptCity of Object.keys(AIRPORT_NAMES)) {
-      for (const arrCity of Object.keys(AIRPORT_NAMES)) {
+    for (const deptCity of internationalCodes) {
+      for (const arrCity of internationalCodes) {
         if (deptCity === arrCity) continue;
 
         const url = `http://openapi.airport.co.kr/service/rest/FlightScheduleList/getIflightScheduleList`;
@@ -242,7 +293,6 @@ const fetchInternationalFlights = async () => {
           for (const flight of flights) {
             await saveFlightToDB(flight, deptCity, arrCity, true, i);
           }
-          // 데이터가 없으면 짧은 대기, 있으면 1초 대기
           const delayTime = flights.length === 0 ? 100 : 1000;
           await new Promise(resolve => setTimeout(resolve, delayTime));
         } catch (error) {
@@ -252,7 +302,6 @@ const fetchInternationalFlights = async () => {
           );
         }
 
-        // 실패 시에도 짧은 대기
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
@@ -260,5 +309,7 @@ const fetchInternationalFlights = async () => {
 };
 
 // 실행
-fetchDomesticFlights();
-fetchInternationalFlights();
+(async () => {
+  await fetchDomesticFlights();
+  await fetchInternationalFlights();
+})();
