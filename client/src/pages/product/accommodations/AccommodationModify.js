@@ -223,8 +223,6 @@ const AccommodationModify = () => {
       // 이미지 삭제 요청을 먼저 보낸다.
       if (imagesToDelete.length > 0) {
         for (const image of imagesToDelete) {
-          console.log('이미지 삭제 요청:', image);
-
           await axios.delete(`/accommodations/${accommodationId}/images`, {
             data: {imageUrl: image}, // DELETE 요청에서는 `data` 속성을 사용해야 한다.
             headers: {'Content-Type': 'application/json'}

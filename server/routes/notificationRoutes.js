@@ -3,9 +3,15 @@ const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notificationController');
 const authMiddleware = require('../middleware/authMiddleware');
+const authorizeRoles = require('../middleware/authorizeRoles');
 
-// 관리자인 경우에만 접근 가능
-router.post('/send', notificationController.sendNotification);
+// 알림 보내기
+router.post(
+  '/send',
+  authMiddleware,
+  authorizeRoles('admin'),
+  notificationController.sendNotification
+);
 
 // 유저가 받은 알림 목록 조회
 router.get('/', authMiddleware, notificationController.getUserNotifications);

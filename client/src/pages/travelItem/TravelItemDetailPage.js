@@ -21,12 +21,11 @@ import {Alert, Snackbar} from '@mui/material';
 
 const TravelItemDetailPage = () => {
   const {itemId} = useParams();
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
-  const [imageError, setImageError] = useState(false); // 이미지 오류 상태 추가
+  const [imageError] = useState(false); // 이미지 오류 상태 추가
   const [showDetails, setShowDetails] = useState(false);
-  const {reviewStatus, setReviewStatus} = useReviewContext();
+  const {setReviewStatus} = useReviewContext();
   const [ratingInfo, setRatingInfo] = useState({avgRating: 0, reviewCount: 0});
   const [openAlert, setOpenAlert] = useState(false);
   const reviewSectionRef = useRef(null);
@@ -40,16 +39,14 @@ const TravelItemDetailPage = () => {
       ? 'http://localhost:5000'
       : 'https://ourrealtrip.shop/api';
 
-  console.log('itemId:', itemId);
-
   useEffect(() => {
-    // 로그인된 사용자 정보 가져오기
     const fetchUserProfile = async () => {
       try {
         const userProfile = await authAPI.getUserProfile();
-        setUser(userProfile);
+        return userProfile; // userProfile을 반환
       } catch (error) {
         console.error('사용자 정보를 가져오는 중 오류 발생:', error);
+        return null;
       }
     };
 
@@ -62,17 +59,17 @@ const TravelItemDetailPage = () => {
       }
     };
 
-    const fetchReviews = async () => {
+    const fetchReviews = async currentUser => {
       try {
         const data = await getReviews(itemId);
-        console.log('Fetched Reviews:', data);
+        if (!Array.isArray(data)) {
+          return;
+        }
 
         const updatedReviewStatus = {};
-
-        // 유저 정보가 있을 때만 리뷰 상태 확인
-        if (user && user._id) {
+        if (currentUser && currentUser._id) {
           data.forEach(review => {
-            if (review.userId._id === user._id) {
+            if (review.userId._id === currentUser._id) {
               const key = `${review.productId}_${review.bookingId}`;
               updatedReviewStatus[key] = true;
             }
@@ -85,9 +82,9 @@ const TravelItemDetailPage = () => {
       }
     };
 
-    fetchUserProfile().then(() => {
+    fetchUserProfile().then(currentUser => {
       fetchItem();
-      fetchReviews();
+      fetchReviews(currentUser);
     });
   }, [itemId, setReviewStatus]);
 

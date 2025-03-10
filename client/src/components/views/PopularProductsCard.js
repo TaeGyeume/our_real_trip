@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Link} from 'react-router-dom';
 import ReviewList from '../review/ReviewList';
-import {Card, CardMedia, CardContent, Typography, Box} from '@mui/material';
+import {Card, CardMedia, CardContent, Typography} from '@mui/material';
 
 const SERVER_URL =
   process.env.REACT_APP_ENV === 'development'

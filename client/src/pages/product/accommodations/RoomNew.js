@@ -108,7 +108,7 @@ const RoomNew = () => {
         newRoomData.append('images', image);
       });
     } else {
-      console.log('업로드할 새 이미지 없음!');
+      // console.log('업로드할 새 이미지 없음!');
     }
 
     try {

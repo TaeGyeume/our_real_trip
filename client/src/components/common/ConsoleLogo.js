@@ -26,10 +26,10 @@ const ConsoleLogo = () => {
       'color: #FF4500; font-weight: bold; font-size: 14px;'
     );
 
-    // console.log(
-    //   '%c💡 Explore amazing travel deals at https://ourrealtrip.com/',
-    //   'color: #1E90FF; font-weight: bold; font-size: 12px; text-decoration: underline;'
-    // );
+    console.log(
+      '%c💡 Explore amazing travel deals at https://ourrealtrip.shop/',
+      'color: #1E90FF; font-weight: bold; font-size: 12px; text-decoration: underline;'
+    );
   }, []);
 
   return null; // 화면에 렌더링할 필요 없음 (콘솔 출력만 수행)

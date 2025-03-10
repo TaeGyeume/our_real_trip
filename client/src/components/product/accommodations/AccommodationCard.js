@@ -8,8 +8,7 @@ import {
   CardContent,
   Typography,
   Button,
-  CardActions,
-  Box
+  CardActions
 } from '@mui/material';
 import ReviewList from '../../review/ReviewList';
 import {useAuthStore} from '../../../store/authStore';

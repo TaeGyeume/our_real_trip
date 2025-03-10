@@ -2,9 +2,17 @@ const express = require('express');
 const router = express.Router();
 const accommodationController = require('../controllers/accommodationController');
 const upload = require('../middleware/uploadMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
+const authorizeRoles = require('../middleware/authorizeRoles');
 
 // 숙소 생성 API (POST /api/accommodations)
-router.post('/new', upload, accommodationController.createAccommodation);
+router.post(
+  '/new',
+  upload,
+  authMiddleware,
+  authorizeRoles('admin'),
+  accommodationController.createAccommodation
+);
 
 // 자동완성 검색
 router.get('/autocomplete', accommodationController.autocompleteSearch);
@@ -28,7 +36,13 @@ router.get(
 router.get('/list', accommodationController.getAllAccommodations);
 
 // 숙소 업데이트 API (PATCH /api/accommodations/:accommodationId)
-router.patch('/:accommodationId', upload, accommodationController.updateAccommodation);
+router.patch(
+  '/:accommodationId',
+  upload,
+  authMiddleware,
+  authorizeRoles('admin'),
+  accommodationController.updateAccommodation
+);
 
 // 숙소 이름 검색 API
 router.get('/searchByName', accommodationController.searchAccommodationsByName);
@@ -39,11 +53,18 @@ router.get('/:accommodationId', accommodationController.getAccommodationById);
 // 숙소 이미지 삭제 API (DELETE)
 router.delete(
   '/:accommodationId/images',
+  authMiddleware,
+  authorizeRoles('admin'),
   accommodationController.deleteAccommodationImage
 );
 
 // 숙소 삭제 API (DELETE /api/accommodations/:accommodationId)
-router.delete('/:accommodationId', accommodationController.deleteAccommodation);
+router.delete(
+  '/:accommodationId',
+  authMiddleware,
+  authorizeRoles('admin'),
+  accommodationController.deleteAccommodation
+);
 
 // 숙소 평점 업데이트 엔드포인트
 router.patch('/:id/update-rating', accommodationController.updateRating);

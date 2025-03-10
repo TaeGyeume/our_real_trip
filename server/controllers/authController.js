@@ -38,7 +38,7 @@ exports.verifyCodeAndFindUserId = async (req, res) => {
       return res.status(400).json({message: '이메일과 인증 코드를 모두 입력해주세요.'});
     }
 
-    console.log(' [서버] 인증 코드 확인 요청:', email, verificationCode);
+    // console.log(' [서버] 인증 코드 확인 요청:', email, verificationCode);
 
     // 서비스에서 인증 코드 검증 후 아이디 찾기
     const isVerified = await authService.verifyCode(email, verificationCode);
