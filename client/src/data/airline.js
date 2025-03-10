@@ -24,7 +24,8 @@ export const AIRLINE_LOGOS = {
   타이항공: 'TG.png',
   에바항공: 'BR.png',
   '에바항공(장영항공)': 'BR.png',
-  춘추항공: 'chunchu.png'
+  춘추항공: 'chunchu.png',
+  비바마카오: 'viva.png'
 };
 
 export const FLIGHT_IMAGES = {
@@ -47,6 +48,7 @@ export const FLIGHT_IMAGES = {
 
 export const AIRPORT_NAMES = {
   GMP: '서울', // 김포공항 → 서울
+  ICN: '서울',
   PUS: '부산', // 김해공항 → 부산
   CJU: '제주', // 제주공항 → 제주
   TAE: '대구', // 대구공항 → 대구

@@ -70,16 +70,18 @@ const saveFlightToDB = async (flight, deptCode, arrCode, isInternational) => {
 
   const operatingDays = getOperatingDays(flight);
   const seatsAvailable = Math.floor(Math.random() * 10) + 1;
-  let price = 100; // 기본 가격
 
-  let seatClass;
-  if (price < 50000) {
-    seatClass = '특가석';
-  } else if (price < 100000) {
-    seatClass = '이코노미석';
-  } else {
-    seatClass = '비즈니스석';
-  }
+  // 이코노미석(70%), 비즈니스석(20%), 특가석(10%) 비율로 배정
+  const {seatClass, price} = getRandomSeatAndPrice();
+
+  // let seatClass;
+  // if (price < 50000) {
+  //   seatClass = '특가석';
+  // } else if (price < 100000) {
+  //   seatClass = '이코노미석';
+  // } else {
+  //   seatClass = '비즈니스석';
+  // }
 
   await Flight.updateOne(
     {flightNumber, 'departure.date': departureDate},
@@ -110,6 +112,28 @@ const saveFlightToDB = async (flight, deptCode, arrCode, isInternational) => {
     `저장 완료: ${flightNumber} (${airline}), ${moment(departureDate).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')}, 좌석: ${seatsAvailable}, 가격: ${price.toLocaleString()}원, 등급: ${seatClass}`
   );
 };
+
+// 이 함수 안에서 등급과 가격을 결정
+function getRandomSeatAndPrice() {
+  const rand = Math.random();
+  let seatClass, price;
+
+  if (rand < 0.7) {
+    // 70% 확률: 이코노미석
+    seatClass = '이코노미석';
+    price = Math.floor(Math.random() * (99999 - 50000 + 1)) + 50000; // 5만~9.9만
+  } else if (rand < 0.9) {
+    // 20% 확률: 비즈니스석
+    seatClass = '비즈니스석';
+    price = Math.floor(Math.random() * (200000 - 100000 + 1)) + 100000; // 10만~20만
+  } else {
+    // 10% 확률: 특가석
+    seatClass = '특가석';
+    price = Math.floor(Math.random() * (49999 - 30000 + 1)) + 30000; // 3만~4.9만
+  }
+
+  return {seatClass, price};
+}
 
 // 국내선 데이터 수집
 const fetchDomesticFlights = async () => {

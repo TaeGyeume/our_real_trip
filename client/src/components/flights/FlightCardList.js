@@ -77,7 +77,7 @@ const FlightCardList = ({flights, type = 'domestic'}) => {
 
   // type에 따라 필터 조건 적용
   const filteredFlights = flights
-    .filter(flight => flight.departure.airport === 'GMP')
+    .filter(flight => ['GMP', 'ICN'].includes(flight.departure.airport))
     .filter(flight => {
       if (type === 'domestic') {
         return domesticArrivalAirports.includes(flight.arrival.airport);
