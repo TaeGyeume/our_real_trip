@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
 
-const MileageInput = ({userMileage, totalPrice, discountAmount, onMileageChange}) => {
+const MileageInput = ({userMileage, totalPrice, onMileageChange}) => {
   const [usedMileage, setUsedMileage] = useState(''); // 문자열로 관리
   const [remainingMileage, setRemainingMileage] = useState(userMileage);
 
@@ -12,7 +12,7 @@ const MileageInput = ({userMileage, totalPrice, discountAmount, onMileageChange}
   }, [usedMileage, userMileage]);
 
   // 최대 사용 가능 마일리지 계산
-  const maxUsableMileage = Math.min(userMileage || 0, totalPrice - discountAmount);
+  const maxUsableMileage = Math.min(userMileage || 0, totalPrice);
 
   // 입력값 변경 시 처리
   const handleMileageChange = e => {
