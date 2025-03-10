@@ -1,4 +1,3 @@
-// src/pages/accommodation/AccommodationDetail.js
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {getReviews} from '../../api/review/reviewService';
