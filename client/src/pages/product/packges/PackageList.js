@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import {getPackages, deletePackage} from '../../../api/package/packageService';
 import {
@@ -17,13 +17,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 // const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
 const SERVER_URL =
   process.env.REACT_APP_ENV === 'development'
     ? 'http://localhost:5000'
     : 'https://ourrealtrip.shop/api';
 
-//  이미지 경로 정리 함수
+// 이미지 경로 정리 함수
 const normalizeImagePath = path => {
   let newPath = path.replace(/\\/g, '/');
   if (!newPath.startsWith('/')) {
@@ -41,11 +40,8 @@ const PackageList = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchPackages();
-  }, [page]);
-
-  const fetchPackages = async () => {
+  // fetchPackages 함수를 useCallback으로 감싸서 page가 변경될 때마다 재생성
+  const fetchPackages = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -61,7 +57,12 @@ const PackageList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
+
+  // page 또는 fetchPackages가 변경될 때마다 호출
+  useEffect(() => {
+    fetchPackages();
+  }, [fetchPackages]);
 
   const handleCreatePackage = () => {
     navigate('/product/package/create');
@@ -101,7 +102,7 @@ const PackageList = () => {
             📦 패키지 목록
           </Typography>
 
-          {/*  현재 경로가 '/product/packages/list'일 때만 '패키지 생성' 버튼 표시 */}
+          {/* 현재 경로가 '/product/packages/list'일 때만 '패키지 생성' 버튼 표시 */}
           {location.pathname === '/product/packages/list' && (
             <Button
               variant="contained"
@@ -155,7 +156,7 @@ const PackageList = () => {
                       </Typography>
                     </CardContent>
 
-                    {/*  수정 & 삭제 버튼 유지 */}
+                    {/* 수정 & 삭제 버튼 */}
                     <Box
                       sx={{
                         display: 'flex',

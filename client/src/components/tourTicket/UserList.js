@@ -141,10 +141,10 @@ const UserList = ({showFilter = true, showAdBanner = true}) => {
     if (Object.keys(groupedTickets).length === 0) return;
 
     setVisibleIndex(prev => {
-      const newIndex = {};
+      const newIndex = {...prev};
 
       Object.keys(groupedTickets).forEach(location => {
-        newIndex[location] = prev[location] || 0;
+        if (newIndex[location] === undefined) newIndex[location] = 0;
       });
 
       return newIndex;
@@ -153,44 +153,22 @@ const UserList = ({showFilter = true, showAdBanner = true}) => {
 
   const itemsPerPage = 4;
 
-  const handleScrollLeft = location => {
-    setVisibleIndex(prev => ({
-      ...prev,
-      [location]: Math.max(0, (prev[location] || 0) - 2)
-    }));
-  };
-
   const handleScrollRight = location => {
     setVisibleIndex(prev => {
-      const maxIndex = Math.ceil(groupedTickets[location].length / itemsPerPage) - 1;
-      return {
-        ...prev,
-        [location]: Math.min(maxIndex, (prev[location] || 0) + 2)
-      };
+      const totalItems = groupedTickets[location].length;
+      const maxIndex = Math.max(0, Math.ceil(totalItems / itemsPerPage) - 1);
+      const nextIndex = Math.min((prev[location] || 0) + 1, maxIndex);
+
+      return {...prev, [location]: nextIndex};
     });
   };
 
-  const handlePriceChange = (event, newValue) => {
-    setPriceRange(newValue);
-  };
+  const handleScrollLeft = location => {
+    setVisibleIndex(prev => {
+      const nextIndex = Math.max((prev[location] || 0) - 1, 0);
 
-  const handleRatingChange = event => {
-    setRatingFilter(event.target.value);
-  };
-
-  const handleCityChange = event => {
-    const city = event.target.name;
-
-    setSelectedCities(prev =>
-      prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city]
-    );
-  };
-
-  const handleResetFilters = () => {
-    setPriceRange([0, 100000]);
-    setRatingFilter('all');
-    setSelectedCities([]);
-    setRegionType('domestic');
+      return {...prev, [location]: nextIndex};
+    });
   };
 
   return (
@@ -251,7 +229,7 @@ const UserList = ({showFilter = true, showAdBanner = true}) => {
                   style={{
                     display: 'flex',
                     transition: 'transform 0.3s ease-in-out',
-                    transform: `translateX(-${(visibleIndex[location] || 0) * 320}px)`
+                    transform: `translateX(-${(visibleIndex[location] || 0) * 100}%)`
                   }}>
                   {groupedTickets[location].map(ticket => (
                     <div

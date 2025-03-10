@@ -59,7 +59,8 @@ const TourTicketModify = () => {
   const [description, setDescription] = useState('');
   const [regionType, setRegionType] = useState('domestic');
   const [location, setLocation] = useState('');
-  const [newImages, setNewImages] = useState([]);
+  const [newImages, setNewImages] = useState([]); // 업로드할 파일
+  const [previewImages, setPreviewImages] = useState([]); // 미리보기 이미지
   const [deleteImages, setDeleteImages] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
@@ -89,21 +90,15 @@ const TourTicketModify = () => {
     fetchTicket();
   }, [id]);
 
-  // useEffect(() => {
-  //   if (regionType === 'domestic' && !domesticLocations.includes(location)) {
-  //     setLocation(domesticLocations[0]);
-  //   } else if (
-  //     regionType === 'international' &&
-  //     !internationalLocations.includes(location)
-  //   ) {
-  //     setLocation(internationalLocations[0]);
-  //   }
-  // }, [regionType]);
-
   const handleImageUpload = e => {
     const files = Array.from(e.target.files);
-    const newImageURLs = files.map(file => URL.createObjectURL(file));
-    setNewImages(prevImages => [...prevImages, ...newImageURLs]);
+
+    // 새로운 이미지 파일 추가
+    setNewImages(prevImages => [...prevImages, ...files]);
+
+    // 미리보기 URL 추가
+    const previewURLs = files.map(file => URL.createObjectURL(file));
+    setPreviewImages(prevPreviews => [...prevPreviews, ...previewURLs]);
   };
 
   const handleImageDeleteToggle = image => {
@@ -155,7 +150,9 @@ const TourTicketModify = () => {
       formData.append('price', price);
       formData.append('stock', stock);
       formData.append('deleteImages', JSON.stringify(deleteImages));
+
       newImages.forEach(img => formData.append('images', img));
+
       await updateTourTicket(id, formData);
       alert('상품이 수정되었습니다.');
       navigate(`/product/tourTicket/${id}`);
@@ -275,7 +272,7 @@ const TourTicketModify = () => {
         </Box>
         <Typography variant="h6">추가할 이미지</Typography>
         <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
-          {newImages.map((image, index) => (
+          {previewImages.map((image, index) => (
             <Box key={index} display="flex" flexDirection="column" alignItems="center">
               <img src={image} alt="새 이미지" width="100" style={{borderRadius: 8}} />
             </Box>

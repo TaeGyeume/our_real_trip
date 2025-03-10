@@ -141,14 +141,14 @@ const RoomNew = () => {
       </Typography>
 
       <Stack spacing={2} component="form" onSubmit={handleSubmit}>
-        <TextField
+        {/* <TextField
           label="숙소 ID"
           fullWidth
           name="accommodation"
           value={formData.accommodation}
           onChange={handleChange}
           required
-        />
+        /> */}
         <TextField
           label="객실명"
           fullWidth
