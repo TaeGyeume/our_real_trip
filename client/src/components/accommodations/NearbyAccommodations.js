@@ -21,7 +21,6 @@ const NearbyAccommodations = ({lat, lng, radius = 5000, limit = 6}) => {
         setLoading(true);
         const data = await fetchNearbyAccommodations(lat, lng, radius, limit);
         setNearbyAccommodations(data);
-        console.log('주변 숙소 데이터:', data);
       } catch (error) {
         console.error('주변 숙소 불러오기 실패:', error);
       } finally {

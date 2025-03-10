@@ -138,13 +138,13 @@ const AccommodationForm = ({onSubmit, initialData = {}, userId}) => {
         requestData.append('images', formData.images[i]);
       }
     } else {
-      console.log('업로드할 이미지가 없습니다.');
+      // console.log('업로드할 이미지가 없습니다.');
     }
 
     // FormData 디버깅
-    for (let pair of requestData.entries()) {
-      console.log('전송할 데이터:', pair[0], pair[1]);
-    }
+    // for (let pair of requestData.entries()) {
+    //   console.log('전송할 데이터:', pair[0], pair[1]);
+    // }
 
     try {
       await createAccommodation(requestData);

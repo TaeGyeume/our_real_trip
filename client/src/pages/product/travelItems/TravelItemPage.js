@@ -7,7 +7,7 @@ const TravelItemPage = () => {
       <h2>🛍️ 상품 관리</h2>
 
       {/* 상품 추가 폼 (onItemCreated 전달) */}
-      <TravelItemForm onItemCreated={() => console.log('상품이 추가됨!')} />
+      <TravelItemForm />
     </div>
   );
 };

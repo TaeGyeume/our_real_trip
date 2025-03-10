@@ -126,7 +126,7 @@ exports.deleteRoom = async roomId => {
             if (err) {
               console.error(`이미지 삭제 오류 (${imageUrl}):`, err);
             } else {
-              console.log(`이미지 삭제 성공: ${absoluteFilePath}`);
+              // console.log(`이미지 삭제 성공: ${absoluteFilePath}`);
             }
           });
         } else {
@@ -202,7 +202,7 @@ exports.deleteImage = async (roomId, imageUrl) => {
         if (err) {
           console.error('이미지 파일 삭제 오류:', err);
         } else {
-          console.log('이미지 파일 삭제 성공:', absoluteFilePath);
+          // console.log('이미지 파일 삭제 성공:', absoluteFilePath);
         }
       });
     } else {
@@ -231,7 +231,7 @@ exports.getRoomById = async roomId => {
 // 개별 이미지 삭제 서비스
 exports.deleteImage = async (roomId, imageUrl) => {
   try {
-    console.log('삭제할 이미지:', imageUrl);
+    // console.log('삭제할 이미지:', imageUrl);
 
     if (!imageUrl) {
       return {status: 400, message: '삭제할 이미지 URL이 제공되지 않았습니다.'};
@@ -256,15 +256,12 @@ exports.deleteImage = async (roomId, imageUrl) => {
       '../uploads',
       imageUrl.replace('/uploads/', '')
     );
-    console.log('삭제할 파일 경로:', absoluteFilePath);
+    // console.log('삭제할 파일 경로:', absoluteFilePath);
 
     if (fs.existsSync(absoluteFilePath)) {
       fs.unlink(absoluteFilePath, err => {
         if (err) console.error('이미지 삭제 오류:', err);
-        else console.log('이미지 삭제 성공:', absoluteFilePath);
       });
-    } else {
-      console.warn('삭제할 이미지 파일이 존재하지 않음:', absoluteFilePath);
     }
 
     return {status: 200, message: '이미지가 삭제되었습니다.', images: room.images};
