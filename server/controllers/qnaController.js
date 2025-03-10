@@ -45,7 +45,7 @@ const createQnaBoard = async (req, res) => {
         .json({error: '파일 업로드는 multipart/form-data 형식이어야 합니다.'});
     }
 
-    // console.log(' 📎 FormData 요청 처리 (파일 포함)');
+    // console.log('  FormData 요청 처리 (파일 포함)');
 
     const bb = busboy({headers: req.headers});
     const uploadDir = path.join(__dirname, '../uploads/qna');
@@ -280,13 +280,13 @@ const deleteQnaComment = async (req, res) => {
 
 const updateQnaBoard = async (req, res) => {
   try {
-    // console.log('🛠️ [DEBUG] QnA 게시글 수정 요청 도착');
+    // console.log('️ [DEBUG] QnA 게시글 수정 요청 도착');
 
     const {qnaBoardId} = req.params; // URL에서 게시글 ID 가져오기
     const userId = req.user.id; // 사용자 ID
 
-    // console.log('✏️ 수정할 게시글 ID:', qnaBoardId);
-    // console.log('👤 사용자 ID:', userId);
+    // console.log(' 수정할 게시글 ID:', qnaBoardId);
+    // console.log(' 사용자 ID:', userId);
 
     const formData = {
       category: '',
@@ -339,13 +339,13 @@ const updateQnaBoard = async (req, res) => {
       // console.log(' 모든 데이터 수신 완료:', formData);
 
       try {
-        // 2️ **MongoDB ObjectId 변환 (문자열 → ObjectId)**
+        //  **MongoDB ObjectId 변환 (문자열 → ObjectId)**
         if (!mongoose.Types.ObjectId.isValid(qnaBoardId)) {
           throw new Error(`유효하지 않은 QnA 게시글 ID: ${qnaBoardId}`);
         }
         const objectId = new mongoose.Types.ObjectId(qnaBoardId);
 
-        // 3️ 서비스 로직 호출
+        //  서비스 로직 호출
         const result = await qnaService.updateQnaBoard(
           objectId,
           userId,

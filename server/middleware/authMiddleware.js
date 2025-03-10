@@ -6,8 +6,8 @@ const User = require('../models/User');
 const PUBLIC_ROUTES = ['/api/favorites', '/api/public-data'];
 
 const authMiddleware = async (req, res, next) => {
-  // console.log('🛠 [Middleware] 요청된 쿠키:', req.cookies);
-  // console.log('🛠 [Middleware] 요청된 헤더:', req.headers);
+  // console.log(' [Middleware] 요청된 쿠키:', req.cookies);
+  // console.log(' [Middleware] 요청된 헤더:', req.headers);
 
   let accessToken = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
 
@@ -17,7 +17,7 @@ const authMiddleware = async (req, res, next) => {
     return next(); // 바로 컨트롤러로 이동
   }
 
-  // 2️ accessToken이 없을 경우, refreshToken을 검사하여 새 accessToken 발급
+  //  accessToken이 없을 경우, refreshToken을 검사하여 새 accessToken 발급
   if (!accessToken) {
     // console.log(' [Middleware] 액세스 토큰이 없음 → 리프레시 토큰 확인');
 
@@ -30,14 +30,14 @@ const authMiddleware = async (req, res, next) => {
     }
 
     try {
-      //  3️ 리프레시 토큰 검증
+      //   리프레시 토큰 검증
       const decodedRefreshToken = jwt.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET
       );
       // console.log(' [Middleware] 리프레시 토큰 검증 성공:', decodedRefreshToken);
 
-      // 4️ DB에서 리프레시 토큰 확인
+      //  DB에서 리프레시 토큰 확인
       const storedToken = await RefreshToken.findOne({
         userId: decodedRefreshToken.id,
         token: refreshToken
@@ -48,7 +48,7 @@ const authMiddleware = async (req, res, next) => {
         return res.status(403).json({message: '유효하지 않은 리프레시 토큰입니다.'});
       }
 
-      //  5️ 새로운 accessToken 발급
+      //   새로운 accessToken 발급
       accessToken = jwt.sign(
         {id: decodedRefreshToken.id, roles: decodedRefreshToken.roles},
         process.env.JWT_SECRET,
@@ -57,7 +57,7 @@ const authMiddleware = async (req, res, next) => {
 
       // console.log(' [Middleware] 새로 발급된 액세스 토큰:', accessToken);
 
-      //6️ 새로운 accessToken을 쿠키에 저장
+      // 새로운 accessToken을 쿠키에 저장
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -66,7 +66,7 @@ const authMiddleware = async (req, res, next) => {
         maxAge: 15 * 60 * 1000
       });
 
-      // 7️ accessToken이 발급되었으므로 요청에 추가하여 계속 진행
+      //  accessToken이 발급되었으므로 요청에 추가하여 계속 진행
       req.user = jwt.verify(accessToken, process.env.JWT_SECRET);
       return next();
     } catch (error) {
@@ -75,7 +75,7 @@ const authMiddleware = async (req, res, next) => {
     }
   }
 
-  // 8️ accessToken이 있으면 검증 후 요청 진행
+  //  accessToken이 있으면 검증 후 요청 진행
   try {
     const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
     req.user = decodedToken;

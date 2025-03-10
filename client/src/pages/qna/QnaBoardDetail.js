@@ -234,7 +234,7 @@ const QnaBoardDetail = () => {
             </Typography>
           </Box>
           <Divider sx={{mb: 3}} />
-          <Typography variant="body1" sx={{mb: 60, lineHeight: 1.8, fontSize: '1.1rem'}}>
+          <Typography variant="body1" sx={{mb: 38, lineHeight: 1.8, fontSize: '1.1rem'}}>
             {qnaBoard.content}
           </Typography>
 

@@ -257,7 +257,7 @@ async function getPackageById(packageId) {
  */
 
 async function updatePackage(packageId, updateData) {
-  console.log('🔍 [DEBUG] 요청 데이터:', updateData);
+  console.log(' [DEBUG] 요청 데이터:', updateData);
 
   // 1) 기존 패키지 데이터 조회
   const existingPackage = await Package.findById(packageId);

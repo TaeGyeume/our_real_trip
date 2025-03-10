@@ -2,21 +2,31 @@ const express = require('express');
 const router = express.Router();
 const locationController = require('../controllers/locationController');
 const authMiddleware = require('../middleware/authMiddleware');
-const authorizeRoles = require('../middleware/authorizeRoles'); // 역할 확인 미들웨어
+const authorizeRoles = require('../middleware/authorizeRoles');
 
 // 여행지 추가 (POST /api/locations) - 관리자만 가능
 router.post(
   '/',
   authMiddleware, // 먼저 인증 확인
-  authorizeRoles('admin'), // 관리자 권한 확인
+  authorizeRoles('admin'),
   locationController.createLocation // 인증 및 권한 확인 후 실행
 );
 
 // 여행지 수정 (PATCH /api/locations/:locationId)
-router.patch('/:locationId', locationController.updateLocation);
+router.patch(
+  '/:locationId',
+  authMiddleware,
+  authorizeRoles('admin'),
+  locationController.updateLocation
+);
 
 // 여행지 삭제 (DELETE /api/locations/:locationId)
-router.delete('/:locationId', locationController.deleteLocation);
+router.delete(
+  '/:locationId',
+  authMiddleware,
+  authorizeRoles('admin'),
+  locationController.deleteLocation
+);
 
 // 모든 여행지 조회
 router.get('/', locationController.getLocations);

@@ -2,32 +2,38 @@ import React, {useEffect, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {getQnaBoardById, updateQnaBoard} from '../../api/qna/qnaBoardService';
 import {getUserProfile} from '../../api/user/user';
+
+// MUI 관련 import
 import {
-  Button,
-  IconButton,
-  Card,
-  CardMedia,
-  CardActions,
-  TextField,
-  MenuItem,
-  Typography,
   Box,
-  // Stack,
-  Grid,
+  Button,
+  Card,
+  CardActions,
+  CardMedia,
+  CircularProgress,
   Divider,
+  FormControl,
+  IconButton,
+  InputLabel,
   List,
   ListItem,
+  ListItemSecondaryAction,
   ListItemText,
-  ListItemSecondaryAction
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
-  UploadFile as UploadFileIcon,
+  Image as ImageIcon,
+  AttachFile as AttachFileIcon,
   InsertDriveFile as FileIcon
+  // UploadFileIcon 제거: 사용되지 않음
 } from '@mui/icons-material';
-import 'bootstrap/dist/css/bootstrap.min.css'; // (선택 사항: Bootstrap을 사용한다면)
 
-// const SERVER_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// 환경에 따른 서버 URL
 const SERVER_URL =
   process.env.REACT_APP_ENV === 'development'
     ? 'http://localhost:5000'
@@ -40,24 +46,21 @@ const QnaBoardEdit = () => {
   // 로그인 사용자 정보
   const [user, setUser] = useState(null);
 
-  // 폼 상태: 기존이미지/파일 + 새 이미지/파일 + 삭제할 목록 등
+  // 폼 상태
   const [formData, setFormData] = useState({
     category: '',
     title: '',
     content: '',
-    images: [], // 새로 추가된 이미지(File 객체)
-    attachments: [], // 새로 추가된 첨부파일(File 객체)
+    images: [], // 새로 추가한 이미지(File)
+    attachments: [], // 새로 추가한 첨부파일(File)
     existingImages: [], // 서버에서 가져온 기존 이미지 경로
     existingAttachments: [], // 서버에서 가져온 기존 첨부파일 경로
-    deletedImages: [], // 서버에서 삭제할 이미지 경로
-    deletedAttachments: [] // 서버에서 삭제할 첨부파일 경로
+    deletedImages: [], // 삭제할 기존 이미지 경로
+    deletedAttachments: [] // 삭제할 기존 첨부파일 경로
   });
 
-  // 기존 + 새 이미지 모두를 **미리보기**로 표시하기 위한 상태
-  // 기존 이미지는 "http://localhost:5000/...경로" 형태,
-  // 새 이미지는 blob: URL 형태
+  // 이미지 미리보기(기존 + 새 이미지)
   const [previewImages, setPreviewImages] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
   // 카테고리 목록
@@ -78,7 +81,6 @@ const QnaBoardEdit = () => {
   // 1) 사용자 & 게시글 불러오기
   // ---------------------------
   useEffect(() => {
-    // 사용자 프로필 조회
     const fetchUser = async () => {
       try {
         const resp = await getUserProfile();
@@ -88,7 +90,6 @@ const QnaBoardEdit = () => {
       }
     };
 
-    // 해당 게시글 조회
     const fetchQnaBoard = async () => {
       try {
         const data = await getQnaBoardById(qnaBoardId);
@@ -105,8 +106,8 @@ const QnaBoardEdit = () => {
           deletedAttachments: []
         });
 
-        // 기존 이미지 경로를 "http://localhost:5000/...경로" 형태로 전환
-        const oldImageURLs = (data.images || []).map(path => `${SERVER_URL}/${path}`);
+        // 기존 이미지 경로를 풀 URL로 변환 후 미리보기 배열에 저장
+        const oldImageURLs = (data.images || []).map(path => `${SERVER_URL}${path}`);
         setPreviewImages(oldImageURLs);
 
         setLoading(false);
@@ -124,19 +125,19 @@ const QnaBoardEdit = () => {
   // 2) 이미지/파일 선택 핸들러 (추가)
   // ----------------------------------
   const handleFileChange = e => {
-    const {name, files} = e.target; // name="images" or "attachments"
-    const fileList = Array.from(files);
+    const {name, files} = e.target; // name: "images" or "attachments"
+    const fileArray = Array.from(files);
 
-    // 만약 이미지면 => blob: URL 생성하여 미리보기 추가
+    // 이미지 업로드 시 blob: URL로 미리보기
     if (name === 'images') {
-      const newImageURLs = fileList.map(file => URL.createObjectURL(file));
+      const newImageURLs = fileArray.map(file => URL.createObjectURL(file));
       setPreviewImages(prev => [...prev, ...newImageURLs]);
     }
 
-    // formData 에 파일 목록 저장
+    // formData에 파일 목록 저장
     setFormData(prev => ({
       ...prev,
-      [name]: [...prev[name], ...fileList]
+      [name]: [...prev[name], ...fileArray]
     }));
   };
 
@@ -144,11 +145,9 @@ const QnaBoardEdit = () => {
   // 3) 기존 이미지 삭제 로직
   // -----------------------------
   const handleRemoveExistingImage = index => {
-    // 기존이미지 중 index번째 경로를 deletedImages 에 추가
     setFormData(prev => ({
       ...prev,
       deletedImages: [...prev.deletedImages, prev.existingImages[index]],
-      // existingImages 배열에서 제거
       existingImages: prev.existingImages.filter((_, i) => i !== index)
     }));
     // 미리보기에서도 제거
@@ -159,7 +158,7 @@ const QnaBoardEdit = () => {
   // 4) 새로 추가한 이미지 삭제
   // -----------------------------
   const handleRemoveNewImage = index => {
-    // previewImages에서 제거
+    // 미리보기에서 제거
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
     // formData.images에서도 제거
     setFormData(prev => ({
@@ -195,21 +194,17 @@ const QnaBoardEdit = () => {
   const handleUpdateQnaBoard = async e => {
     e.preventDefault();
 
-    // 로그인 여부 확인
     if (!user) {
       alert('로그인이 필요합니다.');
       return;
     }
-    // 필수값 체크
     if (!formData.category || !formData.title || !formData.content) {
       alert('카테고리, 제목, 내용을 입력하세요.');
       return;
     }
 
     setLoading(true);
-
     try {
-      // FormData 구성
       const updatedFormData = new FormData();
       updatedFormData.append('category', formData.category);
       updatedFormData.append('title', formData.title);
@@ -221,6 +216,7 @@ const QnaBoardEdit = () => {
           updatedFormData.append('images', file);
         }
       });
+
       // 새로 추가된 첨부파일
       formData.attachments.forEach(file => {
         if (file instanceof File) {
@@ -250,185 +246,165 @@ const QnaBoardEdit = () => {
     }
   };
 
-  if (loading) return <Typography>로딩 중...</Typography>;
+  // 로딩 상태
+  if (loading) {
+    return (
+      <Box sx={{textAlign: 'center', mt: 4}}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{mt: 2}}>
+          로딩 중...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
+      component="form"
+      onSubmit={handleUpdateQnaBoard}
+      encType="multipart/form-data"
       sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
         maxWidth: 800,
-        margin: 'auto',
-        mt: 4,
-        p: 3,
-        bgcolor: 'white',
-        borderRadius: 2,
-        boxShadow: 3
+        margin: '0 auto',
+        mt: 4
       }}>
-      <Typography variant="h4" sx={{mb: 3, textAlign: 'center', fontWeight: 'bold'}}>
+      <Typography variant="h4" component="h2" gutterBottom fontWeight="bold">
         게시글 수정
       </Typography>
 
-      <form onSubmit={handleUpdateQnaBoard} encType="multipart/form-data">
-        {/* 카테고리 */}
-        <TextField
-          select
+      {/* 카테고리 선택 */}
+      <FormControl fullWidth>
+        <InputLabel id="category-label">카테고리</InputLabel>
+        <Select
+          labelId="category-label"
           label="카테고리"
           name="category"
           value={formData.category}
           onChange={e => setFormData({...formData, category: e.target.value})}
-          fullWidth
-          required
-          margin="normal">
+          required>
+          <MenuItem value="">
+            <em>카테고리를 선택하세요</em>
+          </MenuItem>
           {categories.map((cat, idx) => (
             <MenuItem key={idx} value={cat}>
               {cat}
             </MenuItem>
           ))}
-        </TextField>
+        </Select>
+      </FormControl>
 
-        {/* 제목 */}
-        <TextField
-          label="제목"
-          name="title"
-          value={formData.title}
-          onChange={e => setFormData({...formData, title: e.target.value})}
-          fullWidth
-          required
-          margin="normal"
-        />
+      {/* 제목 */}
+      <TextField
+        label="제목"
+        name="title"
+        value={formData.title}
+        onChange={e => setFormData({...formData, title: e.target.value})}
+        fullWidth
+        required
+      />
 
-        {/* 내용 */}
-        <TextField
-          label="내용"
-          name="content"
-          multiline
-          rows={5}
-          value={formData.content}
-          onChange={e => setFormData({...formData, content: e.target.value})}
-          fullWidth
-          required
-          margin="normal"
-        />
+      {/* 내용 */}
+      <TextField
+        label="내용"
+        name="content"
+        value={formData.content}
+        onChange={e => setFormData({...formData, content: e.target.value})}
+        required
+        multiline
+        minRows={5}
+      />
 
-        <Divider sx={{my: 3}} />
+      <Divider sx={{my: 2}} />
 
-        {/* 기존 이미지 목록 */}
-        <Typography variant="h6" sx={{mt: 2, mb: 1}}>
-          기존 업로드된 이미지
+      {/* 기존 이미지 */}
+      <Typography variant="h6" sx={{mt: 2}}>
+        기존 이미지
+      </Typography>
+      {formData.existingImages.length === 0 && (
+        <Typography variant="body2" sx={{mb: 1}}>
+          현재 업로드된 이미지가 없습니다.
         </Typography>
-        {formData.existingImages.length === 0 && (
-          <Typography variant="body2" sx={{mb: 2}}>
-            현재 업로드된 이미지가 없습니다.
-          </Typography>
-        )}
-        <Grid container spacing={2}>
-          {formData.existingImages.map((path, index) => (
-            <Grid item key={index}>
-              <Card sx={{width: 120}}>
-                <CardMedia
-                  component="img"
-                  height="100"
-                  image={`${SERVER_URL}${path}`}
-                  alt="기존 이미지"
-                />
-                <CardActions>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleRemoveExistingImage(index)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+      )}
 
-        {/* 새로 추가한 이미지 미리보기 */}
-        <Typography variant="h6" sx={{mt: 3, mb: 1}}>
-          새로 추가할 이미지 미리보기
-        </Typography>
-        <Grid container spacing={2}>
-          {previewImages.map((imgURL, index) => {
-            // blob:.. 이면 새로 추가한 것
-            const isNew = imgURL.startsWith('blob:');
-            return (
-              <Grid item key={index}>
-                <Card sx={{width: 120}}>
-                  <CardMedia component="img" height="100" image={imgURL} alt="미리보기" />
-                  <CardActions>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() =>
-                        isNew
-                          ? handleRemoveNewImage(index)
-                          : handleRemoveExistingImage(index)
-                      }>
-                      <DeleteIcon />
-                    </IconButton>
-                  </CardActions>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        {/* 이미지 추가 버튼 */}
-        <Box sx={{mt: 2}}>
-          <Button
-            variant="contained"
-            component="label"
-            startIcon={<UploadFileIcon />}
-            sx={{mr: 2}}>
-            이미지 추가
-            <input
-              type="file"
-              name="images"
-              multiple
-              accept="image/*"
-              hidden
-              onChange={handleFileChange}
-            />
-          </Button>
-        </Box>
-
-        <Divider sx={{my: 3}} />
-
-        {/* 기존 첨부파일 목록 */}
-        <Typography variant="h6" sx={{mt: 2, mb: 1}}>
-          기존 첨부파일
-        </Typography>
-        {formData.existingAttachments.length === 0 && (
-          <Typography variant="body2" sx={{mb: 2}}>
-            현재 첨부파일이 없습니다.
-          </Typography>
-        )}
-        <List>
-          {formData.existingAttachments.map((filePath, idx) => (
-            <ListItem key={idx} dense>
-              <FileIcon sx={{mr: 1}} />
-              <ListItemText
-                primary={filePath.split('/').pop() || '첨부파일'}
-                secondary={`파일 경로: ${filePath}`}
-              />
-              <ListItemSecondaryAction>
+      {/* 새로 추가된 이미지 + 기존 이미지 미리보기(통합) */}
+      <Stack direction="row" spacing={2} sx={{flexWrap: 'wrap'}}>
+        {previewImages.map((imgURL, index) => {
+          // blob:으로 시작하면 새로 추가한 이미지
+          const isNew = imgURL.startsWith('blob:');
+          return (
+            <Card key={index} sx={{width: 120}}>
+              <CardMedia component="img" height="100" image={imgURL} alt="미리보기" />
+              <CardActions>
                 <IconButton
-                  edge="end"
                   size="small"
                   color="error"
-                  onClick={() => handleRemoveExistingFile(idx)}>
+                  onClick={() =>
+                    isNew ? handleRemoveNewImage(index) : handleRemoveExistingImage(index)
+                  }>
                   <DeleteIcon />
                 </IconButton>
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
-        </List>
+              </CardActions>
+            </Card>
+          );
+        })}
+      </Stack>
 
-        {/* 새로 추가한 첨부파일 미리보기 */}
-        <Typography variant="h6" sx={{mt: 3, mb: 1}}>
-          새 첨부파일
+      {/* 이미지 업로드 버튼 */}
+      <Stack direction="row" alignItems="center" spacing={2} sx={{mt: 1}}>
+        <Button variant="contained" component="label" startIcon={<ImageIcon />}>
+          이미지 추가
+          <input
+            type="file"
+            name="images"
+            multiple
+            accept="image/*"
+            hidden
+            onChange={handleFileChange}
+          />
+        </Button>
+      </Stack>
+
+      <Divider sx={{my: 2}} />
+
+      {/* 기존 첨부파일 */}
+      <Typography variant="h6" sx={{mt: 2}}>
+        기존 첨부파일
+      </Typography>
+      {formData.existingAttachments.length === 0 && (
+        <Typography variant="body2" sx={{mb: 1}}>
+          현재 첨부파일이 없습니다.
         </Typography>
-        {formData.attachments.length > 0 && (
+      )}
+      <List>
+        {formData.existingAttachments.map((filePath, idx) => (
+          <ListItem key={idx} dense>
+            <FileIcon sx={{mr: 1}} />
+            <ListItemText
+              primary={filePath.split('/').pop() || '첨부파일'}
+              secondary={`경로: ${filePath}`}
+            />
+            <ListItemSecondaryAction>
+              <IconButton
+                edge="end"
+                size="small"
+                color="error"
+                onClick={() => handleRemoveExistingFile(idx)}>
+                <DeleteIcon />
+              </IconButton>
+            </ListItemSecondaryAction>
+          </ListItem>
+        ))}
+      </List>
+
+      {/* 새 첨부파일 미리보기 */}
+      {formData.attachments.length > 0 && (
+        <>
+          <Typography variant="h6" sx={{mt: 2}}>
+            새 첨부파일
+          </Typography>
           <List>
             {formData.attachments.map((fileObj, idx) => (
               <ListItem key={idx} dense>
@@ -449,30 +425,37 @@ const QnaBoardEdit = () => {
               </ListItem>
             ))}
           </List>
-        )}
+        </>
+      )}
 
-        {/* 첨부파일 추가 버튼 */}
-        <Box sx={{mt: 2}}>
-          <Button variant="contained" component="label" startIcon={<UploadFileIcon />}>
-            첨부파일 추가
-            <input
-              type="file"
-              name="attachments"
-              multiple
-              accept=".pdf,.doc,.docx"
-              hidden
-              onChange={handleFileChange}
-            />
-          </Button>
-        </Box>
+      {/* 첨부파일 업로드 버튼 */}
+      <Stack direction="row" alignItems="center" spacing={2} sx={{mt: 1}}>
+        <Button variant="contained" component="label" startIcon={<AttachFileIcon />}>
+          첨부파일 추가
+          <input
+            type="file"
+            name="attachments"
+            multiple
+            accept=".pdf,.doc,.docx"
+            hidden
+            onChange={handleFileChange}
+          />
+        </Button>
+      </Stack>
 
-        <Divider sx={{my: 3}} />
+      <Divider sx={{my: 3}} />
 
-        {/* 수정 버튼 */}
-        <Button type="submit" variant="contained" color="primary" fullWidth sx={{mt: 3}}>
+      {/* 수정 버튼 */}
+      <Box sx={{display: 'flex', justifyContent: 'flex-end'}}>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          startIcon={loading && <CircularProgress size={20} />}>
           {loading ? '수정 중...' : '수정 완료'}
         </Button>
-      </form>
+      </Box>
     </Box>
   );
 };

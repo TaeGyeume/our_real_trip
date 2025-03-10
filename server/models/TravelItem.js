@@ -90,7 +90,7 @@ TravelItemSchema.post('findOneAndDelete', async function (doc) {
       .findById(doc.parentCategory);
     if (parentCategory && parentCategory.subCategories.length === 0) {
       await mongoose.model('travelItem').findByIdAndDelete(parentCategory._id);
-      console.log(`부모 카테고리 자동 삭제됨: ${parentCategory._id}`);
+      // console.log(`부모 카테고리 자동 삭제됨: ${parentCategory._id}`);
     }
   }
 });

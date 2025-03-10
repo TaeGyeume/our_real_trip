@@ -44,7 +44,6 @@ const TravelItemListPage = () => {
       const response = await axios.get(endpoint);
       const allItems = response.data.items || [];
 
-      console.log('불러온 상품 목록:', allItems);
       setItems(allItems);
     } catch (error) {
       console.error('상품 불러오기 실패:', error);
