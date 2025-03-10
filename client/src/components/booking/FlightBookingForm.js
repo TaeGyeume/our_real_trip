@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {createBooking, verifyPayment} from '../../api/booking/bookingService';
 import {authAPI} from '../../api/auth/index';
 import MileageInput from '../mileage/MileageInput';
-import {Button, TextField, Alert, Snackbar} from '@mui/material';
+import {Button, TextField, Alert, Snackbar, Box, Typography, Paper} from '@mui/material';
 import './styles/TourTicketBookingForm.css';
 import FlightBookingCard from '../flights/FlightBookingCard';
 
@@ -137,10 +137,22 @@ const FlightBookingForm = ({selectedFlights, passengers, onBookingSuccess}) => {
                 ))}
               </div>
             </div>
-            <p>👥 승객 수: {passengers}명</p>
-            <p>💰 총 예약 비용: {totalPrice.toLocaleString()} 원</p>
+            <hr className="divider" />
             <br />
-            <br />
+            {/* 승객 수 및 총 예약 비용 영역 */}
+            <Paper elevation={3} sx={{p: 2, mb: 3, backgroundColor: '#f7f7f7'}}>
+              <Typography variant="h6" sx={{fontWeight: 'bold', mb: 1}}>
+                예약 정보
+              </Typography>
+              <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 1}}>
+                <Typography variant="body1">승객 수:</Typography>
+                <Typography variant="body1">{passengers}명</Typography>
+              </Box>
+              <Box sx={{display: 'flex', justifyContent: 'space-between'}}>
+                <Typography variant="body1">총 예약 비용:</Typography>
+                <Typography variant="body1">{totalPrice.toLocaleString()} 원</Typography>
+              </Box>
+            </Paper>
 
             <hr className="divider" />
 
