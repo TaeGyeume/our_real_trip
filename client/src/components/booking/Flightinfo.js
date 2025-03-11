@@ -38,13 +38,24 @@ const AIRLINE_LOGOS = {
 
 const AIRPORT_OPTIONS = [
   {code: 'GMP', name: '김포'},
+  {code: 'ICN', name: '인천'},
   {code: 'PUS', name: '김해'},
   {code: 'CJU', name: '제주'},
-  {code: 'ICN', name: '인천'},
-  {code: 'JFK', name: 'JFK'},
-  {code: 'LAX', name: 'LAX'},
-  {code: 'NRT', name: '나리타 공항'},
-  {code: 'HND', name: '하네다 공항'}
+  {code: 'TAE', name: '대구'},
+  {code: 'KWJ', name: '광주'},
+  {code: 'CJJ', name: '청주'},
+  {code: 'RSU', name: '여수'},
+  {code: 'MWX', name: '무안'},
+  {code: 'HND', name: '하네다공항'},
+  {code: 'NRT', name: '나리타공항'},
+  {code: 'JFK', name: '존 F. 케네디 국제공항'},
+  {code: 'CDG', name: '샤를 드골공항'},
+  {code: 'PEK', name: '베이징공항'},
+  {code: 'PKX', name: '베이징 다싱공항'},
+  {code: 'TSA', name: '타이베이 송산공항'},
+  {code: 'LHR', name: '런던 히드로공항'},
+  {code: 'SYD', name: '시드니공항'},
+  {code: 'BKK', name: '방콕공항'}
 ];
 
 const FlightTimelineInfo = ({booking}) => {
